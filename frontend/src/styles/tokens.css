@@ -1,0 +1,83 @@
+:root {
+  /* ---- COLOR TOKENS (full hex — for direct use) ---- */
+  --color-ink:      #1a1614;
+  --color-ink-2:    #232018;
+  --color-ink-3:    #2e2820;
+  --color-ink-4:    #3a3328;
+
+  --color-cream:    #f5efe4;
+  --color-cream-2:  #ece4d4;
+  --color-cream-3:  #e0d6c2;
+
+  --color-gold:     #c9a961;
+  --color-gold-dark:#a88847;
+  --color-gold-soft:#e8d9b3;
+
+  --color-danger:   #b84545;
+  --color-muted:    #8b7355;
+  --color-subtle:   #a89578;
+  --color-border:   #e0d6c2;
+  --color-surface:  #ffffff;
+  --color-bg:       var(--color-cream);
+  --color-hover:    var(--color-cream-2);
+
+  /* ---- RGB TRIPLETS (for /opacity modifiers) ---- */
+  --color-ink-rgb:      26 22 20;
+  --color-ink-2-rgb:    35 32 24;
+  --color-ink-3-rgb:    46 40 32;
+  --color-ink-4-rgb:    58 51 40;
+  --color-cream-rgb:    245 239 228;
+  --color-cream-2-rgb:  236 228 212;
+  --color-cream-3-rgb:  224 214 194;
+  --color-gold-rgb:     201 169 97;
+  --color-gold-dark-rgb:168 136 71;
+  --color-gold-soft-rgb:232 217 179;
+  --color-danger-rgb:   184 69 69;
+  --color-muted-rgb:    139 115 85;
+  --color-subtle-rgb:   168 149 120;
+  --color-surface-rgb:  255 255 255;
+  --color-border-rgb:   224 214 194;
+
+  /* ---- SEMANTIC ALIASES ---- */
+  --color-brand:      var(--color-gold);
+  --color-brand-dark: var(--color-gold-dark);
+  --color-brand-soft: var(--color-gold-soft);
+  --color-accent:     var(--color-gold);
+
+  /* ---- TYPOGRAPHY ---- */
+  --font-sans:  "Inter", system-ui, -apple-system, sans-serif;
+  --font-serif: "Cormorant Garamond", "Playfair Display", Georgia, serif;
+
+  --text-xs:   0.75rem;
+  --text-sm:   0.875rem;
+  --text-base: 1rem;
+  --text-lg:   1.125rem;
+  --text-xl:   1.25rem;
+  --text-2xl:  1.5rem;
+  --text-3xl:  1.875rem;
+  --text-4xl:  2.25rem;
+  --text-5xl:  3rem;
+  --text-6xl:  3.75rem;
+  --text-7xl:  4.5rem;
+
+  --leading-tight:  1.1;
+  --leading-normal: 1.5;
+  --tracking-luxe:  0.28em;
+
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
+  --radius-xl: 6px;
+
+  --shadow-sm: 0 1px 2px rgba(26, 22, 20, 0.08);
+  --shadow-md: 0 6px 16px rgba(26, 22, 20, 0.12);
+  --shadow-lg: 0 16px 40px rgba(26, 22, 20, 0.20);
+
+  --container-max: 1360px;
+  --header-h: 68px;
+}
