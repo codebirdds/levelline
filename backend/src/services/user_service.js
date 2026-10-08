@@ -4,7 +4,7 @@ const User = db.User;
 const { hashPassword, comparePassword, generateToken } = require('../utils/auth');
 
 class UserService {
-  
+
   // REGISTER USER
   async register(data) {
     const { first_name, last_name, email, mobile, password, role } = data;
@@ -52,6 +52,16 @@ class UserService {
 
     return { user, token };
   }
+
+  // RESET PASSWORD 
+  async resetPassword(data) {
+    const { email, newPassword } = data;
+    if (!email || !newPassword) { throw new Error('Email and new password are required'); }
+    const user = await User.findOne({ where: { email } }); if (!user) { throw new Error('User not found'); }
+    const hashedPassword = await hashPassword(newPassword);
+    await user.update({ password: hashedPassword }); return { message: 'Password reset successfully' };
+  }
 }
+
 
 module.exports = new UserService();
