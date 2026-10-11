@@ -1,116 +1,122 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useSelector } from "react-redux";
-import { selectIsAuthed } from "../../features/auth/authSlice";
 import { ROUTES } from "../../routes/routePaths";
-import SearchDropdown from "./SearchDropdown";
+import { NAV_LEFT, NAV_RIGHT, BOOK_CTA } from "../../features/home/content";
+import MobileMenu from "./MobileMenu";
+import SmartLink from "../common/SmartLink";
+import logo from "../../assets/images/LandingPage/Header/levelin.png";
 
-const NAV = [
-  { label: "Picks",     to: "/?cat=picks" },
-  { label: "Style",     to: "/?cat=style" },
-  { label: "Modes",     to: "/?cat=modes" },
-  { label: "Customize", to: "/customize"  },
-  { label: "Gift",      to: "/?cat=gift"  },
-];
+const linkCls =
+  "font-sans text-[10px] font-medium uppercase tracking-wide transition";
 
-export default function Header() {
-  const isAuthed = useSelector(selectIsAuthed);
-  const [scrolled, setScrolled]     = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
+export default function Header({ scroll }) {
+  const [scrolled, setScrolled] = useState(scroll);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
-    onScroll();
+    let lastY = window.scrollY;
+
+    const onScroll = () => {
+      const y = window.scrollY;
+
+      if (y < 40) {
+        if(!scroll) {
+        setScrolled(false);}
+      } else if (y > lastY) {
+        setScrolled(false);
+      } else {
+        setScrolled(true);
+      }
+
+      lastY = y;
+    };
+
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const solid = scrolled || searchOpen;
-
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          solid
-            ? "bg-ink/95 backdrop-blur-md border-b border-gold/20"
-            : "bg-transparent border-b border-transparent"
-        }`}
+        className={`inset-x-0 top-0 z-40 transition-all duration-300 ${!scrolled && "pt-6"}
+          h-[calc(var(--header-h)*0.6)]
+          ${
+            scrolled
+              ? "fixed bg-[#f8f8f8] text-black shadow-[0_4px_20px_rgba(0,0,0,0.05)]"
+              : "absolute bg-transparent text-cream"
+          }`}
       >
-        <div className="container-x h-[var(--header-h)] flex items-center justify-between relative">
+        {/* Gradient overlay — only when NOT scrolled */}
+        {!scrolled && (
+          <div className="absolute inset-0 z-0 bg-gradient-to-b from-black/60 via-black/25 to-transparent pointer-events-none" />
+        )}
 
-          {/* LEFT — Logo */}
-          <Link
-            to={ROUTES.HOME}
-            className="shrink-0 font-serif text-xl md:text-2xl font-medium tracking-wide leading-none text-cream"
+        {/* Content — above the overlay */}
+        <div className="container-x relative z-10 flex h-full items-center">
+          <button
+            onClick={() => setMenuOpen(true)}
+            aria-label="Open menu"
+            className={`p-1.5 lg:hidden ${scrolled ? "text-black" : "text-cream"}`}
           >
-            Leveline
-          </Link>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+              <path d="M3 6h18M3 12h18M3 18h18" />
+            </svg>
+          </button>
 
-          {/* CENTER — Nav */}
-          <nav className="hidden lg:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 xl:gap-10">
-            {NAV.map((item) => (
-              <Link
-                key={item.label}
-                to={item.to}
-                className="text-[10px] font-medium uppercase tracking-[0.24em] text-cream/85 hover:text-gold transition-colors duration-200"
+          <nav className="hidden flex-1 justify-end gap-10 pr-10 lg:flex">
+            {NAV_LEFT.map((l) => (
+              <SmartLink
+                key={l.label}
+                href={l.href}
+                className={`${linkCls} ${
+                  scrolled ? "text-black hover:text-gold" : "text-cream hover:text-gold"
+                }`}
               >
-                {item.label}
-              </Link>
+                {l.label}
+              </SmartLink>
             ))}
           </nav>
 
-          {/* RIGHT — Icons */}
-          <div className="flex items-center gap-5 shrink-0">
+          <Link to={ROUTES.HOME} className="mx-auto shrink-0 lg:mx-0">
+            <img
+              src={logo}
+              alt="Levelline"
+              className={`h-7 w-auto ${scrolled ? "lg:h-10" : "lg:h-20 mt-14"} transition-all duration-300 ${
+                scrolled ? "brightness-0" : ""
+              }`}
+            />
+          </Link>
 
-            {/* Search icon */}
-            <button
-              onClick={() => setSearchOpen((v) => !v)}
-              aria-label="Search"
-              className="text-cream/85 hover:text-gold transition-colors duration-200"
+          <div className="hidden flex-1 items-center justify-between pl-10 lg:flex">
+            <nav className="flex gap-10">
+              {NAV_RIGHT.map((l) => (
+                <SmartLink
+                  key={l.label}
+                  href={l.href}
+                  className={`${linkCls} ${
+                    scrolled ? "text-black hover:text-gold" : "text-cream hover:text-gold"
+                  }`}
+                >
+                  {l.label}
+                </SmartLink>
+              ))}
+            </nav>
+            <SmartLink
+              href={BOOK_CTA.href}
+              className={`rounded-sm border-[1px] px-3 py-2 font-sans text-[9.5px] ${!scrolled ? "mt-4" : ""} font-medium uppercase transition ${
+                scrolled
+                  ? "border-[#6b6b6b] text-[#6b6b6b] hover:bg-black hover:text-white"
+                  : "border-cream text-cream hover:bg-cream hover:text-ink"
+              }`}
             >
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
-                   stroke="currentColor" strokeWidth="1.6"
-                   strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-            </button>
-
-            {/* Wishlist */}
-            <Link
-              to="/wishlist"
-              aria-label="Wishlist"
-              className="hidden sm:block text-cream/85 hover:text-gold transition-colors duration-200"
-            >
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
-                   stroke="currentColor" strokeWidth="1.6"
-                   strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1L12 21l7.7-7.6 1.1-1a5.5 5.5 0 0 0 0-7.8Z" />
-              </svg>
-            </Link>
-
-            {/* Account */}
-            <Link
-              to={isAuthed ? ROUTES.ADMIN : ROUTES.LOGIN}
-              aria-label="Account"
-              className="text-cream/85 hover:text-gold transition-colors duration-200"
-            >
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
-                   stroke="currentColor" strokeWidth="1.6"
-                   strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="8" r="4" />
-                <path d="M4 21c0-4 4-6 8-6s8 2 8 6" />
-              </svg>
-            </Link>
+              {BOOK_CTA.label}
+            </SmartLink>
           </div>
+
+          <span className="w-8 lg:hidden" aria-hidden="true" />
         </div>
       </header>
-
-      {/* Search panel — drops below header */}
-      <SearchDropdown
-        open={searchOpen}
-        onClose={() => setSearchOpen(false)}
-      />
+      <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
     </>
   );
 }

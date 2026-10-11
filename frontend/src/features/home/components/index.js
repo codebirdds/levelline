@@ -1,2 +1,12 @@
-export { default as HeroBanner }     from "./HeroBanner";
-export { default as ProductSection } from "./ProductSection";
+export { default as HeroBanner } from "./HeroBanner";
+export { default as ChoosePath } from "./ChoosePath";
+export { default as BespokeIntro } from "./BespokeIntro";
+export { default as HowItWorks } from "./HowItWorks";
+export { default as FabricBanner } from "./FabricBanner";
+export { default as Customization } from "./Customization";
+export { default as ProportioningCards } from "./ProportioningCards";
+export { default as ValueProps } from "./ValueProps";
+export { default as DefiningFit } from "./DefiningFit";
+export { default as ThreeWaysToShop } from "./ThreeWaysToShop";
+export { default as Testimonials } from "./Testimonials";
+export { default as SupportShowcase } from "./SupportShowcase";
