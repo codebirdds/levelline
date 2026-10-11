@@ -1,166 +1,201 @@
+
 const db = require('../models');
 const Product = db.Product;
 const Category = db.Category;
 const { Op } = require('sequelize');
 
-
 class ProductService {
 
-  // 🔥 GENERATE SKU
-async generateSku(category_id, categoryName) {
-  const prefix = categoryName.substring(0, 3).toUpperCase();
+    // CREATE PRODUCT
+    async create(data, userId) {
+        const { category_id, variants, ...productData } = data;
 
-  let sku;
-  let exists = true;
-
-  // 🔥 loop until unique SKU is found
-  while (exists) {
-    const randomNumber = Math.floor(1000 + Math.random() * 9000); // 4-digit random
-
-    sku = `${prefix}-${randomNumber}`;
-
-    const existing = await Product.findOne({ where: { sku } });
-
-    if (!existing) {
-      exists = false;
-    }
-  }
-
-  return sku;
-}
-
-  // CREATE PRODUCT
-  async create(data, userId) {
-    const { category_id } = data;
-
-    // ✅ Check category exists
-    const category = await Category.findByPk(category_id);
-    if (!category) {
-      throw new Error('Category not found');
-    }
-
-    // 🔥 AUTO GENERATE SKU (ignore incoming sku)
-    const sku = await this.generateSku(category_id, category.name);
-
-    return await Product.create({
-      ...data,
-      sku,
-      created_by: userId
-    });
-  }
-
-  // GET ALL PRODUCTS
-async findAll(query) {
-  const {
-    page = 1,
-    limit = 20,
-    search = '',
-    category_id,
-    sortBy = 'createdAt',
-    order = 'DESC'
-  } = query;
-
-  const offset = (page - 1) * limit;
-
-  // 🔥 WHERE CONDITION
-  const where = {
-    status: 'active'
-  };
-
-  // 🔍 SEARCH (name + sku)
-  if (search) {
-    where[Op.or] = [
-      { name: { [Op.iLike]: `%${search}%` } },
-      { sku: { [Op.iLike]: `%${search}%` } }
-    ];
-  }
-
-  // 📂 CATEGORY FILTER
-  if (category_id) {
-    where.category_id = category_id;
-  }
-
-  // 🚀 QUERY
-  const { rows, count } = await Product.findAndCountAll({
-    where,
-    include: [
-      {
-        model: Category,
-        as: 'category',
-        attributes: ['id', 'name']
-      }
-    ],
-    limit: parseInt(limit),
-    offset: parseInt(offset),
-    order: [[sortBy, order.toUpperCase()]]
-  });
-
-  return {
-    data: rows,
-    pagination: {
-      total: count,
-      page: parseInt(page),
-      pages: Math.ceil(count / limit),
-      limit: parseInt(limit)
-    }
-  };
-}
-
-  // GET BY ID
-  async findById(id) {
-    const product = await Product.findByPk(id, {
-      include: [
-        {
-          model: Category,
-          as: 'category',
-          attributes: ['id', 'name']
+        // Variants must be managed through the variant API.
+        if (variants !== undefined) {
+            throw new Error(
+                'Create product first, then create variants separately.'
+            );
         }
-      ]
-    });
 
-    if (!product) {
-      throw new Error('Product not found');
+        const category = await Category.findByPk(category_id);
+
+        if (!category) {
+            throw new Error('Category not found');
+        }
+
+        return await Product.create({
+            ...productData,
+            category_id,
+            created_by: userId
+        });
     }
 
-    return product;
-  }
+    // GET ALL PRODUCTS
+    async findAll(query) {
+        const {
+            page = 1,
+            limit = 20,
+            search = '',
+            category_id,
+            gender,
+            sortBy = 'createdAt',
+            order = 'DESC'
+        } = query;
 
-  // UPDATE PRODUCT
-  async update(id, data, userId) {
-    const product = await this.findById(id);
+        const currentPage = Math.max(1, parseInt(page, 10) || 1);
+        const pageSize = Math.min(
+            100,
+            Math.max(1, parseInt(limit, 10) || 20)
+        );
 
-    // ✅ Check category if updating
-    let category = null;
-    if (data.category_id) {
-      category = await Category.findByPk(data.category_id);
-      if (!category) {
-        throw new Error('Category not found');
-      }
+        const offset = (currentPage - 1) * pageSize;
+
+        const allowedSortFields = [
+            'id',
+            'name',
+            'price',
+            'createdAt',
+            'updatedAt'
+        ];
+
+        const sortField = allowedSortFields.includes(sortBy)
+            ? sortBy
+            : 'createdAt';
+
+        const sortOrder = order.toUpperCase() === 'ASC'
+            ? 'ASC'
+            : 'DESC';
+
+        const where = {
+            status: 'active'
+        };
+
+        if (search) {
+            where[Op.or] = [
+                { name: { [Op.like]: `%${search}%` } },
+                { brand: { [Op.like]: `%${search}%` } },
+                { product_type: { [Op.like]: `%${search}%` } }
+            ];
+        }
+
+        if (category_id) {
+            where.category_id = category_id;
+        }
+
+        if (gender) {
+            where.gender = gender;
+        }
+
+        const { rows, count } = await Product.findAndCountAll({
+            where,
+            include: [
+                {
+                    model: Category,
+                    as: 'category',
+                    attributes: ['id', 'name']
+                },
+                {
+                    model: db.ProductVariant,
+                    as: 'variants',
+                    required: false,
+                    where: { status: 'active' }
+                }
+            ],
+            distinct: true,
+            limit: pageSize,
+            offset,
+            order: [[sortField, sortOrder]]
+        });
+
+        return {
+            data: rows,
+            pagination: {
+                total: count,
+                page: currentPage,
+                pages: Math.ceil(count / pageSize),
+                limit: pageSize
+            }
+        };
     }
 
-    // 🔥 Regenerate SKU if category changes
-    let sku = product.sku;
-    if (category) {
-      sku = await this.generateSku(data.category_id, category.name);
+    // GET PRODUCT BY ID
+    async findById(id) {
+        const product = await Product.findByPk(id, {
+            include: [
+                {
+                    model: Category,
+                    as: 'category',
+                    attributes: ['id', 'name']
+                },
+                {
+                    model: db.ProductVariant,
+                    as: 'variants'
+                }
+            ]
+        });
+
+        if (!product) {
+            throw new Error('Product not found');
+        }
+
+        return product;
     }
 
-    await product.update({
-      ...data,
-      sku,
-      updated_by: userId
-    });
+    // UPDATE PRODUCT
+    async update(id, data, userId) {
+        const product = await Product.findByPk(id);
 
-    return product;
-  }
+        if (!product) {
+            throw new Error('Product not found');
+        }
 
-  // DELETE PRODUCT
-  async delete(id) {
-    const product = await this.findById(id);
+        const { variants, sku, stock, images, ...productData } = data;
 
-    await product.destroy();
+        if (variants !== undefined) {
+            throw new Error(
+                'Update variants through the product variant API.'
+            );
+        }
 
-    return true;
-  }
+        if (sku !== undefined || stock !== undefined ||
+            images !== undefined) {
+            throw new Error(
+                'SKU, stock, and images are managed by product variants.'
+            );
+        }
+
+        if (productData.category_id !== undefined) {
+            const category = await Category.findByPk(
+                productData.category_id
+            );
+
+            if (!category) {
+                throw new Error('Category not found');
+            }
+        }
+
+        await product.update({
+            ...productData,
+            updated_by: userId
+        });
+
+        return await this.findById(id);
+    }
+
+    // DELETE PRODUCT
+    async delete(id) {
+        const product = await Product.findByPk(id);
+
+        if (!product) {
+            throw new Error('Product not found');
+        }
+
+        // Associated variants are deleted through the database
+        // foreign key configured with ON DELETE CASCADE.
+        await product.destroy();
+
+        return true;
+    }
 }
 
 module.exports = new ProductService();

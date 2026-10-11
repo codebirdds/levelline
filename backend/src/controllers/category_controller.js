@@ -3,6 +3,15 @@ const categoryService = require('../services/category_service.js');
 // CREATE
 exports.create = async (req, res) => {
   try {
+    // 🔥 Handle Cloudinary image upload
+    if (req.file) {
+      req.body.images = [req.file.path]; // single image
+    }
+
+    // 🔥 If using multiple images (optional)
+    if (req.files && req.files.length > 0) {
+      req.body.images = req.files.map(file => file.path);
+    }
     const category = await categoryService.create(req.body, req.user.id);
 
     res.status(201).json({

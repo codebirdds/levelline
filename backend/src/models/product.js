@@ -1,3 +1,4 @@
+
 'use strict';
 
 const { Model } = require('sequelize');
@@ -5,15 +6,25 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
     class Product extends Model {
         static associate(models) {
-            // optional: link to user
             Product.belongsTo(models.User, {
                 foreignKey: 'created_by',
                 as: 'creator'
             });
 
+            Product.belongsTo(models.User, {
+                foreignKey: 'updated_by',
+                as: 'updater'
+            });
+
             Product.belongsTo(models.Category, {
                 foreignKey: 'category_id',
                 as: 'category'
+            });
+
+            Product.hasMany(models.ProductVariant, {
+                foreignKey: 'product_id',
+                as: 'variants',
+                onDelete: 'CASCADE'
             });
         }
     }
@@ -25,36 +36,33 @@ module.exports = (sequelize, DataTypes) => {
                 allowNull: false
             },
 
-            description: {
-                type: DataTypes.TEXT
-            },
-
-            price: {
-                type: DataTypes.FLOAT,
-                allowNull: false
-            },
-
-            discount_price: {
-                type: DataTypes.FLOAT
-            },
-
-            stock: {
-                type: DataTypes.INTEGER,
-                defaultValue: 0
-            },
-
-            sold_quantity: {
-                type: DataTypes.INTEGER,
-                defaultValue: 0
-            },
-
-            sku: {
+            slug: {
                 type: DataTypes.STRING,
-                unique: true
+                unique: true,
+                allowNull: true
             },
 
-            images: {
-                type: DataTypes.JSON
+            description: {
+                type: DataTypes.TEXT,
+                allowNull: true
+            },
+
+            brand: {
+                type: DataTypes.STRING,
+                allowNull: true
+            },
+
+            product_type: {
+                type: DataTypes.STRING,
+                allowNull: true
+            },
+
+            gender: {
+                type: DataTypes.ENUM(
+                    'men', 'women', 'unisex',
+                    'boys', 'girls', 'kids'
+                ),
+                allowNull: true
             },
 
             category_id: {
@@ -62,18 +70,69 @@ module.exports = (sequelize, DataTypes) => {
                 allowNull: false
             },
 
-            unit: {
-                type: DataTypes.ENUM('piece', 'kg', 'gram', 'liter', 'ml'),
-                defaultValue: 'piece'
+            subcategory: {
+                type: DataTypes.STRING,
+                allowNull: true
             },
 
-            weight_or_volume: {
-                type: DataTypes.FLOAT
+            material: {
+                type: DataTypes.STRING,
+                allowNull: true
+            },
+
+            pattern: {
+                type: DataTypes.STRING,
+                allowNull: true
+            },
+
+            fit: {
+                type: DataTypes.STRING,
+                allowNull: true
+            },
+
+            occasion: {
+                type: DataTypes.STRING,
+                allowNull: true
+            },
+
+            country_of_origin: {
+                type: DataTypes.STRING,
+                allowNull: true
+            },
+
+            care_instructions: {
+                type: DataTypes.TEXT,
+                allowNull: true
+            },
+
+            // Additional product specifications
+            details: {
+                type: DataTypes.JSON,
+                allowNull: true
+            },
+
+            price: {
+                type: DataTypes.DECIMAL(10, 2),
+                allowNull: false
+            },
+
+            discount_price: {
+                type: DataTypes.DECIMAL(10, 2),
+                allowNull: true
             },
 
             status: {
-                type: DataTypes.ENUM('active', 'inactive', 'draft'),
-                defaultValue: 'active'
+                type: DataTypes.ENUM(
+                    'active', 'inactive', 'draft'
+                ),
+                allowNull: false,
+                defaultValue: 'draft'
+            },
+
+            is_featured: {
+                type: DataTypes.BOOLEAN,
+                allowNull: false,
+                defaultValue: false
             },
 
             created_by: {
@@ -90,7 +149,7 @@ module.exports = (sequelize, DataTypes) => {
             sequelize,
             modelName: 'Product',
             tableName: 'products',
-            timestamps: true // auto adds createdAt & updatedAt
+            timestamps: true
         }
     );
 

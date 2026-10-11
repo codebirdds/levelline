@@ -1,106 +1,174 @@
+
 'use strict';
 
 module.exports = {
-  async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('products', {
-      id: {
-        allowNull: false,
-        autoIncrement: true,
-        primaryKey: true,
-        type: Sequelize.INTEGER
-      },
+    async up(queryInterface, Sequelize) {
+        await queryInterface.createTable('products', {
+            id: {
+                allowNull: false,
+                autoIncrement: true,
+                primaryKey: true,
+                type: Sequelize.INTEGER
+            },
 
-      name: {
-        type: Sequelize.STRING,
-        allowNull: false
-      },
+            // Basic product information
+            name: {
+                type: Sequelize.STRING,
+                allowNull: false
+            },
 
-      description: {
-        type: Sequelize.TEXT
-      },
+            slug: {
+                type: Sequelize.STRING,
+                unique: true,
+                allowNull: true
+            },
 
-      price: {
-        type: Sequelize.FLOAT,
-        allowNull: false
-      },
+            description: {
+                type: Sequelize.TEXT,
+                allowNull: true
+            },
 
-      discount_price: {
-        type: Sequelize.FLOAT
-      },
+            brand: {
+                type: Sequelize.STRING,
+                allowNull: true
+            },
 
-      stock: {
-        type: Sequelize.INTEGER,
-        defaultValue: 0
-      },
+            product_type: {
+                type: Sequelize.STRING,
+                allowNull: true
+            },
 
-      sold_quantity: {
-        type: Sequelize.INTEGER,
-        defaultValue: 0
-      },
+            gender: {
+                type: Sequelize.ENUM(
+                    'men',
+                    'women',
+                    'unisex',
+                    'boys',
+                    'girls',
+                    'kids'
+                ),
+                allowNull: true
+            },
 
-      sku: {
-        type: Sequelize.STRING,
-        unique: true
-      },
+            // Category information
+            category_id: {
+                type: Sequelize.INTEGER,
+                allowNull: false,
+                references: {
+                    model: 'categories',
+                    key: 'id'
+                },
+                onUpdate: 'CASCADE',
+                onDelete: 'RESTRICT'
+            },
 
-      images: {
-        type: Sequelize.JSON
-      },
+            subcategory: {
+                type: Sequelize.STRING,
+                allowNull: true
+            },
 
-      category: {
-        type: Sequelize.STRING
-      },
+            // Product specifications
+            material: {
+                type: Sequelize.STRING,
+                allowNull: true
+            },
 
-      unit: {
-        type: Sequelize.ENUM('piece', 'kg', 'gram', 'liter', 'ml'),
-        allowNull: false,
-        defaultValue: 'piece'
-      },
+            pattern: {
+                type: Sequelize.STRING,
+                allowNull: true
+            },
 
-      weight_or_volume: {
-        type: Sequelize.FLOAT
-      },
+            fit: {
+                type: Sequelize.STRING,
+                allowNull: true
+            },
 
-      status: {
-        type: Sequelize.ENUM('active', 'inactive', 'draft'),
-        allowNull: false,
-        defaultValue: 'active'
-      },
+            occasion: {
+                type: Sequelize.STRING,
+                allowNull: true
+            },
 
-      created_by: {
-        type: Sequelize.INTEGER,
-        allowNull: true
-      },
+            country_of_origin: {
+                type: Sequelize.STRING,
+                allowNull: true
+            },
 
-      updated_by: {
-        type: Sequelize.INTEGER,
-        allowNull: true
-      },
+            care_instructions: {
+                type: Sequelize.TEXT,
+                allowNull: true
+            },
 
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.NOW
-      },
+            details: {
+                type: Sequelize.JSON,
+                allowNull: true
+            },
 
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.NOW
-      }
-    });
-  },
+            // Common pricing
+            price: {
+                type: Sequelize.DECIMAL(10, 2),
+                allowNull: false
+            },
 
-  async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('products');
+            discount_price: {
+                type: Sequelize.DECIMAL(10, 2),
+                allowNull: true
+            },
 
-    // 🔥 important for PostgreSQL (Supabase)
-    await queryInterface.sequelize.query(
-      'DROP TYPE IF EXISTS "enum_products_unit";'
-    );
+            // Product status
+            status: {
+                type: Sequelize.ENUM(
+                    'active',
+                    'inactive',
+                    'draft'
+                ),
+                allowNull: false,
+                defaultValue: 'draft'
+            },
 
-    await queryInterface.sequelize.query(
-      'DROP TYPE IF EXISTS "enum_products_status";'
-    );
-  }
+            is_featured: {
+                type: Sequelize.BOOLEAN,
+                allowNull: false,
+                defaultValue: false
+            },
+
+            // Audit fields
+            created_by: {
+                type: Sequelize.INTEGER,
+                allowNull: true,
+                references: {
+                    model: 'users',
+                    key: 'id'
+                },
+                onUpdate: 'CASCADE',
+                onDelete: 'SET NULL'
+            },
+
+            updated_by: {
+                type: Sequelize.INTEGER,
+                allowNull: true,
+                references: {
+                    model: 'users',
+                    key: 'id'
+                },
+                onUpdate: 'CASCADE',
+                onDelete: 'SET NULL'
+            },
+
+            createdAt: {
+                allowNull: false,
+                type: Sequelize.DATE,
+                defaultValue: Sequelize.NOW
+            },
+
+            updatedAt: {
+                allowNull: false,
+                type: Sequelize.DATE,
+                defaultValue: Sequelize.NOW
+            }
+        });
+    },
+
+    async down(queryInterface) {
+        await queryInterface.dropTable('products');
+    }
 };

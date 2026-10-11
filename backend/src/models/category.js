@@ -29,6 +29,10 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: 'active'
       },
 
+      images: {
+        type: DataTypes.JSON
+      },
+
       created_by: {
         type: DataTypes.INTEGER
       },
