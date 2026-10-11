@@ -1,5 +1,5 @@
 :root {
-  /* ---- COLOR TOKENS (full hex — for direct use) ---- */
+  /* ---- COLOR TOKENS ---- */
   --color-ink:      #1a1614;
   --color-ink-2:    #232018;
   --color-ink-3:    #2e2820;
@@ -21,7 +21,11 @@
   --color-bg:       var(--color-cream);
   --color-hover:    var(--color-cream-2);
 
-  /* ---- RGB TRIPLETS (for /opacity modifiers) ---- */
+  /* Typography grays (for headings/subheadings on light bgs) */
+  --color-heading:    #6b6b6b;
+  --color-subheading: #808080;
+
+  /* ---- RGB TRIPLETS ---- */
   --color-ink-rgb:      26 22 20;
   --color-ink-2-rgb:    35 32 24;
   --color-ink-3-rgb:    46 40 32;
@@ -37,6 +41,8 @@
   --color-subtle-rgb:   168 149 120;
   --color-surface-rgb:  255 255 255;
   --color-border-rgb:   224 214 194;
+  --color-heading-rgb:    107 107 107;
+  --color-subheading-rgb: 128 128 128;
 
   /* ---- SEMANTIC ALIASES ---- */
   --color-brand:      var(--color-gold);
@@ -45,8 +51,8 @@
   --color-accent:     var(--color-gold);
 
   /* ---- TYPOGRAPHY ---- */
-  --font-sans:  "Inter", system-ui, -apple-system, sans-serif;
-  --font-serif: "Cormorant Garamond", "Playfair Display", Georgia, serif;
+  --font-sans:  "Montserrat", system-ui, -apple-system, sans-serif;
+  --font-serif: "Playfair Display", Georgia, serif;
 
   --text-xs:   0.75rem;
   --text-sm:   0.875rem;
@@ -79,5 +85,5 @@
   --shadow-lg: 0 16px 40px rgba(26, 22, 20, 0.20);
 
   --container-max: 1360px;
-  --header-h: 68px;
+  --header-h: 72px;
 }
