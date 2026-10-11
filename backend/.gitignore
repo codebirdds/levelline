@@ -1,0 +1,59 @@
+# 🔥 Node modules
+node_modules/
+
+# 🔐 Environment variables
+.env
+.env.*
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+
+# Build / dist
+dist/
+build/
+
+# Temporary files
+tmp/
+temp/
+
+# Coverage
+coverage/
+
+# Sequelize / DB
+*.sqlite
+*.sqlite3
+
+# Uploads (if using local storage)
+uploads/
+
+# Cloudinary (no need to ignore URLs, but ignore temp files)
+*.tmp
+
+# IDE
+.idea/
+
+# Mac system
+.AppleDouble
+.LSOverride
+
+# Windows system
+ehthumbs.db
+Desktop.ini
+
+# dotenv backup
+.env.backup
+
+# Optional: lock files (keep one)
+# package-lock.json
+# yarn.lock
