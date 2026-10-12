@@ -52,6 +52,7 @@ const userRoutes = require("./routes/user_route.js");
 const categoryRoute = require("./routes/category_route.js");
 const productRoute = require("./routes/product_route.js");
 const contactRoute = require("./routes/contact_route.js");
+const cartRoute = require("./routes/cart_route.js");
 
 const logger = require("./middlewares/logger");
 const notFound = require("./middlewares/notFoundHandler.js");
@@ -71,6 +72,7 @@ app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/category", categoryRoute);
 app.use("/api/v1/product", productRoute);
 app.use("/api/v1/contact", contactRoute);
+app.use("/api/v1/cart", cartRoute);
 
 app.use(notFound);
 app.use(errorHandler);
