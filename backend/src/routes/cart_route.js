@@ -10,7 +10,7 @@ const authMiddleware = require('../middlewares/authMiddleware');
 // 🔐 Authenticated user routes
 
 // Add item to cart
-router.post('/', authMiddleware, controller.create);
+router.post('/', authMiddleware, controller.create); 
 
 // Update item quantity
 router.put('/:id', authMiddleware, controller.update);
