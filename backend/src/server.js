@@ -54,6 +54,8 @@ const productRoute = require("./routes/product_route.js");
 const contactRoute = require("./routes/contact_route.js");
 const cartRoute = require("./routes/cart_route.js");
 const addressRoute = require("./routes/address_route.js");
+const orderRoute = require("./routes/order_route.js");
+const paymentRoute = require("./routes/payment_route.js");
 
 const logger = require("./middlewares/logger");
 const notFound = require("./middlewares/notFoundHandler.js");
@@ -75,6 +77,8 @@ app.use("/api/v1/product", productRoute);
 app.use("/api/v1/contact", contactRoute);
 app.use("/api/v1/cart", cartRoute);
 app.use("/api/v1/address", addressRoute);
+app.use("/api/v1/order", orderRoute);
+app.use("/api/v1/payment", paymentRoute);
 
 app.use(notFound);
 app.use(errorHandler);

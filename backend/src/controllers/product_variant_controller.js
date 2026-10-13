@@ -36,7 +36,7 @@ exports.create = async (req, res) => {
         } else if (body.images !== undefined) {
             body.images = parseJsonField(body.images, 'images');
         } else {
-            body.images = [];
+            body.images = []; 
         }
 
         const variant = await productVariantService.create(
