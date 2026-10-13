@@ -1,15 +1,13 @@
-import { useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useParams, useLocation, useNavigate } from "react-router-dom";
 import { Reveal } from "../../../components/animation";
 import { formatCurrency } from "../../../utils/formatCurrency";
 import { ROUTES } from "../../../routes/routePaths";
 import { getReadyToWearBySlug } from "../mediators";
-import { addItem } from "../../checkout/checkoutSlice";
+import { addCartThunk } from "../../cart/cartSlice";
+import { toast } from "react-hot-toast";
+import { useDispatch } from "react-redux";
 import SimpleHeader from "../../../components/layout/SimpleHeader";
-
-const SIZES = [28, 30, 32, 34];
 
 const COLOR_SWATCH = {
   Brown: "#6b4a2a",
@@ -23,6 +21,7 @@ const COLOR_SWATCH = {
   Charcoal: "#3a3a3a",
   Tan: "#c19a6b",
   Black: "#1a1a1a",
+  Red: "#c0392b",
 };
 
 const HeartIcon = ({ filled }) => (
@@ -62,29 +61,79 @@ function Accordion({ title, defaultOpen = false, children }) {
 
 export default function ProductDetail() {
   const { slug } = useParams();
+  const location = useLocation();
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [selectedVariantId, setSelectedVariantId] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState(null);
   const [pincode, setPincode] = useState("");
   const [wishlisted, setWishlisted] = useState(false);
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
 
+  // product passed from card -> use it. otherwise fetch (hard refresh / direct link)
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
+    const stateProduct = location.state?.product;
+
     setSelectedImage(0);
     setSelectedSize(null);
+    setSelectedVariantId(null);
+
+    if (stateProduct) {
+      setProduct(stateProduct);
+      setSelectedVariantId(stateProduct.variants?.[0]?.id ?? null);
+      setLoading(false);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setLoading(true);
     getReadyToWearBySlug(slug)
-      .then((p) => { if (!cancelled) setProduct(p || null); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, [slug]);
+      .then((p) => {
+        if (cancelled) return;
+        setProduct(p || null);
+        setSelectedVariantId(p?.variants?.[0]?.id ?? null);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, location.state?.product]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [slug]);
+
+  const variants = product?.variants || [];
+
+  const activeVariant = useMemo(() => {
+    if (!variants.length) return null;
+    return variants.find((v) => v.id === selectedVariantId) || variants[0];
+  }, [variants, selectedVariantId]);
+
+  const images = useMemo(() => {
+    const list = activeVariant?.images?.length
+      ? activeVariant.images
+      : product?.images || [];
+    return list
+      .slice()
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+      .map((i) => (typeof i === "string" ? i : i.url))
+      .filter(Boolean);
+  }, [activeVariant, product]);
+
+  const sizes = activeVariant?.sizes || [];
+
+  useEffect(() => {
+    setSelectedImage(0);
+    setSelectedSize(null);
+  }, [activeVariant?.id]);
 
   if (loading) {
     return (
@@ -106,7 +155,10 @@ export default function ProductDetail() {
         <main className="bg-white">
           <div className="container-x py-24 text-center">
             <p className="font-sans text-lg text-[#6b6b6b]">Product not found.</p>
-            <Link to={ROUTES.READY_TO_WEAR} className="mt-4 inline-block font-sans text-sm text-[#663f29] underline underline-offset-2">
+            <Link
+              to={ROUTES.READY_TO_WEAR}
+              className="mt-4 inline-block font-sans text-sm text-[#663f29] underline underline-offset-2"
+            >
               Back to Ready to Wear
             </Link>
           </div>
@@ -115,86 +167,114 @@ export default function ProductDetail() {
     );
   }
 
-  const images = [product.image, product.image, product.image, product.image];
-  const swatch = COLOR_SWATCH[product.color] || "#cccccc";
+  const name = product.name || product.title;
+  const sale = product.discount_price && Number(product.discount_price) > 0;
+  const price = sale ? product.discount_price : product.price;
+  const mrp = sale ? product.price : null;
+
+  const handleAddToCart = async (buyNow = false) => {
+    if (!selectedSize) return;
+    if (!activeVariant) {
+      toast.error("Product variant unavailable");
+      return;
+    }
+    try {
+      await dispatch(
+        addCartThunk({
+          product_id: product.id,
+          product_variant_id: activeVariant.id,
+          size: selectedSize,
+          quantity: 1,
+        })
+      ).unwrap();
+      toast.success("Added to bag");
+      if (buyNow) navigate(ROUTES.CHECKOUT);
+    } catch (err) {
+      toast.error(err || "Failed to add to cart");
+    }
+  };
 
   return (
     <>
       <SimpleHeader />
       <main className="bg-white">
-        {/* Breadcrumb row */}
         <div className="container-x pt-4 lg:pt-5">
           <nav className="font-sans text-xs text-[#808080] lg:text-sm">
             <Link to={ROUTES.HOME} className="transition hover:text-[#663f29]">Home</Link>
             <span className="mx-1.5">/</span>
             <Link to={ROUTES.READY_TO_WEAR} className="transition hover:text-[#663f29]">Ready to Wear</Link>
             <span className="mx-1.5">/</span>
-            <span className="text-[#414141]">{product.title}</span>
+            <span className="text-[#414141]">{name}</span>
           </nav>
         </div>
 
         <div className="container-x pb-10">
           <div className="mt-4 grid gap-8 lg:mt-5 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-10 xl:grid-cols-[minmax(0,1fr)_440px] xl:gap-14">
+            <Reveal
+              variant="fade"
+              className="grid grid-cols-[minmax(0,1fr)_68px] gap-3 sm:grid-cols-[minmax(0,1fr)_84px] lg:h-[560px] lg:grid-cols-[minmax(0,1fr)_96px] lg:gap-4"
+            >
+              <div className="relative aspect-[3/4] overflow-hidden bg-[#F5F1E9] lg:aspect-auto lg:h-full">
+                {images[selectedImage] ? (
+                  <img
+                    src={images[selectedImage]}
+                    alt={name}
+                    className="absolute inset-0 size-full object-contain"
+                  />
+                ) : (
+                  <div className="grid size-full place-items-center font-sans text-xs text-[#808080]">
+                    No image
+                  </div>
+                )}
+              </div>
 
-            {/* ─── LEFT: gallery ─── */}
-         <Reveal
-  variant="fade"
-  className="grid grid-cols-[minmax(0,1fr)_68px] gap-3 sm:grid-cols-[minmax(0,1fr)_84px] lg:h-[560px] lg:grid-cols-[minmax(0,1fr)_96px] lg:gap-4"
->
-  {/* Main image — fills full height on desktop */}
-  <div className="relative aspect-[3/4] overflow-hidden bg-[#F5F1E9] lg:aspect-auto lg:h-full">
-    <img
-      src={images[selectedImage]}
-      alt={product.title}
-      className="absolute inset-0 size-full object-contain"
-    />
-  </div>
+              <div className="flex flex-col gap-2 lg:grid lg:h-full lg:grid-rows-4 lg:gap-3">
+                {images.map((src, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setSelectedImage(i)}
+                    aria-label={`View image ${i + 1}`}
+                    className={`relative aspect-square overflow-hidden bg-[#F5F1E9] transition lg:aspect-auto lg:h-full ${
+                      selectedImage === i ? "ring-1 ring-ink" : "opacity-70 hover:opacity-100"
+                    }`}
+                  >
+                    <img src={src} alt="" className="absolute inset-0 size-full object-contain" />
+                  </button>
+                ))}
+              </div>
+            </Reveal>
 
-  {/* Thumbnails — 4 equal rows on desktop, matching the main image height */}
-  <div className="flex flex-col gap-2 lg:grid lg:h-full lg:grid-rows-4 lg:gap-3">
-    {images.map((src, i) => (
-      <button
-        key={i}
-        onClick={() => setSelectedImage(i)}
-        aria-label={`View image ${i + 1}`}
-        className={`relative aspect-square overflow-hidden bg-[#F5F1E9] transition lg:aspect-auto lg:h-full ${
-          selectedImage === i ? "ring-1 ring-ink" : "opacity-70 hover:opacity-100"
-        }`}
-      >
-        <img src={src} alt="" className="absolute inset-0 size-full object-contain" />
-      </button>
-    ))}
-  </div>
-</Reveal>
-
-            {/* ─── RIGHT: info card + ADD TO BAG card ─── */}
             <Reveal delay={120} className="flex flex-col gap-3">
-
-              {/* Info card */}
               <div className="border border-border bg-white p-5 lg:p-6">
-                {/* Title + wishlist */}
                 <div className="flex items-start justify-between gap-4">
                   <h1 className="font-sans text-lg font-medium text-[#414141] lg:text-xl">
-                    {product.title}
+                    {name}
                   </h1>
                   <button
                     onClick={() => setWishlisted((w) => !w)}
                     aria-label="Add to wishlist"
-                    className={`shrink-0 transition ${wishlisted ? "text-[#663f29]" : "text-[#414141] hover:text-[#663f29]"}`}
+                    className={`shrink-0 transition ${
+                      wishlisted ? "text-[#663f29]" : "text-[#414141] hover:text-[#663f29]"
+                    }`}
                   >
                     <HeartIcon filled={wishlisted} />
                   </button>
                 </div>
 
-                {/* Price */}
+                {product.brand && (
+                  <p className="mt-1 font-sans text-xs uppercase tracking-wide text-[#808080]">
+                    {product.brand}
+                  </p>
+                )}
+
                 <div className="mt-2">
                   <div className="flex items-baseline gap-2">
                     <span className="font-sans text-base font-bold text-[#414141] lg:text-lg">
-                      {formatCurrency(product.price)}
+                      {formatCurrency(price)}
                     </span>
-                    {product.mrp && product.mrp > product.price && (
+                    {mrp && (
                       <span className="font-sans text-sm text-[#808080] line-through">
-                        {formatCurrency(product.mrp)}
+                        {formatCurrency(mrp)}
                       </span>
                     )}
                   </div>
@@ -205,19 +285,44 @@ export default function ProductDetail() {
 
                 <div className="mt-4 h-px bg-border" />
 
-                {/* Color */}
-                <div className="mt-4">
-                  <p className="font-sans text-xs uppercase tracking-wide text-[#808080]">Color</p>
-                  <div className="mt-2">
-                    <span
-                      title={product.color}
-                      className="inline-block size-7 rounded-sm ring-1 ring-border"
-                      style={{ backgroundColor: swatch }}
-                    />
+                {variants.length > 0 && (
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between">
+                      <p className="font-sans text-xs uppercase tracking-wide text-[#808080]">
+                        Color
+                      </p>
+                      {activeVariant?.color && (
+                        <span className="font-sans text-xs text-[#414141]">
+                          {activeVariant.color}
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {variants.map((v) => {
+                        const swatch = v.color_code || COLOR_SWATCH[v.color] || "#cccccc";
+                        const active = v.id === activeVariant?.id;
+                        return (
+                          <button
+                            key={v.id}
+                            type="button"
+                            onClick={() => setSelectedVariantId(v.id)}
+                            title={v.color}
+                            aria-label={v.color}
+                            className={`grid size-8 place-items-center rounded-sm ring-1 transition ${
+                              active ? "ring-ink" : "ring-border hover:ring-[#808080]"
+                            }`}
+                          >
+                            <span
+                              className="size-6 rounded-sm"
+                              style={{ backgroundColor: swatch }}
+                            />
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+                )}
 
-                {/* Size */}
                 <div className="mt-4">
                   <div className="flex items-center justify-between">
                     <p className="font-sans text-xs uppercase tracking-wide text-[#808080]">Size</p>
@@ -226,25 +331,35 @@ export default function ProductDetail() {
                     </button>
                   </div>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {SIZES.map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => setSelectedSize(s)}
-                        className={`h-9 min-w-[40px] border px-2.5 font-sans text-sm transition ${
-                          selectedSize === s
-                            ? "border-ink bg-ink text-cream"
-                            : "border-border text-[#414141] hover:border-ink"
-                        }`}
-                      >
-                        {s}
-                      </button>
-                    ))}
+                    {sizes.length === 0 && (
+                      <p className="font-sans text-xs text-[#808080]">No sizes available</p>
+                    )}
+                    {sizes.map((s) => {
+                      const out = Number(s.stock) <= 0;
+                      const active = selectedSize === s.size;
+                      return (
+                        <button
+                          key={s.sku || s.size}
+                          type="button"
+                          disabled={out}
+                          onClick={() => setSelectedSize(s.size)}
+                          className={`h-9 min-w-[40px] border px-2.5 font-sans text-sm transition ${
+                            active
+                              ? "border-ink bg-ink text-cream"
+                              : out
+                              ? "cursor-not-allowed border-border text-[#c4c4c4] line-through"
+                              : "border-border text-[#414141] hover:border-ink"
+                          }`}
+                        >
+                          {s.size}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
                 <div className="mt-4 h-px bg-border" />
 
-                {/* Pincode */}
                 <div className="mt-4">
                   <p className="font-sans text-sm text-[#808080]">
                     Enter Pincode To Check Delivery Date
@@ -256,7 +371,9 @@ export default function ProductDetail() {
                       </span>
                       <input
                         value={pincode}
-                        onChange={(e) => setPincode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                        onChange={(e) =>
+                          setPincode(e.target.value.replace(/\D/g, "").slice(0, 6))
+                        }
                         placeholder="Enter your shipping pincode"
                         inputMode="numeric"
                         className="h-10 w-full border border-border bg-white pl-9 pr-3 font-sans text-sm text-[#414141] outline-none placeholder:text-[#b0b0b0] focus:border-ink"
@@ -269,23 +386,17 @@ export default function ProductDetail() {
                 </div>
               </div>
 
-              {/* ADD TO BAG + BUY NOW */}
               <div className="border border-border bg-white p-3">
                 <button
                   disabled={!selectedSize}
-                  onClick={() => {
-                    dispatch(addItem({ product, size: selectedSize }));
-                    navigate(ROUTES.CHECKOUT);
-                  }}
+                  onClick={() => handleAddToCart(true)}
                   className="h-12 w-full bg-ink font-sans text-sm font-medium uppercase tracking-wide text-cream transition hover:bg-[#663f29] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Buy Now
                 </button>
                 <button
                   disabled={!selectedSize}
-                  onClick={() => {
-                    dispatch(addItem({ product, size: selectedSize }));
-                  }}
+                  onClick={() => handleAddToCart(false)}
                   className="mt-2 h-12 w-full border border-ink bg-white font-sans text-sm font-medium uppercase tracking-wide text-[#414141] transition hover:bg-ink hover:text-cream disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Add to Bag
@@ -299,17 +410,26 @@ export default function ProductDetail() {
             </Reveal>
           </div>
 
-          {/* Accordions */}
           <div className="mt-6 border-t border-border">
             <Accordion title="Product Details and Overview" defaultOpen>
-              <p className="capitalize">{product.fabric} · {product.color}</p>
-              <p className="mt-2">
-                Crafted from premium {product.fabric?.toLowerCase() || "fabric"} with a refined finish.
-                A timeless piece designed to move with you through every season.
+              <p className="capitalize">
+                {[product.material, product.fit, activeVariant?.color]
+                  .filter(Boolean)
+                  .join(" · ")}
               </p>
+              {product.description && <p className="mt-2">{product.description}</p>}
+              <ul className="mt-2 space-y-1">
+                {product.occasion && <li>Occasion: {product.occasion}</li>}
+                {product.country_of_origin && (
+                  <li>Country of origin: {product.country_of_origin}</li>
+                )}
+              </ul>
             </Accordion>
             <Accordion title="Delivery & Return">
               <p>Complimentary shipping across India. Free returns within 7 days of delivery.</p>
+            </Accordion>
+            <Accordion title="Care Instructions">
+              <p>{product.care_instructions || "Dry clean only."}</p>
             </Accordion>
             <Accordion title="Contact Us">
               <p>

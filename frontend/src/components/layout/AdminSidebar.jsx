@@ -5,6 +5,7 @@ const LINKS = [
   { to: ROUTES.ADMIN_DASH,       label: "Dashboard",  icon: "M3 12h7V3H3v9Zm11 9h7v-7h-7v7Zm0-18v7h7V3h-7ZM3 21h7v-7H3v7Z" },
   { to: ROUTES.ADMIN_PRODUCTS,   label: "Products",   icon: "M21 16V8l-9-5-9 5v8l9 5 9-5Zm-9-11 6 3.5-6 3.5-6-3.5L12 5Z" },
   { to: ROUTES.ADMIN_CATEGORIES, label: "Categories", icon: "M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm10 0h6v6h-6v-6Z" },
+  { to: ROUTES.ADMIN_VARIANTS,   label: "Variants",   icon: "M7 7h10v10H7V7Zm0-4h10v2H7V3ZM3 3h2v2H3V3Zm0 16h2v2H3v-2Zm16 0h2v2h-2v-2Zm0-16h2v2h-2V3Z" },
 ];
 
 export default function AdminSidebar() {

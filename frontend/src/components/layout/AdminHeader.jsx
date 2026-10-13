@@ -8,6 +8,7 @@ const TITLES = {
   [ROUTES.ADMIN_DASH]:       "Dashboard",
   [ROUTES.ADMIN_PRODUCTS]:   "Products",
   [ROUTES.ADMIN_CATEGORIES]: "Categories",
+  [ROUTES.ADMIN_VARIANTS]:   "Product Variants",
 };
 
 export default function AdminHeader() {

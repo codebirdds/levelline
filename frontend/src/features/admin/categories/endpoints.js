@@ -1,6 +1,6 @@
 export const ADMIN_CATEGORIES = {
-  LIST:   { method: "GET",    url: "/admin/categories" },
-  CREATE: { method: "POST",   url: "/admin/categories" },
-  UPDATE: { method: "PUT",    url: (id) => `/admin/categories/${id}` },
-  DELETE: { method: "DELETE", url: (id) => `/admin/categories/${id}` },
+  LIST:   { method: "GET",    url: "v1/category" },
+  CREATE: { method: "POST",   url: "v1/category" },
+  UPDATE: { method: "PUT",    url: (id) => `v1/category/${id}` },
+  DELETE: { method: "DELETE", url: (id) => `v1/category/${id}` },
 };

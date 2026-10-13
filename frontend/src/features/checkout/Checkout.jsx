@@ -1,7 +1,13 @@
-import { useSelector } from "react-redux";
+import { useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 import { ROUTES } from "../../routes/routePaths";
-import { selectCheckoutItems } from "./checkoutSlice";
+import {
+  selectCartItems,
+  selectCartLoading,
+  selectCartFetched,
+  fetchCartThunk,
+} from "../cart/cartSlice";
 import CheckoutStepper from "./components/CheckoutStepper";
 import DeliverTo from "./components/DeliverTo";
 import BagItem from "./components/BagItem";
@@ -10,32 +16,55 @@ import MoreCoupons from "./components/MoreCoupons";
 import SimpleHeader from "../../components/layout/SimpleHeader";
 
 export default function Checkout() {
-  const items = useSelector(selectCheckoutItems);
+  const dispatch = useDispatch();
+  const items = useSelector(selectCartItems) || [];
+  const loading = useSelector(selectCartLoading);
+  const fetched = useSelector(selectCartFetched);
+
+  // sirf ek baar fetch — flag guard + thunk condition double safety
+  useEffect(() => {
+    if (!fetched) dispatch(fetchCartThunk());
+  }, [dispatch, fetched]);
+
+  if (loading && !fetched) {
+    return (
+      <>
+        <SimpleHeader />
+        <main className="bg-white">
+          <div className="container-x py-24 text-center font-sans text-sm text-[#808080]">
+            Loading…
+          </div>
+        </main>
+      </>
+    );
+  }
 
   if (!items.length) {
     return (
-      <main className="mt-[100px] min-h-[60vh] bg-white">
-        <div className="container-x py-24 text-center">
-          <p className="font-sans text-lg text-[#6b6b6b]">Your bag is empty.</p>
-          <Link
-            to={ROUTES.READY_TO_WEAR}
-            className="mt-4 inline-block font-sans text-sm text-[#663f29] underline underline-offset-2"
-          >
-            Continue shopping
-          </Link>
-        </div>
-      </main>
+      <>
+        <SimpleHeader />
+        <main className="min-h-[60vh] bg-white">
+          <div className="container-x py-24 text-center">
+            <p className="font-sans text-lg text-[#6b6b6b]">Your bag is empty.</p>
+            <Link
+              to={ROUTES.READY_TO_WEAR}
+              className="mt-4 inline-block font-sans text-sm text-[#663f29] underline underline-offset-2"
+            >
+              Continue shopping
+            </Link>
+          </div>
+        </main>
+      </>
     );
   }
 
   return (
     <main className="min-h-screen bg-white">
-        <SimpleHeader />
+      <SimpleHeader />
       <CheckoutStepper current={1} />
 
       <div className="container-x pb-16">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-8 xl:grid-cols-[minmax(0,1fr)_420px]">
-          {/* ─── LEFT ─── */}
           <div>
             <DeliverTo />
 
@@ -44,13 +73,15 @@ export default function Checkout() {
             </h2>
 
             <div className="mt-4 space-y-4">
-              {items.map((i) => (
-                <BagItem key={`${i.id}-${i.size}`} item={i} />
+              {items.map((i, idx) => (
+                <BagItem
+                  key={`${i.product_variant_id ?? i.id}-${i.size}-${idx}`}
+                  item={i}
+                />
               ))}
             </div>
           </div>
 
-          {/* ─── RIGHT ─── */}
           <div className="space-y-4 lg:sticky lg:top-[120px] lg:self-start">
             <OrderSummary />
             <MoreCoupons />

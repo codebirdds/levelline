@@ -6,6 +6,7 @@ import { selectAuthStatus, selectAuthError } from "./authSlice";
 import { ROUTES } from "../../routes/routePaths";
 import Button from "../../components/common/Button";
 import Input from "../../components/common/Input";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 export default function Login() {
   const dispatch = useDispatch();
@@ -14,6 +15,7 @@ export default function Login() {
   const status = useSelector(selectAuthStatus);
   const error  = useSelector(selectAuthError);
   const [form, setForm] = useState({ email: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false);
 
   const from = location.state?.from?.pathname || ROUTES.HOME;
 
@@ -31,9 +33,11 @@ export default function Login() {
       <Input label="Email" type="email" required
         value={form.email}
         onChange={(e) => setForm({ ...form, email: e.target.value })} />
-      <Input label="Password" type="password" required
+      <Input label="Password" type={showPassword ? "text" : "password"} required
         value={form.password}
-        onChange={(e) => setForm({ ...form, password: e.target.value })} />
+        onChange={(e) => setForm({ ...form, password: e.target.value })}
+        icon={showPassword ? FaEye : FaEyeSlash}
+        Click={() => setShowPassword(!showPassword)} />
       {error && <p className="text-sm text-red-500">{error}</p>}
       <Button type="submit" loading={status === "loading"} className="w-full">
         Login

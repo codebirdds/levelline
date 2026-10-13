@@ -1,35 +1,34 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { selectCheckoutCoupon, selectCheckoutItems, applyCoupon, removeCoupon } from "../checkoutSlice";
+import { selectCartItems } from "../../cart/cartSlice";
 import { COUPONS } from "../constants";
 import { formatCurrency } from "../../../utils/formatCurrency";
 
 export default function OrderSummary() {
-  const items = useSelector(selectCheckoutItems);
-  const coupon = useSelector(selectCheckoutCoupon);
+  const items = useSelector(selectCartItems);
   const dispatch = useDispatch();
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
+  const [coupon, setCoupon] = useState(null);
 
-  const orderValue = items.reduce((sum, i) => sum + (i.mrp || i.price) * i.qty, 0);
-  const productDiscount = items.reduce(
-    (sum, i) => sum + ((i.mrp || i.price) - i.price) * i.qty,
-    0
-  );
-  const subtotal = orderValue - productDiscount;
+  const orderValue = items.reduce((sum, i) => sum + (i.unit_price * i.quantity), 0);
+  const subtotal = orderValue;
   const couponDiscount = coupon ? Math.round((subtotal * coupon.percent) / 100) : 0;
   const grandTotal = subtotal - couponDiscount;
-  const overallSavings = productDiscount + couponDiscount;
 
   const handleApply = () => {
     const clean = code.trim().toUpperCase();
     if (COUPONS[clean]) {
-      dispatch(applyCoupon(COUPONS[clean]));
+      setCoupon(COUPONS[clean]);
       setError("");
       setCode("");
     } else {
       setError("Invalid coupon code");
     }
+  };
+
+  const handleRemove = () => {
+    setCoupon(null);
   };
 
   return (
@@ -42,9 +41,7 @@ export default function OrderSummary() {
 
       <div className="space-y-3 p-4 lg:p-5">
         <Row label="Order Value" value={formatCurrency(orderValue)} />
-        {productDiscount > 0 && (
-          <Row label="Product Discount" value={`- ${formatCurrency(productDiscount)}`} />
-        )}
+
         <div>
           {coupon ? (
             <div className="flex items-center justify-between text-sm">
@@ -52,7 +49,7 @@ export default function OrderSummary() {
                 {coupon.code} applied ({coupon.percent}% off)
               </span>
               <button
-                onClick={() => dispatch(removeCoupon())}
+                onClick={handleRemove}
                 className="font-sans text-xs text-[#c0392b] underline underline-offset-2"
               >
                 Remove
@@ -63,7 +60,6 @@ export default function OrderSummary() {
           )}
         </div>
 
-        {/* Coupon input */}
         {!coupon && (
           <>
             <div className="flex gap-2">
@@ -100,11 +96,11 @@ export default function OrderSummary() {
             {formatCurrency(grandTotal)}
           </span>
         </div>
-        {overallSavings > 0 && (
+        {couponDiscount > 0 && (
           <div className="mt-1 flex items-center justify-between">
-            <span className="font-sans text-xs text-[#2f8f3e]">Overall savings</span>
+            <span className="font-sans text-xs text-[#2f8f3e]">Coupon savings</span>
             <span className="font-sans text-xs text-[#2f8f3e]">
-              {formatCurrency(overallSavings)}
+              {formatCurrency(couponDiscount)}
             </span>
           </div>
         )}

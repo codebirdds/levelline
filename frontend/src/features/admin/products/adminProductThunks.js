@@ -19,8 +19,10 @@ export const createProductThunk = (payload) => async (dispatch) => {
   dispatch(submitStart());
   try {
     const created = await api.createProduct(payload);
-    dispatch(addItem(created));
+    dispatch(addItem(created.data || created));
     dispatch(closeForm());
+  } catch (err) {
+    dispatch(fetchFailure(err.response?.data?.message || "Failed to create product"));
   } finally {
     dispatch(submitEnd());
   }
@@ -30,14 +32,20 @@ export const updateProductThunk = (id, payload) => async (dispatch) => {
   dispatch(submitStart());
   try {
     const updated = await api.updateProduct(id, payload);
-    dispatch(updateItem(updated));
+    dispatch(updateItem(updated.data || updated));
     dispatch(closeForm());
+  } catch (err) {
+    dispatch(fetchFailure(err.response?.data?.message || "Failed to update product"));
   } finally {
     dispatch(submitEnd());
   }
 };
 
 export const deleteProductThunk = (id) => async (dispatch) => {
-  await api.deleteProduct(id);
-  dispatch(removeItem(id));
+  try {
+    await api.deleteProduct(id);
+    dispatch(removeItem(id));
+  } catch (err) {
+    dispatch(fetchFailure(err.response?.data?.message || "Failed to delete product"));
+  }
 };

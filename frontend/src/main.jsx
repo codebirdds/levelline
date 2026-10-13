@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import ReactDOM from "react-dom/client";
+import { Toaster } from "react-hot-toast";
 import { Provider, useDispatch, useSelector } from "react-redux";
 import store from "./redux/store";
 import { bootstrapAuthThunk } from "./features/auth/authThunks";
@@ -24,6 +25,7 @@ function Bootstrapper({ children }) {
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <Provider store={store}>
+      <Toaster position="bottom-right" />
       <Bootstrapper>
         <AppRouter />
       </Bootstrapper>

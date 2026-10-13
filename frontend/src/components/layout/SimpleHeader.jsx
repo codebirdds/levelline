@@ -2,17 +2,30 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { ROUTES } from "../../routes/routePaths";
-import { selectCheckoutItems } from "../../features/checkout/checkoutSlice";
+import { selectCartItems } from "../../features/cart/cartSlice";
 import { formatCurrency } from "../../utils/formatCurrency";
 import logo from "../../assets/images/LandingPage/Header/levelin.png";
 
 const PHONE = "1800-833-4488";
-const IS_LOGGED_IN = false; // ← dummy flag; swap for real auth later
+const IS_LOGGED_IN = false;
+
+const itemImage = (i) =>
+  i.variant?.images?.find?.((x) => x.is_primary)?.url ||
+  i.variant?.images?.[0]?.url ||
+  i.product?.images?.[0]?.url ||
+  (typeof i.product?.images?.[0] === "string" ? i.product.images[0] : "") ||
+  i.product?.image ||
+  i.image ||
+  "";
+
+const itemName = (i) => i.product?.name || i.product?.title || i.title || "";
+const itemPrice = (i) => Number(i.unit_price ?? i.price ?? 0);
+const itemQty = (i) => Number(i.quantity ?? i.qty ?? 1);
 
 export default function SimpleHeader() {
-  const items = useSelector(selectCheckoutItems);
-  const count = items.reduce((s, i) => s + i.qty, 0);
-  const total = items.reduce((s, i) => s + i.price * i.qty, 0);
+  const items = useSelector(selectCartItems) || [];
+  const count = items.reduce((s, i) => s + itemQty(i), 0);
+  const total = items.reduce((s, i) => s + itemPrice(i) * itemQty(i), 0);
 
   const [cartOpen, setCartOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -20,8 +33,6 @@ export default function SimpleHeader() {
   return (
     <header className="sticky top-0 z-40 h-[60px] border-b border-border bg-white">
       <div className="container-x relative flex h-full items-center justify-between">
-
-        {/* ─── LEFT: phone ─── */}
         <a
           href={`tel:${PHONE.replace(/-/g, "")}`}
           className="flex items-center gap-2 font-sans text-sm text-[#414141] transition hover:text-[#663f29]"
@@ -30,23 +41,15 @@ export default function SimpleHeader() {
           <span className="hidden sm:inline">{PHONE}</span>
         </a>
 
-        {/* ─── CENTER: logo (truly centered) ─── */}
         <Link
           to={ROUTES.HOME}
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
           aria-label="Levelline home"
         >
-          <img
-            src={logo}
-            alt="Levelline"
-            className="h-6 w-auto brightness-0 lg:h-7"
-          />
+          <img src={logo} alt="Levelline" className="h-6 w-auto brightness-0 lg:h-7" />
         </Link>
 
-        {/* ─── RIGHT: cart + profile ─── */}
         <div className="flex items-center gap-1 sm:gap-2">
-
-          {/* ── CART ── */}
           <div
             className="relative"
             onMouseEnter={() => setCartOpen(true)}
@@ -70,9 +73,7 @@ export default function SimpleHeader() {
                 <div className="w-[320px] border border-border bg-white shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
                   {items.length === 0 ? (
                     <div className="p-6 text-center">
-                      <p className="font-sans text-sm text-[#808080]">
-                        Your bag is empty
-                      </p>
+                      <p className="font-sans text-sm text-[#808080]">Your bag is empty</p>
                       <Link
                         to={ROUTES.READY_TO_WEAR}
                         className="mt-3 inline-block font-sans text-xs uppercase tracking-wide text-[#663f29] underline underline-offset-2"
@@ -82,36 +83,34 @@ export default function SimpleHeader() {
                     </div>
                   ) : (
                     <>
-                      {/* Items */}
                       <div className="max-h-[280px] overflow-y-auto p-4">
-                        {items.map((i) => (
+                        {items.map((i, idx) => (
                           <div
-                            key={`${i.id}-${i.size}`}
+                            key={`${i.id ?? i.product_variant_id}-${i.size}-${idx}`}
                             className="flex gap-3 border-b border-border py-3 last:border-0 last:pb-0 first:pt-0"
                           >
                             <div className="aspect-square w-14 shrink-0 overflow-hidden bg-[#F5F1E9]">
                               <img
-                                src={i.image}
-                                alt={i.title}
+                                src={itemImage(i)}
+                                alt={itemName(i)}
                                 className="size-full object-contain"
                               />
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="truncate font-sans text-sm text-[#414141]">
-                                {i.title}
+                                {itemName(i)}
                               </p>
                               <p className="mt-0.5 font-sans text-sm font-bold text-[#414141]">
-                                {formatCurrency(i.price)}
+                                {formatCurrency(itemPrice(i))}
                               </p>
                               <p className="mt-0.5 font-sans text-xs text-[#808080]">
-                                Size: {i.size} · Qty: {i.qty}
+                                Size: {i.size} · Qty: {itemQty(i)}
                               </p>
                             </div>
                           </div>
                         ))}
                       </div>
 
-                      {/* Footer */}
                       <div className="border-t border-border p-4">
                         <div className="flex items-center justify-between font-sans text-sm">
                           <span className="text-[#414141]">Total payable:</span>
@@ -133,7 +132,6 @@ export default function SimpleHeader() {
             )}
           </div>
 
-          {/* ── PROFILE ── */}
           <div
             className="relative"
             onMouseEnter={() => setProfileOpen(true)}
@@ -151,21 +149,9 @@ export default function SimpleHeader() {
                 <div className="w-[220px] border border-border bg-white p-3 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
                   {IS_LOGGED_IN ? (
                     <div className="flex flex-col">
-                      <Link
-                        to="#"
-                        className="block px-2 py-2 font-sans text-sm text-[#414141] transition hover:text-[#663f29]"
-                      >
-                        My Account
-                      </Link>
-                      <Link
-                        to="#"
-                        className="block px-2 py-2 font-sans text-sm text-[#414141] transition hover:text-[#663f29]"
-                      >
-                        Orders
-                      </Link>
-                      <button className="px-2 py-2 text-left font-sans text-sm text-[#414141] transition hover:text-[#663f29]">
-                        Logout
-                      </button>
+                      <Link to="#" className="block px-2 py-2 font-sans text-sm text-[#414141] transition hover:text-[#663f29]">My Account</Link>
+                      <Link to="#" className="block px-2 py-2 font-sans text-sm text-[#414141] transition hover:text-[#663f29]">Orders</Link>
+                      <button className="px-2 py-2 text-left font-sans text-sm text-[#414141] transition hover:text-[#663f29]">Logout</button>
                     </div>
                   ) : (
                     <Link
@@ -184,8 +170,6 @@ export default function SimpleHeader() {
     </header>
   );
 }
-
-/* ─────────── Icons ─────────── */
 
 const PhoneIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
