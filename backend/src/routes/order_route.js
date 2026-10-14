@@ -34,4 +34,11 @@ router.patch(
   orderController.adminUpdateStatus
 );
 
+router.patch(
+  '/admin/deliver/:orderId',
+  authMiddleware,
+  roleMiddleware('admin'),
+  orderController.markAsDeliver
+);
+
 module.exports = router;

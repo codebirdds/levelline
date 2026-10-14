@@ -146,4 +146,34 @@ exports.adminUpdateStatus = async (req, res) => {
       message: error.message
     });
   }
-};
+
+
+  // ADMIN: MARK AS ORDER STATUS
+  exports.markAsDeliver = async (req, res) => {
+    try {
+      const { order_id } = req.params;
+
+      if (!order_id) {
+        return res.status(400).json({
+          success: false,
+          message: 'order_id is required'
+        });
+      }
+
+      const order = await orderService.completeDelivery(
+        order_id,
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: 'Order status updated successfully',
+        data: order
+      });
+    } catch (error) {
+      return res.status(error.statusCode || 400).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
+}
