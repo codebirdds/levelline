@@ -13,7 +13,6 @@ const Editorial = ({ src }) => (
   </ImageReveal>
 );
 
-/** 2 products-per-row 2x2 half + a tall editorial image, like the Figma. */
 const FeatureBlock = ({ items, image, imageFirst }) => (
   <div className="grid gap-y-8 lg:grid-cols-2 lg:gap-x-1.5">
     {imageFirst && <Editorial src={image} />}
@@ -33,7 +32,6 @@ export default function ProductGrid({ products, editorial }) {
     );
   }
 
-  // Filtered / sorted view => plain grid. "ALL" => editorial layout from the design.
   if (!editorial) {
     return (
       <div className="grid grid-cols-2 gap-x-1.5 gap-y-8 px-4 lg:grid-cols-4 lg:gap-y-10">

@@ -7,25 +7,38 @@ import {
 export const fetchCategoriesThunk = () => async (dispatch) => {
   dispatch(fetchStart());
   try {
-    dispatch(fetchSuccess(await api.listCategories()));
+    const data = await api.listCategories();
+    dispatch(fetchSuccess(data));
   } catch (err) {
     dispatch(fetchFailure(err.response?.data?.message || "Failed to load categories"));
   }
 };
 
 export const createCategoryThunk = (payload) => async (dispatch) => {
-  const created = await api.createCategory(payload);
-  dispatch(addItem(created));
-  dispatch(closeForm());
+  try {
+    const created = await api.createCategory(payload);
+    dispatch(addItem(created.data || created));
+    dispatch(closeForm());
+  } catch (err) {
+    dispatch(fetchFailure(err.response?.data?.message || "Failed to create category"));
+  }
 };
 
 export const updateCategoryThunk = (id, payload) => async (dispatch) => {
-  const updated = await api.updateCategory(id, payload);
-  dispatch(updateItem(updated));
-  dispatch(closeForm());
+  try {
+    const updated = await api.updateCategory(id, payload);
+    dispatch(updateItem(updated.data || updated));
+    dispatch(closeForm());
+  } catch (err) {
+    dispatch(fetchFailure(err.response?.data?.message || "Failed to update category"));
+  }
 };
 
 export const deleteCategoryThunk = (id) => async (dispatch) => {
-  await api.deleteCategory(id);
-  dispatch(removeItem(id));
+  try {
+    await api.deleteCategory(id);
+    dispatch(removeItem(id));
+  } catch (err) {
+    dispatch(fetchFailure(err.response?.data?.message || "Failed to delete category"));
+  }
 };

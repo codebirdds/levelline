@@ -6,6 +6,21 @@ const api = axios.create(axiosConfig);
 let _store;
 export const injectStore = (store) => { _store = store; };
 
+const TOKEN_KEY = "auth_token";
+
+// Attach token from localStorage to every outgoing request
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (token) {
+      config.headers = config.headers || {};
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 // Refresh interceptor (from previous message) — keep as-is
 let isRefreshing = false;
 let queue = [];
@@ -42,6 +57,7 @@ api.interceptors.response.use(
       return api(original);
     } catch (refreshErr) {
       flushQueue(refreshErr);
+      localStorage.removeItem(TOKEN_KEY);
       const { logout } = await import("../features/auth/authSlice");
       _store?.dispatch(logout());
       if (window.location.pathname !== "/login") window.location.href = "/login";

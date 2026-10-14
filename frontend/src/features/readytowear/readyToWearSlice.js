@@ -32,7 +32,10 @@ const selectRtwItems = (s) => s.readyToWear?.items;
 export const selectVisibleRtw = createSelector(
   [selectRtwItems, selectRtwCategory, selectRtwSort],
   (items, category, sort) => {
-    let list = category === "ALL" ? items : items?.filter((i) => i.category === category);
+    let list = items;
+    if (category !== "ALL") {
+      list = list?.filter((i) => i.category?.name === category);
+    }
     if (sort === "price-asc") list = [...list].sort((a, b) => a.price - b.price);
     if (sort === "price-desc") list = [...list].sort((a, b) => b.price - a.price);
     return list;

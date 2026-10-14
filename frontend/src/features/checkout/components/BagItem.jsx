@@ -1,5 +1,5 @@
 import { useDispatch } from "react-redux";
-import { removeItem, updateQty } from "../checkoutSlice";
+import { updateCartThunk, removeCartThunk } from "../../cart/cartSlice";
 import { formatCurrency } from "../../../utils/formatCurrency";
 import { DELIVERY_NOTE, RETURN_NOTE } from "../constants";
 
@@ -17,21 +17,22 @@ const ReturnIcon = () => (
 
 export default function BagItem({ item }) {
   const dispatch = useDispatch();
-  const discount = item.mrp && item.mrp > item.price
-    ? Math.round(((item.mrp - item.price) / item.mrp) * 100)
-    : 0;
+  const product = item.product || {};
+  const variant = item.variant || {};
+  const image = (Array.isArray(variant.images) ? variant.images : []).find?.(i => i.is_primary) || (Array.isArray(variant.images) ? variant.images : [])[0] || variant.images?.[0] || "";
+  const title = product.name || item.product?.name || "Product";
+  const price = item.unit_price || Number(product.discount_price ?? product.price ?? 0);
+  const mrp = Number(product.price ?? 0);
+  const qty = item.quantity ?? item.qty ?? 1;
+  const discount = mrp > price ? Math.round(((mrp - price) / mrp) * 100) : 0;
 
-  const dec = () =>
-    dispatch(updateQty({ id: item.id, size: item.size, qty: item.qty - 1 }));
-
-  const inc = () =>
-    dispatch(updateQty({ id: item.id, size: item.size, qty: item.qty + 1 }));
+  const dec = () => dispatch(updateCartThunk({ id: item.id, quantity: Math.max(1, qty - 1) }));
+  const inc = () => dispatch(updateCartThunk({ id: item.id, quantity: qty + 1 }));
 
   return (
     <div className="relative border border-border bg-white p-4 lg:p-5">
-      {/* Remove */}
       <button
-        onClick={() => dispatch(removeItem({ id: item.id, size: item.size }))}
+        onClick={() => dispatch(removeCartThunk(item.id))}
         aria-label="Remove item"
         className="absolute right-3 top-3 text-[#414141] transition hover:text-[#663f29]"
       >
@@ -41,26 +42,23 @@ export default function BagItem({ item }) {
       </button>
 
       <div className="flex gap-4">
-        {/* Image */}
         <div className="aspect-[3/4] w-24 shrink-0 overflow-hidden bg-[#F5F1E9] sm:w-28 lg:w-32">
-          <img src={item.image} alt={item.title} className="size-full object-contain" />
+          <img src={image?.url || image} alt={title} className="size-full object-contain" />
         </div>
 
-        {/* Info */}
         <div className="min-w-0 flex-1 pr-6">
           <h3 className="font-sans text-sm font-medium uppercase text-[#414141] lg:text-base">
-            {item.title}
+            {title}
           </h3>
 
-          {/* Price row */}
           <div className="mt-2 flex flex-wrap items-baseline gap-2">
             <span className="font-sans text-base font-bold text-[#414141]">
-              {formatCurrency(item.price)}
+              {formatCurrency(price)}
             </span>
             {discount > 0 && (
               <>
                 <span className="font-sans text-sm text-[#808080] line-through">
-                  {formatCurrency(item.mrp)}
+                  {formatCurrency(mrp)}
                 </span>
                 <span className="font-sans text-sm font-medium text-[#c0392b]">
                   {discount}% Off
@@ -69,15 +67,10 @@ export default function BagItem({ item }) {
             )}
           </div>
 
-          {/* Controls */}
           <div className="mt-3 flex flex-wrap items-center gap-3">
-            {/* Size (still a select) */}
             <div className="relative">
               <select
-                value={item.size}
-                onChange={(e) =>
-                  dispatch(updateQty({ id: item.id, size: item.size, qty: item.qty }))
-                }
+                defaultValue={item.size}
                 className="h-9 appearance-none border border-border bg-white pl-3 pr-7 font-sans text-sm text-[#414141] focus:border-ink focus:outline-none"
               >
                 <option value={item.size}>Size {item.size}</option>
@@ -87,30 +80,22 @@ export default function BagItem({ item }) {
               </span>
             </div>
 
-            {/* Qty stepper */}
             <div className="inline-flex h-9 items-center border border-border bg-white">
               <button
                 onClick={dec}
-                disabled={item.qty <= 1}
-                aria-label="Decrease quantity"
+                disabled={qty <= 1}
                 className="flex h-full w-9 items-center justify-center font-sans text-base text-[#414141] transition hover:bg-[#F5F1E9] disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                −
-              </button>
+              >−</button>
               <span className="flex h-full min-w-[36px] items-center justify-center border-x border-border px-2 font-sans text-sm text-[#414141]">
-                {item.qty}
+                {qty}
               </span>
               <button
                 onClick={inc}
-                aria-label="Increase quantity"
                 className="flex h-full w-9 items-center justify-center font-sans text-base text-[#414141] transition hover:bg-[#F5F1E9]"
-              >
-                +
-              </button>
+              >+</button>
             </div>
           </div>
 
-          {/* Notes */}
           <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 font-sans text-xs text-[#414141]">
             <span className="inline-flex items-center gap-1.5">
               <TruckIcon /> {DELIVERY_NOTE}

@@ -1,13 +1,21 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { CATEGORIES, SORTS } from "../constants";
+import { SORTS } from "../constants";
 import { selectRtwCategory, selectRtwSort, setCategory, setSort } from "../readyToWearSlice";
+import { listCategories } from "../../admin/categories/mediators";
 
 export default function FilterBar() {
   const dispatch = useDispatch();
   const category = useSelector(selectRtwCategory);
   const sort = useSelector(selectRtwSort);
   const [open, setOpen] = useState(false);
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    listCategories().then((data) => setCategories(Array.isArray(data) ? data : [])).catch(() => {});
+  }, []);
+
+  const tabs = ["ALL", ...categories.map((c) => c.name)];
 
   return (
     <div className="border-b border-border">
@@ -48,7 +56,7 @@ export default function FilterBar() {
 
         {/* Category tabs */}
         <div role="tablist" className="no-scrollbar flex min-w-0 flex-1 items-stretch overflow-x-auto">
-          {CATEGORIES.map((c) => {
+          {tabs.map((c) => {
             const active = c === category;
             return (
               <button

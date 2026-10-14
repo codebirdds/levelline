@@ -12,6 +12,8 @@ exports.create = async (req, res) => {
     if (req.files && req.files.length > 0) {
       req.body.images = req.files.map(file => file.path);
     }
+
+    
     const category = await categoryService.create(req.body, req.user.id);
 
     res.status(201).json({

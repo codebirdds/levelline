@@ -2,6 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   user: null,
+  accessToken: null,
   status: "idle",       // idle | loading | authenticated | error
   error: null,
   bootstrapped: false,
@@ -13,7 +14,8 @@ const authSlice = createSlice({
   reducers: {
     authStart:   (s) => { s.status = "loading"; s.error = null; },
     authSuccess: (s, { payload }) => {
-      s.user = payload.user;
+      s.user = payload?.data?.user || payload?.user;
+      s.accessToken = payload?.data?.accessToken || payload?.data?.token || payload?.token;
       s.status = "authenticated";
       s.error = null;
     },
@@ -21,6 +23,7 @@ const authSlice = createSlice({
     setBootstrapped: (s, { payload = true }) => { s.bootstrapped = payload; },
     logout: (s) => {
       s.user = null;
+      s.accessToken = null;
       s.status = "idle";
       s.error = null;
       s.bootstrapped = true;
