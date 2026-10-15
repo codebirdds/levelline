@@ -2,7 +2,7 @@
 // ABOUT PAGE — content
 // Reuses images already available in readytowear/assets.
 // ─────────────────────────────────────────────────────────────
-import aboutHero from "./assets/about.png";
+import aboutHero from "./Assets/about.png";
 import editorial1 from "../readytowear/assets/editorial1.png";
 import editorial2 from "../readytowear/assets/editorial2.png";
 import expertStitching from "../readytowear/assets/expertStitching.png";
