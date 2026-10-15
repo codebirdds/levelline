@@ -5,7 +5,7 @@ import { Reveal } from "../../../components/animation";
 import { formatCurrency } from "../../../utils/formatCurrency";
 import { ROUTES } from "../../../routes/routePaths";
 import { getReadyToWearBySlug } from "../mediators";
-import { addCartThunk } from "../../cart/cartSlice";
+import { addCartThunk,fetchCartThunk } from "../../cart/cartSlice";
 import { toast } from "react-hot-toast";
 import SimpleHeader from "../../../components/layout/SimpleHeader";
 
@@ -149,45 +149,48 @@ export default function ProductDetail() {
   //   • Not logged in → /login with `from` + `intent`
   //   • Logged in → add to cart; if buyNow, go to /checkout
   // ─────────────────────────────────────────────────────────
-  const handleAddToCart = async (buyNow = false) => {
-    if (!selectedSize) {
-      toast.error("Please select a size");
-      return;
-    }
+const handleAddToCart = async (buyNow = false) => {
+  if (!selectedSize) {
+    toast.error("Please select a size");
+    return;
+  }
 
-    if (!user) {
-      navigate(ROUTES.LOGIN, {
-        state: {
-          from: { pathname: location.pathname },
-          intent: buyNow ? "buy" : "add",
-        },
-        replace: false,
-      });
-      return;
-    }
+  if (!user) {
+    navigate(ROUTES.LOGIN, {
+      state: {
+        from: { pathname: location.pathname },
+        intent: buyNow ? "buy" : "add",
+      },
+      replace: false,
+    });
+    return;
+  }
 
-    if (!activeVariant) {
-      toast.error("Product variant unavailable");
-      return;
-    }
+  if (!activeVariant) {
+    toast.error("Product variant unavailable");
+    return;
+  }
 
-    try {
-      await dispatch(
-        addCartThunk({
-          product_id: product.id,
-          product_variant_id: activeVariant.id,
-          size: selectedSize,
-          quantity: 1,
-        })
-      ).unwrap();
+  try {
+    await dispatch(
+      addCartThunk({
+        product_id: product.id,
+        product_variant_id: activeVariant.id,
+        size: selectedSize,
+        quantity: 1,
+      })
+    ).unwrap();
 
-      toast.success("Added to bag");
+    // ✅ Refresh cart so the header badge + dropdown update immediately
+    dispatch(fetchCartThunk());
 
-      if (buyNow) navigate(ROUTES.CHECKOUT);
-    } catch (err) {
-      toast.error(err || "Failed to add to cart");
-    }
-  };
+    toast.success("Added to bag");
+
+    if (buyNow) navigate(ROUTES.CHECKOUT);
+  } catch (err) {
+    toast.error(err || "Failed to add to cart");
+  }
+};
 
   // ─────────────────────────────────────────────────────────
   // Loading / not-found
