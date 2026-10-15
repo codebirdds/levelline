@@ -5,7 +5,7 @@ import { ROUTES } from "../../routes/routePaths";
 import { NAV_LEFT, NAV_RIGHT, BOOK_CTA } from "../../features/home/content";
 import MobileMenu from "./MobileMenu";
 import SmartLink from "../common/SmartLink";
-import logo from "../../assets/images/LandingPage/Header/levelin.png";
+import logo from "../../assets/images/LandingPage/header/levelin.png";
 import { selectUser } from "../../features/auth/authSlice";
 
 const linkCls =

@@ -6,7 +6,7 @@ import { selectCartItems } from "../../features/cart/cartSlice";
 import { formatCurrency } from "../../utils/formatCurrency";
 import { selectIsAuthed, selectUser } from "../../features/auth/authSlice";
 import { logoutThunk } from "../../features/auth/authThunks";
-import logo from "../../assets/images/LandingPage/Header/levelin.png";
+import logo from "../../assets/images/LandingPage/header/levelin.png";
 
 const PHONE = "1800-833-4488";
 const itemImage = (i) =>
