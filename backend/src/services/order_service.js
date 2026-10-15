@@ -93,6 +93,7 @@ const createHttpError = (message, statusCode = 400) => {
 
 class OrderService {
     // CREATE ORDER AND INITIAL PAYMENT RECORD
+
     async create(data, userId) {
         const addressId = Number(data.address_id);
         const paymentMethod = data.payment_method || 'cod';
@@ -142,13 +143,22 @@ class OrderService {
 
             for (const cart of cartItems) {
                 const product = cart.product;
-                const variant = cart.variant;
 
                 if (!product || product.status !== 'active') {
                     throw createHttpError(
                         `Product is unavailable (cart item ${cart.id})`
                     );
                 }
+
+                // Lock and fetch the latest variant stock.
+                const variant = await ProductVariant.findOne({
+                    where: {
+                        id: cart.product_variant_id,
+                        product_id: product.id
+                    },
+                    transaction,
+                    lock: transaction.LOCK.UPDATE
+                });
 
                 if (
                     !variant ||
@@ -160,29 +170,63 @@ class OrderService {
                     );
                 }
 
-                const sizeEntry = Array.isArray(variant.sizes)
-                    ? variant.sizes.find(
-                        (item) =>
-                            String(item.size).toLowerCase() ===
-                            String(cart.size).toLowerCase()
-                    )
-                    : null;
+                const sizes = Array.isArray(variant.sizes)
+                    ? variant.sizes
+                    : [];
+
+                const sizeEntry = sizes.find(
+                    (item) =>
+                        String(item.size).toLowerCase() ===
+                        String(cart.size).toLowerCase()
+                );
 
                 if (!sizeEntry) {
-                    throw createHttpError(`Size ${cart.size} is no longer available`);
+                    throw createHttpError(
+                        `Size ${cart.size} is no longer available`
+                    );
                 }
 
                 const quantity = Number(cart.quantity);
 
                 if (!Number.isInteger(quantity) || quantity < 1) {
-                    throw createHttpError(`Invalid quantity for cart item ${cart.id}`);
+                    throw createHttpError(
+                        `Invalid quantity for cart item ${cart.id}`
+                    );
                 }
 
-                if (Number(sizeEntry.stock) < quantity) {
+                const availableStock = Number(sizeEntry.stock);
+
+                if (
+                    !Number.isFinite(availableStock) ||
+                    availableStock < quantity
+                ) {
                     throw createHttpError(
                         `Insufficient stock for ${product.name}, size ${cart.size}`
                     );
                 }
+
+                // Deduct stock from the selected size only.
+                const updatedSizes = sizes.map((item) => {
+                    const isSelectedSize =
+                        String(item.size).toLowerCase() ===
+                        String(cart.size).toLowerCase();
+
+                    if (isSelectedSize) {
+                        return {
+                            ...item,
+                            stock: Number(item.stock) - quantity
+                        };
+                    }
+
+                    return item;
+                });
+
+                await variant.update(
+                    {
+                        sizes: updatedSizes
+                    },
+                    { transaction }
+                );
 
                 const originalUnitCents = toCents(product.price);
 
@@ -198,10 +242,13 @@ class OrderService {
                     discountedUnitCents < 0 ||
                     discountedUnitCents > originalUnitCents
                 ) {
-                    throw createHttpError(`Invalid pricing for ${product.name}`);
+                    throw createHttpError(
+                        `Invalid pricing for ${product.name}`
+                    );
                 }
 
                 const lineSubtotal = originalUnitCents * quantity;
+
                 const lineDiscount =
                     (originalUnitCents - discountedUnitCents) * quantity;
 
@@ -255,7 +302,7 @@ class OrderService {
                 { transaction }
             );
 
-            // Every order gets an initial pending payment record.
+            // Create the initial pending payment record.
             await Payment.create(
                 {
                     order_id: order.id,
@@ -271,6 +318,7 @@ class OrderService {
                 { transaction }
             );
 
+            // Clear the user's cart after order and payment record creation.
             await Cart.destroy({
                 where: {
                     user_id: userId
@@ -278,6 +326,7 @@ class OrderService {
                 transaction
             });
 
+            // Commit order creation and stock deduction together.
             await transaction.commit();
 
             return order;
@@ -286,6 +335,7 @@ class OrderService {
             throw error;
         }
     }
+
 
     // CUSTOMER: LIST THEIR ORDERS
     async findAll(userId, query = {}) {
@@ -356,45 +406,137 @@ class OrderService {
     }
 
     // CUSTOMER: CANCEL THEIR ORDER
-    async cancel(id, userId) {
-        const transaction = await db.sequelize.transaction();
+async cancel(id, userId) {
+    const transaction = await db.sequelize.transaction();
 
-        try {
-            const order = await Order.findOne({
-                where: { id, user_id: userId },
+    try {
+        const order = await Order.findOne({
+            where: {
+                id,
+                user_id: userId
+            },
+            transaction,
+            lock: transaction.LOCK.UPDATE
+        });
+
+        if (!order) {
+            throw createHttpError('Order not found', 404);
+        }
+
+        if (order.order_status === 'cancelled') {
+            throw createHttpError('Order is already cancelled');
+        }
+
+        if (!['pending', 'confirmed'].includes(order.order_status)) {
+            throw createHttpError(
+                'This order can no longer be cancelled'
+            );
+        }
+
+        if (order.payment_status === 'paid') {
+            throw createHttpError(
+                'This order has been paid. Use the refund workflow before cancelling.'
+            );
+        }
+
+        const items = order.items;
+
+        if (!Array.isArray(items) || items.length === 0) {
+            throw createHttpError(
+                'Order items are missing; stock cannot be restored'
+            );
+        }
+
+        // Restore stock for each ordered variant and size.
+        for (const item of items) {
+            const quantity = Number(item.quantity);
+
+            if (
+                !Number.isInteger(quantity) ||
+                quantity < 1 ||
+                !item.product_variant_id ||
+                item.size == null
+            ) {
+                throw createHttpError(
+                    'Invalid order item; stock cannot be restored'
+                );
+            }
+
+            const variant = await ProductVariant.findOne({
+                where: {
+                    id: item.product_variant_id
+                },
                 transaction,
                 lock: transaction.LOCK.UPDATE
             });
 
-            if (!order) {
-                throw createHttpError('Order not found', 404);
-            }
-
-            if (!['pending', 'confirmed'].includes(order.order_status)) {
-                throw createHttpError('This order can no longer be cancelled');
-            }
-
-            if (order.payment_status === 'paid') {
+            if (!variant) {
                 throw createHttpError(
-                    'This order has been paid. Use the refund workflow before cancelling.'
+                    `Product variant ${item.product_variant_id} not found`
                 );
             }
 
-            await order.update(
+            const sizes = Array.isArray(variant.sizes)
+                ? variant.sizes
+                : [];
+
+            const sizeIndex = sizes.findIndex(
+                (sizeItem) =>
+                    String(sizeItem.size).toLowerCase() ===
+                    String(item.size).toLowerCase()
+            );
+
+            if (sizeIndex === -1) {
+                throw createHttpError(
+                    `Size ${item.size} not found for variant ${variant.id}`
+                );
+            }
+
+            const currentStock = Number(sizes[sizeIndex].stock);
+
+            if (!Number.isFinite(currentStock) || currentStock < 0) {
+                throw createHttpError(
+                    `Invalid stock for variant ${variant.id}, size ${item.size}`
+                );
+            }
+
+            // Add the cancelled quantity back to this size.
+            const updatedSizes = sizes.map((sizeItem, index) => {
+                if (index !== sizeIndex) {
+                    return sizeItem;
+                }
+
+                return {
+                    ...sizeItem,
+                    stock: currentStock + quantity
+                };
+            });
+
+            await variant.update(
                 {
-                    order_status: 'cancelled',
-                    cancelled_at: new Date()
+                    sizes: updatedSizes
                 },
                 { transaction }
             );
-
-            await transaction.commit();
-            return order;
-        } catch (error) {
-            await transaction.rollback();
-            throw error;
         }
+
+        // Update order status only after stock restoration succeeds.
+        await order.update(
+            {
+                order_status: 'cancelled',
+                cancelled_at: new Date()
+            },
+            { transaction }
+        );
+
+        await transaction.commit();
+
+        return order;
+    } catch (error) {
+        await transaction.rollback();
+        throw error;
     }
+}
 
     // ADMIN: LIST ALL ORDERS WITH FILTERS
     async adminFindAll(query = {}) {

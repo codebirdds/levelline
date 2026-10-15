@@ -46,7 +46,7 @@ console.log(
 );
 
 router.patch(
-  '/admin/deliver/:orderId',
+  '/admin/deliver/:order_id',
   authMiddleware,
   roleMiddleware('admin'),
   orderController.markAsDeliver
