@@ -109,7 +109,7 @@ module.exports = {
       payment_method: {
         type: Sequelize.ENUM('cashfree', 'cod'),
         allowNull: false,
-        defaultValue: 'cashfree'
+        defaultValue: 'cod'
       },
 
       notes: {

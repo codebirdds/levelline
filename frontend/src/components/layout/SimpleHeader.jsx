@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { ROUTES } from "../../routes/routePaths";
 import { selectCartItems } from "../../features/cart/cartSlice";
 import { formatCurrency } from "../../utils/formatCurrency";
+import { selectIsAuthed, selectUser } from "../../features/auth/authSlice";
+import { logoutThunk } from "../../features/auth/authThunks";
 import logo from "../../assets/images/LandingPage/Header/levelin.png";
 
 const PHONE = "1800-833-4488";
-const IS_LOGGED_IN = false;
-
 const itemImage = (i) =>
   i.variant?.images?.find?.((x) => x.is_primary)?.url ||
   i.variant?.images?.[0]?.url ||
@@ -23,6 +23,9 @@ const itemPrice = (i) => Number(i.unit_price ?? i.price ?? 0);
 const itemQty = (i) => Number(i.quantity ?? i.qty ?? 1);
 
 export default function SimpleHeader() {
+  const dispatch = useDispatch();
+  const isLoggedIn = useSelector(selectIsAuthed);
+  const user = useSelector(selectUser);
   const items = useSelector(selectCartItems) || [];
   const count = items.reduce((s, i) => s + itemQty(i), 0);
   const total = items.reduce((s, i) => s + itemPrice(i) * itemQty(i), 0);
@@ -147,11 +150,11 @@ export default function SimpleHeader() {
             {profileOpen && (
               <div className="absolute right-0 top-full pt-2">
                 <div className="w-[220px] border border-border bg-white p-3 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
-                  {IS_LOGGED_IN ? (
+                  {isLoggedIn ? (
                     <div className="flex flex-col">
-                      <Link to="#" className="block px-2 py-2 font-sans text-sm text-[#414141] transition hover:text-[#663f29]">My Account</Link>
-                      <Link to="#" className="block px-2 py-2 font-sans text-sm text-[#414141] transition hover:text-[#663f29]">Orders</Link>
-                      <button className="px-2 py-2 text-left font-sans text-sm text-[#414141] transition hover:text-[#663f29]">Logout</button>
+                      <span className="px-2 py-2 font-sans text-xs text-[#808080]">Hi, {user?.name || "there"}</span>
+                      <Link to={ROUTES.TRACK_ORDER} onClick={() => setProfileOpen(false)} className="block px-2 py-2 font-sans text-sm text-[#414141] transition hover:text-[#663f29]">Track your orders</Link>
+                      <button onClick={() => dispatch(logoutThunk())} className="px-2 py-2 text-left font-sans text-sm text-[#414141] transition hover:text-[#663f29]">Logout</button>
                     </div>
                   ) : (
                     <Link

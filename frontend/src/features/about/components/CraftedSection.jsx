@@ -1,33 +1,55 @@
-import SectionHeading from "../../../components/common/SectionHeading";
 import ArrowLink from "../../../components/ui/ArrowLink";
-import { Reveal, ImageReveal } from "../../../components/animation";
-import { TYPE } from "../../../components/common/typography";
+import { Reveal } from "../../../components/animation";
 import ServicesGrid from "./ServicesGrid";
+import { ABOUT_IMAGES } from "../content";
 
 export default function CraftedSection({ services = [] }) {
   return (
-    <section className="px-5 pb-16 pt-16 sm:px-10 lg:px-[2%] lg:pb-[111px] lg:pt-[110px]">
-      <div className="grid gap-10 md:grid-cols-[1fr_1.2fr] xl:grid-cols-[400fr_384fr_950fr] xl:items-center xl:gap-x-[55px]">
-        <ImageReveal className="aspect-[400/505] bg-cream-2">
-          <img src="/images/about/crafted.jpg" alt="" loading="lazy" className="size-full object-cover" />
-        </ImageReveal>
+    <section className="px-5 pb-12 pt-12 sm:px-8 lg:px-[3%] lg:pb-16 lg:pt-16">
+      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-[260px_290px_minmax(0,1fr)] lg:items-start lg:gap-8 xl:gap-10">
+        {/* ── LEFT: image ── */}
+        <Reveal variant="fade" className="self-start">
+          <div className="aspect-[400/500] w-full overflow-hidden bg-[#F5F1E9] lg:max-w-[260px]">
+            <img
+              src={ABOUT_IMAGES.premiumFabric}
+              alt=""
+              loading="lazy"
+              className="size-full object-cover"
+            />
+          </div>
+        </Reveal>
 
-        <div>
+        {/* ── MIDDLE: text ── */}
+        <div className="self-start lg:pt-2">
           <Reveal>
-            <SectionHeading align="left" title={<>Crafted with Precision, <br className="hidden xl:block" />Designed for You</>} />
+            <h2 className="font-sans text-xl font-medium leading-snug text-[#6b6b6b] lg:text-2xl">
+              Crafted with Precision, <br />
+              Designed for You
+            </h2>
           </Reveal>
-          <Reveal delay={120}>
-            <p className={`max-w-[384px] ${TYPE.p}`}>
-              Every detail matters. From the finest fabrics to the final stitch, our services are
-              designed to give you a truly personal experience.
+
+          <Reveal delay={100}>
+            <p className="mt-3 font-sans text-sm italic leading-relaxed text-[#808080]">
+              Every detail matters. From the finest fabrics to the final stitch,
+              our services are designed to give you a truly personal experience.
             </p>
           </Reveal>
-          <Reveal delay={240}>
-            <ArrowLink href="/#services" className="mt-8 uppercase lg:mt-12">Explore the services</ArrowLink>
+
+          <Reveal delay={200}>
+            <ArrowLink
+              href="/#services"
+              className="mt-5 inline-block text-xs uppercase tracking-[0.15em]"
+            >
+              Explore the services
+            </ArrowLink>
           </Reveal>
         </div>
 
-        <ServicesGrid items={services} className="md:col-span-2 xl:col-span-1" />
+        {/* ── RIGHT: services grid ── */}
+        <ServicesGrid
+          items={services}
+          className="md:col-span-2 lg:col-span-1"
+        />
       </div>
     </section>
   );

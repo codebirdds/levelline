@@ -9,6 +9,7 @@ const TITLES = {
   [ROUTES.ADMIN_PRODUCTS]:   "Products",
   [ROUTES.ADMIN_CATEGORIES]: "Categories",
   [ROUTES.ADMIN_VARIANTS]:   "Product Variants",
+  [ROUTES.ADMIN_ORDERS]:     "Orders",
 };
 
 export default function AdminHeader() {

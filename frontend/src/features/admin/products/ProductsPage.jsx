@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  selectAdminProducts, selectAdminLoading,
+  selectAdminProducts,
+  selectAdminLoading,
   openForm,
 } from "./adminProductSlice";
 import { fetchAdminProductsThunk, deleteProductThunk } from "./adminProductThunks";
 import ProductTable from "./components/ProductTable";
 import ProductFormModal from "./components/ProductFormModal";
+import VariantsModal from "./components/VariantsModal";
 import ConfirmDialog from "../../../components/common/ConfirmDialog";
 import Spinner from "../../../components/common/Spinner";
 
@@ -14,12 +16,20 @@ export default function ProductsPage() {
   const dispatch = useDispatch();
   const items    = useSelector(selectAdminProducts);
   const loading  = useSelector(selectAdminLoading);
-  const [deleting, setDeleting] = useState(null);
-  const [busy, setBusy] = useState(false);
+  const [deleting, setDeleting]                   = useState(null);
+  const [busy, setBusy]                           = useState(false);
+  const [variantProductId, setVariantProductId]   = useState(null);
+
+  // Derive live product so it updates after refetch
+  const liveProduct = variantProductId
+    ? items.find((p) => p.id === variantProductId) || null
+    : null;
 
   useEffect(() => {
     dispatch(fetchAdminProductsThunk());
   }, [dispatch]);
+
+  const refresh = () => dispatch(fetchAdminProductsThunk());
 
   const onConfirmDelete = async () => {
     if (!deleting) return;
@@ -35,7 +45,9 @@ export default function ProductsPage() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted">{items.length} product{items.length !== 1 && "s"}</p>
+        <p className="text-sm text-muted">
+          {items.length} product{items.length !== 1 && "s"}
+        </p>
         <button
           onClick={() => dispatch(openForm(null))}
           className="text-sm font-semibold bg-brand text-white px-4 py-2 rounded-md hover:bg-brand-dark transition"
@@ -45,17 +57,35 @@ export default function ProductsPage() {
       </div>
 
       <div className="bg-surface border border-border rounded-lg">
-        {loading ? <Spinner full /> : <ProductTable items={items} onEdit={(p) => dispatch(openForm(p))} onDelete={setDeleting} />}
+        {loading ? (
+          <Spinner full />
+        ) : (
+          <ProductTable
+            items={items}
+            onEdit={(p) => dispatch(openForm(p))}
+            onDelete={setDeleting}
+            onManageVariants={(p) => setVariantProductId(p.id)}
+          />
+        )}
       </div>
 
+      {/* Product add/edit modal */}
       <ProductFormModal />
+
+      {/* Nested variants modal */}
+      <VariantsModal
+        open={!!variantProductId}
+        onClose={() => setVariantProductId(null)}
+        product={liveProduct}
+        onRefresh={refresh}
+      />
 
       <ConfirmDialog
         open={!!deleting}
         onClose={() => setDeleting(null)}
         onConfirm={onConfirmDelete}
         loading={busy}
-        message={`Delete "${deleting?.title}"? This cannot be undone.`}
+        message={`Delete "${deleting?.name}"? This cannot be undone.`}
       />
     </div>
   );

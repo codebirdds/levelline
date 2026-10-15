@@ -1,8 +1,13 @@
 import { useEffect } from "react";
 import SmartLink from "../common/SmartLink";
 import { NAV_LEFT, NAV_RIGHT, BOOK_CTA } from "../../features/home/content";
+import { useSelector } from "react-redux";
+import { Link } from "react-router-dom";
+import { selectUser } from "../../features/auth/authSlice";
+import { ROUTES } from "../../routes/routePaths";
 
 export default function MobileMenu({ open, onClose }) {
+  const user = useSelector(selectUser);
   useEffect(() => {
     if (!open) return;
     const onKey = (e) => e.key === "Escape" && onClose();
@@ -36,6 +41,7 @@ export default function MobileMenu({ open, onClose }) {
               {l.label}
             </SmartLink>
           ))}
+          {user?.role === "user" && <Link to={ROUTES.TRACK_ORDER} onClick={onClose} className="font-sans text-lg font-medium uppercase tracking-wide hover:text-gold">Track order</Link>}
         </nav>
         <SmartLink
           href={BOOK_CTA.href}

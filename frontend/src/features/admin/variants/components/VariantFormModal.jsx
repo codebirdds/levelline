@@ -10,7 +10,7 @@ import {
 import { createVariantThunk, updateVariantThunk } from "../variantThunks";
 import { listProducts } from "../../products/mediators";
 
-const MAX_IMAGES = 6;
+const MAX_IMAGES  = 6;
 const MAX_SIZE_MB = 5;
 
 const EMPTY = {
@@ -24,39 +24,50 @@ const EMPTY = {
 
 export default function VariantFormModal() {
   const dispatch = useDispatch();
-  const open = useSelector(selectVariantFormOpen);
-  const editing = useSelector(selectVariantEditing);
+  const open       = useSelector(selectVariantFormOpen);
+  const editing    = useSelector(selectVariantEditing);
   const submitting = useSelector(selectSubmitting);
 
-  const [form, setForm] = useState(EMPTY);
+  const [form, setForm]                     = useState(EMPTY);
   const [existingImages, setExistingImages] = useState([]); // urls already on server
-  const [newFiles, setNewFiles] = useState([]);             // File objects to upload
-  const [products, setProducts] = useState([]);
-  const [imgError, setImgError] = useState(null);
+  const [newFiles, setNewFiles]             = useState([]); // File objects to upload
+  const [products, setProducts]             = useState([]);
+  const [imgError, setImgError]             = useState(null);
   const fileRef = useRef(null);
 
-  // load products once
+  // ── Decide mode based on presence of an id ─────────────
+  //   editing.id exists     → UPDATE variant
+  //   editing.id missing    → CREATE variant (may include preset product_id)
+  //   editing === null      → CREATE variant (no preset)
+  const isEdit          = !!editing?.id;
+  const isPresetProduct = !isEdit && !!editing?.product_id;
+
+  // Load products once
   useEffect(() => {
     listProducts()
-      .then((data) => setProducts(Array.isArray(data) ? data : []))
+      .then((data) => {
+        const arr = Array.isArray(data) ? data : data?.data || [];
+        setProducts(arr);
+      })
       .catch(() => {});
   }, []);
 
-  // hydrate when opening
+  // Hydrate form when modal opens
   useEffect(() => {
     if (!open) return;
+
     if (editing) {
       setForm({
         product_id: editing.product_id || editing.product?.id || "",
-        color: editing.color || "",
+        color:      editing.color || "",
         color_code: editing.color_code || "",
-        sizes: editing.sizes?.length
+        sizes:      editing.sizes?.length
           ? editing.sizes
           : [{ size: "S", sku: "", stock: 0 }],
-        images: editing.images || [],
-        status: editing.status || "active",
+        images:     editing.images || [],
+        status:     editing.status || "active",
       });
-      // normalize: images can be string[] or { url }[]
+
       setExistingImages(
         (editing.images || []).map((img) =>
           typeof img === "string" ? img : img.url
@@ -66,30 +77,35 @@ export default function VariantFormModal() {
       setForm(EMPTY);
       setExistingImages([]);
     }
+
     setNewFiles([]);
     setImgError(null);
   }, [editing, open]);
 
-  // cleanup object URLs
+  // Cleanup object URLs
   useEffect(() => {
     return () => {
-      newFiles.forEach((f) => URL.revokeObjectURL(f.__preview));
+      newFiles.forEach((f) => f.__preview && URL.revokeObjectURL(f.__preview));
     };
   }, [newFiles]);
 
   const onClose = () => !submitting && dispatch(closeForm());
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
+  // ── Sizes ──────────────────────────────────────────────
   const addSize = () =>
     set("sizes", [...form.sizes, { size: "", sku: "", stock: 0 }]);
+
   const removeSize = (i) =>
     set("sizes", form.sizes.filter((_, idx) => idx !== i));
+
   const updateSize = (i, field, val) =>
     set(
       "sizes",
       form.sizes.map((s, idx) => (idx === i ? { ...s, [field]: val } : s))
     );
 
+  // ── Images ─────────────────────────────────────────────
   const totalImages = existingImages.length + newFiles.length;
 
   const acceptFiles = (fileList) => {
@@ -103,22 +119,23 @@ export default function VariantFormModal() {
         setImgError(`"${f.name}" is larger than ${MAX_SIZE_MB}MB`);
         continue;
       }
-      // attach preview URL (revoke later)
       f.__preview = URL.createObjectURL(f);
       accepted.push(f);
     }
 
-    const room = MAX_IMAGES - existingImages.length - newFiles.length;
+    const room  = MAX_IMAGES - existingImages.length - newFiles.length;
     const toAdd = accepted.slice(0, Math.max(0, room));
+
     if (accepted.length > room) {
       setImgError(`Max ${MAX_IMAGES} images allowed`);
     }
+
     setNewFiles((prev) => [...prev, ...toAdd]);
   };
 
   const onPickFiles = (e) => {
     acceptFiles(e.target.files);
-    e.target.value = ""; // allow re-selecting same file
+    e.target.value = "";
   };
 
   const onDrop = (e) => {
@@ -138,6 +155,7 @@ export default function VariantFormModal() {
     });
   };
 
+  // ── Submit ─────────────────────────────────────────────
   const onSubmit = (e) => {
     e.preventDefault();
     if (submitting) return;
@@ -148,22 +166,24 @@ export default function VariantFormModal() {
     if (form.color_code) payload.append("color_code", form.color_code);
     payload.append("sizes", JSON.stringify(form.sizes));
     payload.append("status", form.status);
-
-    // existing images the server should KEEP (drop the ones user removed)
     payload.append("keepImages", JSON.stringify(existingImages));
 
-    // new files — same field name for every file
     newFiles.forEach((f) => payload.append("images", f));
 
-    if (editing) dispatch(updateVariantThunk(editing.id, payload));
-    else dispatch(createVariantThunk(payload));
+    if (isEdit) {
+      // UPDATE — send variant id as first arg
+      dispatch(updateVariantThunk(editing.id, payload));
+    } else {
+      // CREATE — no id, product may be preset
+      dispatch(createVariantThunk(payload));
+    }
   };
 
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title={editing ? "Edit Variant" : "Add Variant"}
+      title={isEdit ? "Edit Variant" : "Add Variant"}
       footer={
         <>
           <button
@@ -178,7 +198,7 @@ export default function VariantFormModal() {
             disabled={submitting}
             className="px-4 py-2 text-sm font-semibold bg-brand text-white rounded-md hover:bg-brand-dark disabled:opacity-60"
           >
-            {submitting ? "Saving…" : editing ? "Save Changes" : "Create"}
+            {submitting ? "Saving…" : isEdit ? "Save Changes" : "Create"}
           </button>
         </>
       }
@@ -189,43 +209,47 @@ export default function VariantFormModal() {
         encType="multipart/form-data"
         className="space-y-4"
       >
-        {/* product + color */}
+        {/* Product + Color */}
         <div className="grid grid-cols-2 gap-4">
           <Field label="Product *">
             <select
               required
               value={form.product_id}
               onChange={(e) => set("product_id", Number(e.target.value))}
-              className="w-full border border-border rounded-md px-3 py-2 text-sm focus:border-brand outline-none bg-surface"
+              disabled={isPresetProduct}
+              className="w-full border border-border rounded-md px-3 py-2 text-sm focus:border-brand outline-none bg-surface disabled:bg-hover disabled:cursor-not-allowed disabled:text-muted"
             >
               <option value="">Select product</option>
               {products.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.name}
+                  {p.name || p.title}
                 </option>
               ))}
             </select>
           </Field>
+
           <Field label="Color *">
             <input
               required
               value={form.color}
               onChange={(e) => set("color", e.target.value)}
+              placeholder="Red / Navy / Olive"
               className="w-full border border-border rounded-md px-3 py-2 text-sm focus:border-brand outline-none"
             />
           </Field>
         </div>
 
-        {/* color code + status */}
+        {/* Color code + Status */}
         <div className="grid grid-cols-2 gap-4">
           <Field label="Color Code">
             <input
               value={form.color_code}
               onChange={(e) => set("color_code", e.target.value)}
               placeholder="#FF0000"
-              className="w-full border border-border rounded-md px-3 py-2 text-sm focus:border-brand outline-none"
+              className="w-full border border-border rounded-md px-3 py-2 text-sm focus:border-brand outline-none font-mono"
             />
           </Field>
+
           <Field label="Status">
             <select
               value={form.status}
@@ -238,7 +262,7 @@ export default function VariantFormModal() {
           </Field>
         </div>
 
-        {/* sizes */}
+        {/* Sizes */}
         <div>
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-muted">Sizes</span>
@@ -250,6 +274,7 @@ export default function VariantFormModal() {
               + Add Size
             </button>
           </div>
+
           <div className="space-y-2">
             {form.sizes.map((s, i) => (
               <div key={i} className="grid grid-cols-4 gap-2 items-end">
@@ -262,34 +287,35 @@ export default function VariantFormModal() {
                     className="w-full border border-border rounded-md px-3 py-2 text-sm focus:border-brand outline-none"
                   />
                 </div>
+
                 <div>
                   <span className="block mb-1 text-xs text-muted">SKU</span>
                   <input
                     value={s.sku}
                     onChange={(e) => updateSize(i, "sku", e.target.value)}
                     placeholder="TSH-RED-S"
-                    className="w-full border border-border rounded-md px-3 py-2 text-sm focus:border-brand outline-none"
+                    className="w-full border border-border rounded-md px-3 py-2 text-sm focus:border-brand outline-none font-mono"
                   />
                 </div>
+
                 <div>
                   <span className="block mb-1 text-xs text-muted">Stock</span>
                   <input
                     type="number"
                     min="0"
                     value={s.stock}
-                    onChange={(e) =>
-                      updateSize(i, "stock", Number(e.target.value))
-                    }
+                    onChange={(e) => updateSize(i, "stock", Number(e.target.value))}
                     className="w-full border border-border rounded-md px-3 py-2 text-sm focus:border-brand outline-none"
                   />
                 </div>
+
                 <div>
                   <span className="block mb-1 text-xs text-muted">&nbsp;</span>
                   <button
                     type="button"
                     onClick={() => removeSize(i)}
                     disabled={form.sizes.length === 1}
-                    className="w-full h-[38px] text-xs font-semibold text-danger hover:underline disabled:opacity-30"
+                    className="w-full h-[38px] text-xs font-semibold text-danger hover:underline disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     Remove
                   </button>
@@ -299,7 +325,7 @@ export default function VariantFormModal() {
           </div>
         </div>
 
-        {/* images */}
+        {/* Images */}
         <div>
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-muted">
@@ -310,7 +336,6 @@ export default function VariantFormModal() {
             </span>
           </div>
 
-          {/* dropzone */}
           <div
             onDrop={onDrop}
             onDragOver={(e) => e.preventDefault()}
@@ -331,11 +356,8 @@ export default function VariantFormModal() {
             />
           </div>
 
-          {imgError && (
-            <p className="text-xs text-danger mt-2">{imgError}</p>
-          )}
+          {imgError && <p className="text-xs text-danger mt-2">{imgError}</p>}
 
-          {/* previews */}
           {totalImages > 0 && (
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-3">
               {existingImages.map((src, i) => (
@@ -355,6 +377,7 @@ export default function VariantFormModal() {
                   </button>
                 </div>
               ))}
+
               {newFiles.map((f, i) => (
                 <div key={`n-${i}`} className="relative group">
                   <img

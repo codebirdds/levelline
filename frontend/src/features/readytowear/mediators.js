@@ -36,8 +36,15 @@ const normalize = (p) => {
   };
 };
 
-export const listReadyToWear = async () => {
-  const res = await call(READY_TO_WEAR.LIST, { params: { status: "active", limit: 100 } });
+export const listReadyToWear = async ({ category_id, sort } = {}) => {
+  // Build params — only include category_id if it's a real value
+  const params = { status: "active", limit: 100 };
+  if (category_id != null && category_id !== "") {
+    params.category_id = category_id;
+  }
+  if (sort) params.sort = sort;
+
+  const res = await call(READY_TO_WEAR.LIST, { params });
   const rows = res?.data || res || [];
   return rows.map(normalize);
 };

@@ -1,19 +1,6 @@
 import { useDispatch } from "react-redux";
 import { updateCartThunk, removeCartThunk } from "../../cart/cartSlice";
 import { formatCurrency } from "../../../utils/formatCurrency";
-import { DELIVERY_NOTE, RETURN_NOTE } from "../constants";
-
-const TruckIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M1 3h13v13H1zM14 8h4l3 3v5h-7zM5 21a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM17 21a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" />
-  </svg>
-);
-
-const ReturnIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M1 4v6h6M3.5 15a9 9 0 1 0 2.1-9.4L1 10" />
-  </svg>
-);
 
 export default function BagItem({ item }) {
   const dispatch = useDispatch();
@@ -96,14 +83,6 @@ export default function BagItem({ item }) {
             </div>
           </div>
 
-          <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 font-sans text-xs text-[#414141]">
-            <span className="inline-flex items-center gap-1.5">
-              <TruckIcon /> {DELIVERY_NOTE}
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <ReturnIcon /> {RETURN_NOTE}
-            </span>
-          </div>
         </div>
       </div>
     </div>

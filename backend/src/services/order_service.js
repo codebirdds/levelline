@@ -31,6 +31,7 @@ const VALID_PAYMENT_STATUSES = [
 ];
 
 const VALID_PAYMENT_METHODS = ['cashfree', 'cod'];
+const AVAILABLE_PAYMENT_METHODS = ['cod'];
 
 const toCents = (value) => {
     const number = Number(value);
@@ -94,15 +95,15 @@ class OrderService {
     // CREATE ORDER AND INITIAL PAYMENT RECORD
     async create(data, userId) {
         const addressId = Number(data.address_id);
-        const paymentMethod = data.payment_method || 'cashfree';
+        const paymentMethod = data.payment_method || 'cod';
 
         if (!Number.isInteger(addressId) || addressId <= 0) {
             throw createHttpError('A valid address_id is required');
         }
 
-        if (!VALID_PAYMENT_METHODS.includes(paymentMethod)) {
+        if (!AVAILABLE_PAYMENT_METHODS.includes(paymentMethod)) {
             throw createHttpError(
-                'Invalid payment_method. Use cashfree or cod.'
+                'Invalid payment_method. Cash on delivery is currently available.'
             );
         }
 

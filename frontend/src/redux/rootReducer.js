@@ -9,6 +9,7 @@ import addressReducer         from "../features/address/addressSlice";
 import readyToWearReducer     from "../features/readytowear/readyToWearSlice";
 import checkoutReducer from "../features/checkout/checkoutSlice";
 import fabricReducer from "../features/fabric/fabricSlice";
+import trackOrderReducer from "../features/trackOrder/trackOrderSlice";
 
 const rootReducer = combineReducers({
   auth:          authReducer,
@@ -21,6 +22,7 @@ const rootReducer = combineReducers({
   readyToWear:   readyToWearReducer,
   checkout:        checkoutReducer,
   fabric: fabricReducer,
+  trackOrder: trackOrderReducer,
 });
 
 export default rootReducer;

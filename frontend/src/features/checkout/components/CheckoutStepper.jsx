@@ -1,4 +1,4 @@
-const STEPS = ["Shopping Bag", "Address", "Payment"];
+const STEPS = ["Shopping Bag", "Address", "Payment", "Confirm"];
 
 export default function CheckoutStepper({ current = 1 }) {
   return (
