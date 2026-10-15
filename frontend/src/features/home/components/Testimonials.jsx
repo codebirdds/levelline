@@ -1,169 +1,227 @@
-import { useEffect, useRef, useState } from "react";
-import { TESTIMONIALS } from "../content";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import SectionHeading from "../../../components/common/SectionHeading";
+import { Reveal } from "../../../components/animation";
+import { TYPE } from "../../../components/common/typography";
+import { prefersReducedMotion } from "../../../components/animation/useInView";
 
-const Stars = () => (
-  <div className="flex gap-0.5 text-gold" aria-label="5 out of 5 stars">
+const GAP = 24;
+const AUTOPLAY_MS = 2000;
+
+const Stars = ({ rating = 5 }) => (
+  <div className="flex gap-0.5 text-[#f5a623]" aria-label={`${rating} out of 5 stars`}>
     {Array.from({ length: 5 }).map((_, i) => (
-      <svg key={i} width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <svg key={i} width="13" height="13" viewBox="0 0 24 24" fill={i < rating ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
         <path d="M12 2l3.1 6.6 7.2.9-5.3 5 1.4 7.1L12 18l-6.4 3.6L7 14.5l-5.3-5 7.2-.9z" />
       </svg>
     ))}
   </div>
 );
 
-const Arrow = ({ dir, onClick }) => (
-  <button
-    onClick={onClick}
-    aria-label={dir < 0 ? "Previous testimonials" : "Next testimonials"}
-    className="flex size-10 shrink-0 items-center justify-center rounded-full border border-border text-heading transition hover:bg-ink hover:text-cream lg:size-12"
-  >
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ transform: dir < 0 ? "rotate(180deg)" : "none" }}>
-      <path d="M9 5l7 7-7 7" />
-    </svg>
-  </button>
-);
+const Avatar = ({ src }) =>
+  src ? (
+    <img src={src} alt="" loading="lazy" draggable={false} className="size-11 shrink-0 rounded-full object-cover" />
+  ) : (
+    <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#3b2314] text-white">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z" />
+      </svg>
+    </span>
+  );
 
 export default function Testimonials({
+  items = [],
+  badge = "Testimonials",
+  title = "Master Craftsmanship & Unmatched Experience",
+  subtitle = "Discover how Levelline delivers bespoke excellence through flawless fit, premium fabrics, and personalized luxury tailored specifically for our discerning global clients.",
   autoPlay = true,
-  interval = 4000,
-  pauseOnHover = true,
 }) {
-  const track = useRef(null);
+  const n = items.length;
+  const loop = n > 1;
+  const viewportRef = useRef(null);
+  const swipeRef = useRef(null);
+  const [width, setWidth] = useState(0);
+  const [index, setIndex] = useState(loop ? n : 0);
+  const [animate, setAnimate] = useState(false);
   const [paused, setPaused] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(0);
 
-  const realCount = TESTIMONIALS.length;
-  const items = [...TESTIMONIALS, ...TESTIMONIALS, ...TESTIMONIALS]; // 3x clones
+  const slides = loop ? [...items, ...items, ...items] : items;
 
-  const stepSize = () => {
-    const el = track.current;
-    if (!el?.firstElementChild) return 0;
-    return el.firstElementChild.getBoundingClientRect().width + 24; // card + gap
-  };
-
-  // Scroll one card forward/back with smooth behavior
-  const scrollBy = (dir) => {
-    const el = track.current;
+  // Measure viewport — retries so width is never stuck at 0
+  useLayoutEffect(() => {
+    const el = viewportRef.current;
     if (!el) return;
-    el.scrollBy({ left: dir * stepSize(), behavior: "smooth" });
-  };
-
-  // Seamless loop: silently jump one set when entering a clone zone
-  const normalize = () => {
-    const el = track.current;
-    if (!el) return;
-    const oneSet = el.scrollWidth / 3;
-    if (el.scrollLeft >= oneSet * 2) {
-      el.scrollLeft -= oneSet;
-    } else if (el.scrollLeft < oneSet * 0.5) {
-      el.scrollLeft += oneSet;
-    }
-  };
-
-  // Start in the middle set so we can scroll both directions
-  useEffect(() => {
-    const el = track.current;
-    if (!el) return;
-    requestAnimationFrame(() => {
-      const oneSet = el.scrollWidth / 3;
-      el.scrollLeft = oneSet;
-    });
+    const measure = () => {
+      const w = el.clientWidth;
+      if (w > 0) setWidth(w);
+    };
+    measure();
+    const raf = requestAnimationFrame(measure);
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+    };
   }, []);
 
-  // Auto-slide
+  // Turn on animation once we have a real width
   useEffect(() => {
-    if (!autoPlay || paused) return;
-    const id = setInterval(() => scrollBy(1), interval);
+    if (width > 0) {
+      const id = requestAnimationFrame(() => setAnimate(true));
+      return () => cancelAnimationFrame(id);
+    }
+  }, [width]);
+
+  // Reset to middle copy when the data changes
+  useEffect(() => {
+    setAnimate(false);
+    setIndex(n > 1 ? n : 0);
+    const id = requestAnimationFrame(() =>
+      requestAnimationFrame(() => setAnimate(true))
+    );
+    return () => cancelAnimationFrame(id);
+  }, [n]);
+
+  const go = useCallback((dir) => setIndex((i) => i + dir), []);
+
+  // Silent jump back to the middle set (copies are identical)
+  const settle = useCallback(() => {
+    if (!loop) return;
+    const jump = (i) => {
+      setAnimate(false);
+      setIndex(i);
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => setAnimate(true))
+      );
+    };
+    if (index >= 2 * n) jump(index - n);
+    else if (index < n) jump(index + n);
+  }, [index, loop, n]);
+
+  const onTransitionEnd = (e) => {
+    if (e.target === e.currentTarget && e.propertyName === "transform") settle();
+  };
+
+  // Autoplay
+  useEffect(() => {
+    if (!autoPlay || !loop || paused || prefersReducedMotion()) return;
+    const id = setInterval(() => {
+      if (!document.hidden) go(1);
+    }, AUTOPLAY_MS);
     return () => clearInterval(id);
-  }, [autoPlay, paused, interval]);
+  }, [autoPlay, loop, paused, go]);
 
-  // Track active card + run loop normalization on every scroll
-  useEffect(() => {
-    const el = track.current;
-    if (!el) return;
+  // Swipe
+  const onPointerDown = (e) => {
+    swipeRef.current = e.clientX;
+    setPaused(true);
+  };
+  const endSwipe = (e) => {
+    if (swipeRef.current != null && e) {
+      const dx = e.clientX - swipeRef.current;
+      if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1);
+    }
+    swipeRef.current = null;
+    setPaused(false);
+  };
 
-    const onScroll = () => {
-      normalize();
+  if (!n) return null;
 
-      const cards = Array.from(el.children);
-      const center = el.scrollLeft + el.clientWidth / 2;
-      let closest = 0;
-      let minDist = Infinity;
-      cards.forEach((card, i) => {
-        const cardCenter = card.offsetLeft + card.offsetWidth / 2;
-        const d = Math.abs(cardCenter - center);
-        if (d < minDist) {
-          minDist = d;
-          closest = i;
-        }
-      });
-      setActiveIndex(closest % realCount);
-    };
+  // Card width — safe fallback so cards render immediately
+  const cardW =
+    width === 0
+      ? 300
+      : width < 640
+      ? width * 0.78
+      : width < 1024
+      ? width * 0.6
+      : Math.min(width * 0.42, 640);
 
-    onScroll();
-    el.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    return () => {
-      el.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-    };
-  }, [realCount]);
+  const x = width === 0 ? 0 : width / 2 - cardW / 2 - index * (cardW + GAP);
 
   return (
     <section className="relative overflow-hidden py-12 lg:py-20">
+      {/* Watermark — unchanged */}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-4 -translate-x-1/2 select-none whitespace-nowrap font-serif text-[18vw] font-bold leading-none tracking-tight text-ink/[0.05] lg:top-8 lg:text-[14rem]"
+        className="pointer-events-none absolute left-1/2 top-16 -translate-x-1/2 select-none whitespace-nowrap font-sans text-[16vw] font-bold leading-none text-[#4a5a85]/[0.07] sm:text-[11vw] lg:top-20 2xl:text-[12rem]"
       >
         LEVELLINE
       </span>
 
-      <div className="container-x relative">
-        <div className="mx-auto max-w-3xl text-center">
-          <span className="inline-block rounded-full border border-border px-3 py-1 font-sans text-[10px] font-medium uppercase tracking-[0.2em] text-[#6b6b6b]">
-            Testimonials
+      {/* Heading — unchanged */}
+      <div className="container-x relative text-center">
+        <Reveal variant="fade">
+          <span className="inline-block rounded-full bg-[#f6f3ee] px-4 py-1.5 font-sans text-xs font-semibold uppercase tracking-wide text-[#6b6b6b]">
+            {badge}
           </span>
-          <h2 className="mt-6 font-sans text-2xl font-medium text-[#6b6b6b] lg:text-4xl">
-            Master Craftsmanship &amp; Unmatched Experience
-          </h2>
-          <p className="mx-auto mt-4 max-w-2xl font-sans text-sm leading-relaxed text-[#808080] lg:text-base">
-            Discover how Levelline delivers bespoke excellence through flawless fit,
-            premium fabrics, and personalized luxury tailored specifically for our
-            discerning global clients.
-          </p>
-        </div>
+        </Reveal>
+        <Reveal delay={120} className="mt-6">
+          <SectionHeading title={title} subtitle={subtitle} />
+        </Reveal>
+      </div>
 
-        <div className="mt-10 flex items-center justify-between gap-4 lg:mt-14">
-          <Arrow dir={-1} onClick={() => scrollBy(-1)} />
-          <Arrow dir={1} onClick={() => scrollBy(1)} />
-        </div>
-
+      {/* Carousel — full-width viewport so neighbours peek in */}
+      <div
+        ref={viewportRef}
+        role="region"
+        aria-roledescription="carousel"
+        aria-label="Testimonials"
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+        onPointerDown={onPointerDown}
+        onPointerUp={endSwipe}
+        onPointerCancel={() => endSwipe(null)}
+        onPointerLeave={() => endSwipe(null)}
+        className="mt-10 select-none overflow-hidden py-10 lg:mt-14 lg:py-14 [touch-action:pan-y]"
+      >
         <div
-          ref={track}
-          onMouseEnter={() => pauseOnHover && setPaused(true)}
-          onMouseLeave={() => pauseOnHover && setPaused(false)}
-          onTouchStart={() => setPaused(true)}
-          onTouchEnd={() => setPaused(false)}
-          className="no-scrollbar mt-6 flex snap-x snap-mandatory items-stretch gap-6 overflow-x-auto pb-4"
+          onTransitionEnd={onTransitionEnd}
+          className="flex items-stretch will-change-transform"
+          style={{
+            transform: `translate3d(${x}px, 0, 0)`,
+            transition:
+              animate && !prefersReducedMotion()
+                ? "transform 700ms cubic-bezier(0.22, 1, 0.36, 1)"
+                : "none",
+          }}
         >
-          {items.map((t, i) => {
-            const active = i % realCount === activeIndex;
+          {slides.map((t, i) => {
+            const active = i === index;
+            const isClone = loop && (i < n || i >= 2 * n);
             return (
               <figure
-                key={`${t.name}-${i}`}
-                className={`shrink-0 basis-[85%] snap-center rounded-lg p-8 transition-all duration-700 ease-in-out sm:basis-[calc(50%-12px)] lg:basis-[calc((100%-48px)/3)] lg:p-10 ${
-                  active ? "scale-105 bg-[#F6F3EE] shadow-md" : "scale-100 bg-white shadow-sm"
+                key={i}
+                aria-hidden={isClone || undefined}
+                className={`flex shrink-0 flex-col items-center rounded-lg border p-6 text-center transition-[transform,background-color,border-color,box-shadow] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] sm:p-8 lg:p-10 ${
+                  active
+                    ? "z-10 scale-[1.04] border-transparent bg-[#f6f3ee] shadow-md"
+                    : "scale-100 border-border bg-white shadow-sm"
                 }`}
+                style={{ width: cardW, marginRight: GAP }}
               >
-                <blockquote className="min-h-[7rem] font-sans text-base leading-relaxed text-[#808080]">
-                  {t.text}
-                </blockquote>
-                <figcaption className="mt-8 flex items-center gap-4">
-                  <img src={t.avatar} alt="" loading="lazy" className="size-14 shrink-0 rounded-full object-cover lg:size-16" />
+                {t.title && (
+                  <h3 className={`${TYPE.h3} mb-4`}>{t.title}</h3>
+                )}
+                <blockquote className={`flex-1 ${TYPE.p}`}>{t.text}</blockquote>
+
+                <figcaption
+                  className={`mt-6 inline-flex items-center gap-3 rounded-lg border px-4 py-3 text-left lg:mt-8 ${
+                    active
+                      ? "border-transparent bg-[#f3ecdf]"
+                      : "border-border/60 bg-transparent"
+                  }`}
+                >
+                  <Avatar src={t.avatar} />
                   <div>
-                    <p className="font-sans text-lg font-medium text-[#6b6b6b] lg:text-md">{t.name}</p>
-                    <p className="mt-1 font-sans text-sm leading-relaxed text-[#808080]">{t.role}</p>
-                    <div className="mt-2"><Stars /></div>
+                    <p className="font-sans text-sm font-medium text-[#6b6b6b]">
+                      {t.name}
+                    </p>
+                    <p className="font-sans text-sm text-[#808080]">{t.role}</p>
+                    <div className="mt-1">
+                      <Stars rating={t.rating ?? 5} />
+                    </div>
                   </div>
                 </figcaption>
               </figure>

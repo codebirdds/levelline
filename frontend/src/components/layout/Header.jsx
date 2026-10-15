@@ -1,15 +1,32 @@
 import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { ROUTES } from "../../routes/routePaths";
 import { NAV_LEFT, NAV_RIGHT, BOOK_CTA } from "../../features/home/content";
 import MobileMenu from "./MobileMenu";
 import SmartLink from "../common/SmartLink";
 import logo from "../../assets/images/LandingPage/Header/levelin.png";
+import { selectUser } from "../../features/auth/authSlice";
 
 const linkCls =
   "font-sans text-[10px] font-medium uppercase tracking-wide transition";
 
+const isExternal = (href) => !href || href.startsWith("#") || /^https?:/.test(href);
+
+// Renders <Link> for internal paths ("/about"), <SmartLink> for "#..." or "http..."
+const NavLink = ({ href, className, children }) =>
+  isExternal(href) ? (
+    <SmartLink href={href} className={className}>
+      {children}
+    </SmartLink>
+  ) : (
+    <Link to={href} className={className}>
+      {children}
+    </Link>
+  );
+
 export default function Header({ scroll }) {
+  const user = useSelector(selectUser);
   const [scrolled, setScrolled] = useState(scroll);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -20,8 +37,9 @@ export default function Header({ scroll }) {
       const y = window.scrollY;
 
       if (y < 40) {
-        if(!scroll) {
-        setScrolled(false);}
+        if (!scroll) {
+          setScrolled(false);
+        }
       } else if (y > lastY) {
         setScrolled(false);
       } else {
@@ -46,12 +64,10 @@ export default function Header({ scroll }) {
               : "absolute bg-transparent text-cream"
           }`}
       >
-        {/* Gradient overlay — only when NOT scrolled */}
         {!scrolled && (
           <div className="absolute inset-0 z-0 bg-gradient-to-b from-black/60 via-black/25 to-transparent pointer-events-none" />
         )}
 
-        {/* Content — above the overlay */}
         <div className="container-x relative z-10 flex h-full items-center">
           <button
             onClick={() => setMenuOpen(true)}
@@ -65,7 +81,7 @@ export default function Header({ scroll }) {
 
           <nav className="hidden flex-1 justify-end gap-10 pr-10 lg:flex">
             {NAV_LEFT.map((l) => (
-              <SmartLink
+              <NavLink
                 key={l.label}
                 href={l.href}
                 className={`${linkCls} ${
@@ -73,7 +89,7 @@ export default function Header({ scroll }) {
                 }`}
               >
                 {l.label}
-              </SmartLink>
+              </NavLink>
             ))}
           </nav>
 
@@ -90,7 +106,7 @@ export default function Header({ scroll }) {
           <div className="hidden flex-1 items-center justify-between pl-10 lg:flex">
             <nav className="flex gap-10">
               {NAV_RIGHT.map((l) => (
-                <SmartLink
+                <NavLink
                   key={l.label}
                   href={l.href}
                   className={`${linkCls} ${
@@ -98,19 +114,31 @@ export default function Header({ scroll }) {
                   }`}
                 >
                   {l.label}
-                </SmartLink>
+                </NavLink>
               ))}
             </nav>
-            <SmartLink
-              href={BOOK_CTA.href}
-              className={`rounded-sm border-[1px] px-3 py-2 font-sans text-[9.5px] ${!scrolled ? "mt-4" : ""} font-medium uppercase transition ${
-                scrolled
-                  ? "border-[#6b6b6b] text-[#6b6b6b] hover:bg-black hover:text-white"
-                  : "border-cream text-cream hover:bg-cream hover:text-ink"
-              }`}
-            >
-              {BOOK_CTA.label}
-            </SmartLink>
+            <div className="flex items-center gap-3">
+              {/* {user?.role === "user" && (
+                <Link
+                  to={ROUTES.TRACK_ORDER}
+                  className={`font-sans text-[9.5px] font-medium uppercase tracking-wide transition ${
+                    scrolled ? "text-[#6b6b6b] hover:text-black" : "text-cream hover:text-gold"
+                  }`}
+                >
+                  Track order
+                </Link>
+              )} */}
+              <SmartLink
+                href={BOOK_CTA.href}
+                className={`rounded-sm border-[1px] px-3 py-2 font-sans text-[9.5px] ${!scrolled ? "mt-4" : ""} font-medium uppercase transition ${
+                  scrolled
+                    ? "border-[#6b6b6b] text-[#6b6b6b] hover:bg-black hover:text-white"
+                    : "border-cream text-cream hover:bg-cream hover:text-ink"
+                }`}
+              >
+                {BOOK_CTA.label}
+              </SmartLink>
+            </div>
           </div>
 
           <span className="w-8 lg:hidden" aria-hidden="true" />

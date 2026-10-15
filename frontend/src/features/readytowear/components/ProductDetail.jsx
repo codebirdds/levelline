@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useLocation, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import { Reveal } from "../../../components/animation";
 import { formatCurrency } from "../../../utils/formatCurrency";
 import { ROUTES } from "../../../routes/routePaths";
 import { getReadyToWearBySlug } from "../mediators";
 import { addCartThunk } from "../../cart/cartSlice";
 import { toast } from "react-hot-toast";
-import { useDispatch } from "react-redux";
 import SimpleHeader from "../../../components/layout/SimpleHeader";
+
+// ── Auth: your slice exports selectUser (not selectAuthUser)
+import { selectUser } from "../../auth/authSlice";
 
 const COLOR_SWATCH = {
   Brown: "#6b4a2a",
@@ -65,6 +68,9 @@ export default function ProductDetail() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  // ── Auth user (null when logged out)
+  const user = useSelector(selectUser);
+
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedVariantId, setSelectedVariantId] = useState(null);
@@ -73,7 +79,11 @@ export default function ProductDetail() {
   const [pincode, setPincode] = useState("");
   const [wishlisted, setWishlisted] = useState(false);
 
-  // product passed from card -> use it. otherwise fetch (hard refresh / direct link)
+  // ─────────────────────────────────────────────────────────
+  // Load product
+  //  • If navigated from a card, product is in location.state
+  //  • If hard refresh / direct URL, fetch by slug
+  // ─────────────────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
     const stateProduct = location.state?.product;
@@ -86,9 +96,7 @@ export default function ProductDetail() {
       setProduct(stateProduct);
       setSelectedVariantId(stateProduct.variants?.[0]?.id ?? null);
       setLoading(false);
-      return () => {
-        cancelled = true;
-      };
+      return () => { cancelled = true; };
     }
 
     setLoading(true);
@@ -101,11 +109,11 @@ export default function ProductDetail() {
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
-    return () => {
-      cancelled = true;
-    };
+
+    return () => { cancelled = true; };
   }, [slug, location.state?.product]);
 
+  // Scroll to top on slug change
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [slug]);
@@ -130,11 +138,60 @@ export default function ProductDetail() {
 
   const sizes = activeVariant?.sizes || [];
 
+  // Reset size when switching variant
   useEffect(() => {
     setSelectedImage(0);
     setSelectedSize(null);
   }, [activeVariant?.id]);
 
+  // ─────────────────────────────────────────────────────────
+  // Add to cart / Buy Now
+  //   • Not logged in → /login with `from` + `intent`
+  //   • Logged in → add to cart; if buyNow, go to /checkout
+  // ─────────────────────────────────────────────────────────
+  const handleAddToCart = async (buyNow = false) => {
+    if (!selectedSize) {
+      toast.error("Please select a size");
+      return;
+    }
+
+    if (!user) {
+      navigate(ROUTES.LOGIN, {
+        state: {
+          from: { pathname: location.pathname },
+          intent: buyNow ? "buy" : "add",
+        },
+        replace: false,
+      });
+      return;
+    }
+
+    if (!activeVariant) {
+      toast.error("Product variant unavailable");
+      return;
+    }
+
+    try {
+      await dispatch(
+        addCartThunk({
+          product_id: product.id,
+          product_variant_id: activeVariant.id,
+          size: selectedSize,
+          quantity: 1,
+        })
+      ).unwrap();
+
+      toast.success("Added to bag");
+
+      if (buyNow) navigate(ROUTES.CHECKOUT);
+    } catch (err) {
+      toast.error(err || "Failed to add to cart");
+    }
+  };
+
+  // ─────────────────────────────────────────────────────────
+  // Loading / not-found
+  // ─────────────────────────────────────────────────────────
   if (loading) {
     return (
       <>
@@ -172,32 +229,11 @@ export default function ProductDetail() {
   const price = sale ? product.discount_price : product.price;
   const mrp = sale ? product.price : null;
 
-  const handleAddToCart = async (buyNow = false) => {
-    if (!selectedSize) return;
-    if (!activeVariant) {
-      toast.error("Product variant unavailable");
-      return;
-    }
-    try {
-      await dispatch(
-        addCartThunk({
-          product_id: product.id,
-          product_variant_id: activeVariant.id,
-          size: selectedSize,
-          quantity: 1,
-        })
-      ).unwrap();
-      toast.success("Added to bag");
-      if (buyNow) navigate(ROUTES.CHECKOUT);
-    } catch (err) {
-      toast.error(err || "Failed to add to cart");
-    }
-  };
-
   return (
     <>
       <SimpleHeader />
       <main className="bg-white">
+        {/* Breadcrumb */}
         <div className="container-x pt-4 lg:pt-5">
           <nav className="font-sans text-xs text-[#808080] lg:text-sm">
             <Link to={ROUTES.HOME} className="transition hover:text-[#663f29]">Home</Link>
@@ -210,6 +246,8 @@ export default function ProductDetail() {
 
         <div className="container-x pb-10">
           <div className="mt-4 grid gap-8 lg:mt-5 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-10 xl:grid-cols-[minmax(0,1fr)_440px] xl:gap-14">
+
+            {/* ─── LEFT: gallery ─── */}
             <Reveal
               variant="fade"
               className="grid grid-cols-[minmax(0,1fr)_68px] gap-3 sm:grid-cols-[minmax(0,1fr)_84px] lg:h-[560px] lg:grid-cols-[minmax(0,1fr)_96px] lg:gap-4"
@@ -244,7 +282,9 @@ export default function ProductDetail() {
               </div>
             </Reveal>
 
+            {/* ─── RIGHT: info + actions ─── */}
             <Reveal delay={120} className="flex flex-col gap-3">
+              {/* Info card */}
               <div className="border border-border bg-white p-5 lg:p-6">
                 <div className="flex items-start justify-between gap-4">
                   <h1 className="font-sans text-lg font-medium text-[#414141] lg:text-xl">
@@ -285,6 +325,7 @@ export default function ProductDetail() {
 
                 <div className="mt-4 h-px bg-border" />
 
+                {/* Color variants */}
                 {variants.length > 0 && (
                   <div className="mt-4">
                     <div className="flex items-center justify-between">
@@ -323,6 +364,7 @@ export default function ProductDetail() {
                   </div>
                 )}
 
+                {/* Sizes */}
                 <div className="mt-4">
                   <div className="flex items-center justify-between">
                     <p className="font-sans text-xs uppercase tracking-wide text-[#808080]">Size</p>
@@ -360,6 +402,7 @@ export default function ProductDetail() {
 
                 <div className="mt-4 h-px bg-border" />
 
+                {/* Pincode */}
                 <div className="mt-4">
                   <p className="font-sans text-sm text-[#808080]">
                     Enter Pincode To Check Delivery Date
@@ -386,6 +429,7 @@ export default function ProductDetail() {
                 </div>
               </div>
 
+              {/* Actions card */}
               <div className="border border-border bg-white p-3">
                 <button
                   disabled={!selectedSize}
@@ -410,6 +454,7 @@ export default function ProductDetail() {
             </Reveal>
           </div>
 
+          {/* Accordions */}
           <div className="mt-6 border-t border-border">
             <Accordion title="Product Details and Overview" defaultOpen>
               <p className="capitalize">

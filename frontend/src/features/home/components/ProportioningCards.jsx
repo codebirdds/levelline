@@ -1,9 +1,14 @@
+import { Reveal, ImageReveal, Stagger } from "../../../components/animation";
 import { PROPORTION_CARDS } from "../content";
 
 export default function ProportioningCards() {
   return (
-    <section className="container-x py-10">
-      <div className="grid gap-4 lg:grid-cols-2 lg:gap-2">
+    <section className="container-x py-10 lg:py-14">
+      <Stagger
+        className="grid gap-4 lg:grid-cols-2 lg:gap-2"
+        step={150}
+        delay={0}
+      >
         {PROPORTION_CARDS.map((card) => (
           <div
             key={card.title}
@@ -31,7 +36,7 @@ export default function ProportioningCards() {
             </div>
           </div>
         ))}
-      </div>
+      </Stagger>
     </section>
   );
 }

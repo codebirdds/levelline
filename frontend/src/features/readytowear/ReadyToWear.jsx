@@ -2,7 +2,8 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchReadyToWearThunk } from "./readyToWearThunks";
 import {
-  selectVisibleRtw, selectRtwLoading, selectRtwError, selectRtwCategory, selectRtwSort,
+  selectVisibleRtw, selectRtwLoading, selectRtwError,
+  selectRtwCategory, selectRtwCategoryId, selectRtwSort,
 } from "./readyToWearSlice";
 import RtwHero from "./components/RtwHero";
 import RtwIntro from "./components/RtwIntro";
@@ -24,10 +25,14 @@ export default function ReadyToWear() {
   const products = useSelector(selectVisibleRtw);
   const loading = useSelector(selectRtwLoading);
   const error = useSelector(selectRtwError);
-  const category = useSelector(selectRtwCategory);
+  const category = useSelector(selectRtwCategory);       // display name
+  const category_id = useSelector(selectRtwCategoryId);  // ← id passed to API
   const sort = useSelector(selectRtwSort);
 
-  useEffect(() => { dispatch(fetchReadyToWearThunk()); }, [dispatch]);
+  // Refetch when category_id or sort changes
+  useEffect(() => {
+    dispatch(fetchReadyToWearThunk({ category_id, sort }));
+  }, [dispatch, category_id, sort]);
 
   const editorial = category === "ALL" && sort === "featured";
 
@@ -43,8 +48,11 @@ export default function ReadyToWear() {
         ) : error ? (
           <p className="px-4 py-24 text-center font-sans text-danger">{error}</p>
         ) : (
-          // key => grid re-plays its reveal animation when the category/sort changes
-          <ProductGrid key={`${category}-${sort}`} products={products} editorial={editorial} />
+          <ProductGrid
+            key={`${category_id ?? "all"}-${sort}`}
+            products={products}
+            editorial={editorial}
+          />
         )}
       </section>
 

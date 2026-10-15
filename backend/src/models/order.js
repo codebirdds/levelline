@@ -113,7 +113,7 @@ module.exports = (sequelize, DataTypes) => {
             payment_method: {
                 type: DataTypes.ENUM('cashfree', 'cod'),
                 allowNull: false,
-                defaultValue: 'cashfree'
+                defaultValue: 'cod'
             },
 
             notes: {

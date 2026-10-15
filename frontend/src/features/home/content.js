@@ -1,4 +1,8 @@
 // Static landing-page copy + image paths. Swap for a mediator later if it moves to a CMS/API.
+import { ROUTES } from "../../routes/routePaths";
+
+
+
 const img = (name) => `/images/home/${name}`;
 import RTW from "./Assets/RTW.png";
 import MTM from "./Assets/MTM.png";
@@ -18,11 +22,12 @@ import HeroVIdeo from "./Assets/HeroVideo.mp4";
 import defineFit from "./Assets/defineFit.mp4";
 export const NAV_LEFT = [
   { label: "Custom Clothing", href: "#custom" },
-  { label: "Fabrics", href: "#fabrics" },
+  { label: "Fabrics", href: ROUTES.FABRIC },
 ];
+
 export const NAV_RIGHT = [
-  { label: "Services", href: "#services" },
-  { label: "About Us", href: "#about" },
+  { label: "Services", href: ROUTES.READY_TO_WEAR },
+  { label: "About Us", href: ROUTES.ABOUT },
 ];
 export const BOOK_CTA = { label: "Book an appointment", href: "#services" }; // TODO: booking route
 
@@ -79,23 +84,61 @@ export const VALUE_PROPS = [
 export const FIT = {
   title: "Defining Your Fit",
   image: img("fit.jpg"),
-  video: {defineFit}, // optional – remove to use image only
+  video: defineFit, // optional – remove to use image only
   text: "The canvas between your lapel is not just a lining; it is the soul of a suit. Hand-padded by our tailors, it allows the garment to shape perfectly to your body over time. It is a slow, methodical technique that defines a true bespoke suit. Experience the difference a dedicated fit makes.",
   cta: "Explore the craftsmanship",
   href: "#",
 };
 
 export const SHOP_OPTIONS = [
-  { title: "Home Consultation", text: "Personalized fitting and curated fabric selections, brought directly to your home or office.", cta: "Book Home Visit", image: img("shop-home.jpg"), href: "#" },
-  { title: "Visit Our Atelier", text: "Experience our private studio, explore fine imported fabrics, and consult with master tailors.", cta: "View Atelier Location", image: img("shop-atelier.jpg"), href: "#" },
-  { title: "Virtual Fitting & Styling", text: "Connect live with our stylists from anywhere to discuss custom cuts and sartorial guidance.", cta: "Schedule Video Call", image: img("shop-virtual.jpg"), href: "#" },
+  {
+    title: "Home Consultation",
+    text: "Personalized fitting and curated fabric selections, brought directly to your home or office.",
+    cta: "Book Home Visit",
+    image: RTW2,
+    href: "#",
+  },
+  {
+    title: "Visit Our Atelier",
+    text: "Experience our private studio, explore fine imported fabrics, and consult with master tailors.",
+    cta: "View Atelier Location",
+    image: step5,
+    href: "#",
+  },
+  {
+    title: "Virtual Fitting & Styling",
+    text: "Connect live with our stylists from anywhere to discuss custom cuts and sartorial guidance.",
+    cta: "Schedule Video Call",
+    image: MTM2,
+    href: "#",
+  },
 ];
-
 // Placeholder copy from the Figma file – replace with real reviews.
 export const TESTIMONIALS = [
-  { name: "Serhiy Hipskyy", role: "CEO Universal", avatar: img("avatar-1.jpg"), text: "Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus." },
-  { name: "Justus Menke", role: "CEO Eronaman", avatar: img("avatar-2.jpg"), text: "Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus." },
-  { name: "Britain Eriksen", role: "CEO Universal", avatar: img("avatar-3.jpg"), text: "Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus." },
+  {
+    title: "Fabric quality is absolute perfection",
+    name: "Marcus Vance",
+    role: "Managing Director, Dubai & London",
+    avatar: img("avatar-1.jpg"),
+    text: "My bespoke suit remotely from Dubai was a seamless experience. The team guided me through every detail, from selecting the wool to personalizing the inner lining and lapel cuts. The measurement and master tailoring surpassed all my expectations — the suit fits like a second skin: effortless, structured, and commanding presence in every boardroom meeting.",
+    rating: 5,
+  },
+  {
+    title: "Uncompromising luxury & master craftsmanship",
+    name: "Rohan Kapoor",
+    role: "Founder & CEO, Mumbai",
+    avatar: img("avatar-2.jpg"),
+    text: "Finding a tailor that understands modern sartorial aesthetics while preserving classic bespoke heritage is rare. Levelline's attention to detail is remarkable. The drape of the cashmere blazer, the hand-finished stitching, and the personalized consultation made the entire journey truly luxurious. It's easily the most comfortable and well-fitted garment in my wardrobe.",
+    rating: 5,
+  },
+  {
+    title: "A true benchmark in international bespoke",
+    name: "Alexander Sterling",
+    role: "Private Equity Partner, Geneva",
+    avatar: img("avatar-3.jpg"),
+    text: "As someone who travels frequently for business, I value consistency above all. Levelline combines durability, comfort, and timeless elegance delivered on every front. From the initial measurement to the final delivery, their transparency and customer service are first class. The silhouette is immaculate, and I will definitely return for my next collection with them.",
+    rating: 5,
+  },
 ];
 
 export const SUPPORT_IMAGES = { arch: img("support-arch.jpg"), wide: img("support-wide.jpg") };
