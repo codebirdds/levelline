@@ -146,6 +146,8 @@ exports.adminUpdateStatus = async (req, res) => {
       message: error.message
     });
   }
+}
+
 
 
   // ADMIN: MARK AS ORDER STATUS
@@ -176,4 +178,3 @@ exports.adminUpdateStatus = async (req, res) => {
       });
     }
   }
-}

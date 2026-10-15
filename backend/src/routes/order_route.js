@@ -34,6 +34,17 @@ router.patch(
   orderController.adminUpdateStatus
 );
 
+console.log('authMiddleware:', typeof authMiddleware);
+console.log('roleMiddleware:', typeof roleMiddleware);
+console.log(
+  'roleMiddleware result:',
+  typeof roleMiddleware('admin')
+);
+console.log(
+  'markAsDeliver:',
+  typeof orderController.markAsDeliver
+);
+
 router.patch(
   '/admin/deliver/:orderId',
   authMiddleware,
