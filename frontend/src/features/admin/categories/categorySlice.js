@@ -17,8 +17,8 @@ const slice = createSlice({
     fetchSuccess:(s, { payload }) => { s.loading = false; s.items = payload; },
     fetchFailure:(s, { payload }) => { s.loading = false; s.error = payload; },
 
-    submitStart: () => {},
-    submitEnd:   () => {},
+    submitStart: (s) => { s.submitting = true; },
+    submitEnd:   (s) => { s.submitting = false; },
 
     openForm:  (s, { payload = null }) => { s.formOpen = true; s.editing = payload; },
     closeForm: (s) => { s.formOpen = false; s.editing = null; },
@@ -39,6 +39,7 @@ export const {
 export const selectCategories     = (s) => s.categories.items;
 export const selectCategoryLoading = (s) => s.categories.loading;
 export const selectCategoryFormOpen = (s) => s.categories.formOpen;
+export const selectCategorySubmitting = (s) => s.categories.submitting;
 export const selectCategoryEditing  = (s) => s.categories.editing;
 
 export default slice.reducer;

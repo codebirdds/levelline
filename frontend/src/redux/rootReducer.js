@@ -10,6 +10,8 @@ import readyToWearReducer     from "../features/readytowear/readyToWearSlice";
 import checkoutReducer from "../features/checkout/checkoutSlice";
 import fabricReducer from "../features/fabric/fabricSlice";
 import trackOrderReducer from "../features/trackOrder/trackOrderSlice";
+import contactReducer from "../features/contact/contactSlice";
+import adminContactReducer from "../features/admin/contacts/adminContactSlice";
 
 const rootReducer = combineReducers({
   auth:          authReducer,
@@ -23,6 +25,7 @@ const rootReducer = combineReducers({
   checkout:        checkoutReducer,
   fabric: fabricReducer,
   trackOrder: trackOrderReducer,
+  contact: contactReducer,
 });
 
 export default rootReducer;

@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-hot-toast";
 import SimpleHeader from "../../components/layout/SimpleHeader";
-import Spinner from "../../components/common/Spinner";
 import OrderCard from "./components/OrderCard";
 import {
   clearSelectedOrder,
@@ -10,8 +9,8 @@ import {
   selectMyOrdersError,
   selectMyOrdersLoading,
   selectTrackedOrder,
-  selectTrackedOrderError,
   selectTrackedOrderLoading,
+  selectTrackedOrderError,
 } from "./trackOrderSlice";
 import {
   fetchMyOrderThunk,
@@ -93,7 +92,10 @@ export default function TrackOrder() {
 
         {detailLoading && (
           <div className="mb-5 border border-border bg-white p-5">
-            <Spinner full />
+            <div className="flex flex-col items-center justify-center gap-4">
+              <div className="h-8 w-8 rounded-full border-2 border-brand border-t-transparent animate-spin" />
+              <p className="text-sm text-[#808080]">Loading order details…</p>
+            </div>
           </div>
         )}
 
@@ -144,7 +146,10 @@ export default function TrackOrder() {
 
         {loading ? (
           <div className="border border-border bg-white p-10">
-            <Spinner full />
+            <div className="flex flex-col items-center justify-center gap-4">
+              <div className="h-8 w-8 rounded-full border-2 border-brand border-t-transparent animate-spin" />
+              <p className="text-sm text-[#808080]">Loading your orders…</p>
+            </div>
           </div>
         ) : orders.length === 0 ? (
           <div className="border border-border bg-white px-5 py-14 text-center">

@@ -23,7 +23,7 @@ export default function HeroBanner() {
         <h1 className="font-serif text-3xl uppercase leading-[0.95] tracking-tight text-cream/95 lg:text-4xl">
           The <br /> Art of Style
         </h1>
-        <p className="mt-1 max-w-xl font-serif text-base text-cream/85 lg:mt-3 lg:text-sm">
+        <p className="mt-2 max-w-xl font-serif text-base text-cream/85 lg:mt-3 lg:text-sm">
           {HERO.tagline}
         </p>
       </div>

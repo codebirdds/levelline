@@ -8,7 +8,7 @@ import { fetchCategoriesThunk, deleteCategoryThunk } from "./categoryThunks";
 import CategoryTable from "./components/CategoryTable";
 import CategoryFormModal from "./components/CategoryFormModal";
 import ConfirmDialog from "../../../components/common/ConfirmDialog";
-import Spinner from "../../../components/common/Spinner";
+
 
 export default function CategoriesPage() {
   const dispatch = useDispatch();
@@ -45,7 +45,14 @@ export default function CategoriesPage() {
       </div>
 
       <div className="bg-surface border border-border rounded-lg">
-        {loading ? <Spinner full /> : <CategoryTable items={items} onEdit={(c) => dispatch(openForm(c))} onDelete={setDeleting} />}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center gap-4 py-12">
+            <div className="h-8 w-8 rounded-full border-2 border-brand border-t-transparent animate-spin" />
+            <p className="text-sm text-muted">Loading categories…</p>
+          </div>
+        ) : (
+          <CategoryTable items={items} onEdit={(c) => dispatch(openForm(c))} onDelete={setDeleting} />
+        )}
       </div>
 
       <CategoryFormModal />

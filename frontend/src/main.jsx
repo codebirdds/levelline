@@ -17,7 +17,14 @@ function Bootstrapper({ children }) {
   }, [dispatch]);
 
   if (!bootstrapped) {
-    return <div className="grid place-items-center min-h-screen">Loading…</div>;
+    return (
+      <div className="grid place-items-center min-h-screen bg-white">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-8 w-8 rounded-full border-2 border-brand border-t-transparent animate-spin" />
+          <p className="text-sm text-[#808080]">Loading…</p>
+        </div>
+      </div>
+    );
   }
   return children;
 }

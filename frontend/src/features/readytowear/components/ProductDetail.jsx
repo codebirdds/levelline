@@ -5,11 +5,9 @@ import { Reveal } from "../../../components/animation";
 import { formatCurrency } from "../../../utils/formatCurrency";
 import { ROUTES } from "../../../routes/routePaths";
 import { getReadyToWearBySlug } from "../mediators";
-import { addCartThunk,fetchCartThunk } from "../../cart/cartSlice";
+import { addCartThunk, fetchCartThunk } from "../../cart/cartSlice";
 import { toast } from "react-hot-toast";
 import SimpleHeader from "../../../components/layout/SimpleHeader";
-
-// ── Auth: your slice exports selectUser (not selectAuthUser)
 import { selectUser } from "../../auth/authSlice";
 
 const COLOR_SWATCH = {
@@ -46,7 +44,7 @@ function Accordion({ title, defaultOpen = false, children }) {
     <div className="border-b border-border">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center justify-between gap-4 py-3.5 text-left"
+        className="flex w-full items-center justify-between gap-4 py-3 text-left"
       >
         <span className="font-sans text-sm font-medium text-[#414141]">{title}</span>
         <span className={`text-lg leading-none text-[#414141] transition-transform duration-300 ${open ? "rotate-45" : ""}`}>
@@ -54,7 +52,7 @@ function Accordion({ title, defaultOpen = false, children }) {
         </span>
       </button>
       {open && (
-        <div className="pb-4 font-sans text-sm leading-relaxed text-[#808080]">
+        <div className="pb-3 font-sans text-sm leading-relaxed text-[#808080]">
           {children}
         </div>
       )}
@@ -68,7 +66,6 @@ export default function ProductDetail() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // ── Auth user (null when logged out)
   const user = useSelector(selectUser);
 
   const [product, setProduct] = useState(null);
@@ -79,11 +76,9 @@ export default function ProductDetail() {
   const [pincode, setPincode] = useState("");
   const [wishlisted, setWishlisted] = useState(false);
 
-  // ─────────────────────────────────────────────────────────
-  // Load product
-  //  • If navigated from a card, product is in location.state
-  //  • If hard refresh / direct URL, fetch by slug
-  // ─────────────────────────────────────────────────────────
+  // Validation error shown on the right panel
+  const [validationError, setValidationError] = useState("");
+
   useEffect(() => {
     let cancelled = false;
     const stateProduct = location.state?.product;
@@ -91,6 +86,7 @@ export default function ProductDetail() {
     setSelectedImage(0);
     setSelectedSize(null);
     setSelectedVariantId(null);
+    setValidationError("");
 
     if (stateProduct) {
       setProduct(stateProduct);
@@ -113,7 +109,6 @@ export default function ProductDetail() {
     return () => { cancelled = true; };
   }, [slug, location.state?.product]);
 
-  // Scroll to top on slug change
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [slug]);
@@ -138,69 +133,70 @@ export default function ProductDetail() {
 
   const sizes = activeVariant?.sizes || [];
 
-  // Reset size when switching variant
   useEffect(() => {
     setSelectedImage(0);
     setSelectedSize(null);
+    setValidationError("");
   }, [activeVariant?.id]);
 
-  // ─────────────────────────────────────────────────────────
-  // Add to cart / Buy Now
-  //   • Not logged in → /login with `from` + `intent`
-  //   • Logged in → add to cart; if buyNow, go to /checkout
-  // ─────────────────────────────────────────────────────────
-const handleAddToCart = async (buyNow = false) => {
-  if (!selectedSize) {
-    toast.error("Please select a size");
-    return;
-  }
+  // Clear the error as soon as the user picks a size
+  useEffect(() => {
+    if (selectedSize) setValidationError("");
+  }, [selectedSize]);
 
-  if (!user) {
-    navigate(ROUTES.LOGIN, {
-      state: {
-        from: { pathname: location.pathname },
-        intent: buyNow ? "buy" : "add",
-      },
-      replace: false,
-    });
-    return;
-  }
+  const handleAddToCart = async (buyNow = false) => {
+    setValidationError("");
 
-  if (!activeVariant) {
-    toast.error("Product variant unavailable");
-    return;
-  }
+    if (!selectedSize) {
+      setValidationError("Please select a size to continue.");
+      toast.error("Please select a size");
+      return;
+    }
 
-  try {
-    await dispatch(
-      addCartThunk({
-        product_id: product.id,
-        product_variant_id: activeVariant.id,
-        size: selectedSize,
-        quantity: 1,
-      })
-    ).unwrap();
+    if (!user) {
+      navigate(ROUTES.LOGIN, {
+        state: {
+          from: { pathname: location.pathname },
+          intent: buyNow ? "buy" : "add",
+        },
+        replace: false,
+      });
+      return;
+    }
 
-    // ✅ Refresh cart so the header badge + dropdown update immediately
-    dispatch(fetchCartThunk());
+    if (!activeVariant) {
+      setValidationError("This product variant is currently unavailable.");
+      return;
+    }
 
-    toast.success("Added to bag");
+    try {
+      await dispatch(
+        addCartThunk({
+          product_id: product.id,
+          product_variant_id: activeVariant.id,
+          size: selectedSize,
+          quantity: 1,
+        })
+      ).unwrap();
 
-    if (buyNow) navigate(ROUTES.CHECKOUT);
-  } catch (err) {
-    toast.error(err || "Failed to add to cart");
-  }
-};
+      dispatch(fetchCartThunk());
+      toast.success("Added to bag");
 
-  // ─────────────────────────────────────────────────────────
-  // Loading / not-found
-  // ─────────────────────────────────────────────────────────
+      if (buyNow) navigate(ROUTES.CHECKOUT);
+    } catch (err) {
+      setValidationError(
+        typeof err === "string" ? err : "Failed to add to cart. Please try again."
+      );
+      toast.error(err || "Failed to add to cart");
+    }
+  };
+
   if (loading) {
     return (
       <>
         <SimpleHeader />
         <main className="bg-white">
-          <div className="container-x py-24 text-center font-sans text-sm text-[#808080]">
+          <div className="mx-auto max-w-[1441px] px-4 py-24 text-center font-sans text-sm text-[#808080] lg:px-8">
             Loading…
           </div>
         </main>
@@ -213,7 +209,7 @@ const handleAddToCart = async (buyNow = false) => {
       <>
         <SimpleHeader />
         <main className="bg-white">
-          <div className="container-x py-24 text-center">
+          <div className="mx-auto max-w-[1441px] px-4 py-24 text-center lg:px-8">
             <p className="font-sans text-lg text-[#6b6b6b]">Product not found.</p>
             <Link
               to={ROUTES.READY_TO_WEAR}
@@ -228,16 +224,22 @@ const handleAddToCart = async (buyNow = false) => {
   }
 
   const name = product.name || product.title;
-  const sale = product.discount_price && Number(product.discount_price) > 0;
-  const price = sale ? product.discount_price : product.price;
-  const mrp = sale ? product.price : null;
+
+  // Final price = price − discount_price
+  const basePrice = Number(product.price) || 0;
+  const discountAmt = Number(product.discount_price) || 0;
+  const price =
+    discountAmt > 0 ? Math.max(basePrice - discountAmt, 0) : basePrice;
+  const mrp = discountAmt > 0 && basePrice > 0 ? basePrice : null;
+  const percentOff =
+    mrp && mrp > price ? Math.round((discountAmt / basePrice) * 100) : 0;
 
   return (
     <>
       <SimpleHeader />
       <main className="bg-white">
         {/* Breadcrumb */}
-        <div className="container-x pt-4 lg:pt-5">
+        <div className="mx-auto w-full max-w-[1441px] px-4 pt-4 lg:px-8 lg:pt-5">
           <nav className="font-sans text-xs text-[#808080] lg:text-sm">
             <Link to={ROUTES.HOME} className="transition hover:text-[#663f29]">Home</Link>
             <span className="mx-1.5">/</span>
@@ -247,13 +249,17 @@ const handleAddToCart = async (buyNow = false) => {
           </nav>
         </div>
 
-        <div className="container-x pb-10">
-          <div className="mt-4 grid gap-8 lg:mt-5 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-10 xl:grid-cols-[minmax(0,1fr)_440px] xl:gap-14">
+        {/* ✅ FIX #1: Removed `lg:h-[calc(100vh-100px)]` from this wrapper.
+            Now the wrapper grows naturally and the accordions below are part of the page flow. */}
+        <div className="mx-auto w-full max-w-[1441px] px-4 pb-10 lg:px-8">
+          {/* ✅ FIX #2: Moved the fixed viewport height onto the grid itself
+              (used 140px to leave room for breadcrumb + header). Adjust if needed. */}
+          <div className="mt-4 grid gap-6 lg:mt-5 lg:h-[calc(100vh-140px)] lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-8 xl:grid-cols-[minmax(0,1fr)_420px] xl:gap-10">
 
             {/* ─── LEFT: gallery ─── */}
             <Reveal
               variant="fade"
-              className="grid grid-cols-[minmax(0,1fr)_68px] gap-3 sm:grid-cols-[minmax(0,1fr)_84px] lg:h-[560px] lg:grid-cols-[minmax(0,1fr)_96px] lg:gap-4"
+              className="grid grid-cols-[minmax(0,1fr)_60px] gap-2.5 sm:grid-cols-[minmax(0,1fr)_76px] lg:h-full lg:grid-cols-[minmax(0,1fr)_88px] lg:gap-3"
             >
               <div className="relative aspect-[3/4] overflow-hidden bg-[#F5F1E9] lg:aspect-auto lg:h-full">
                 {images[selectedImage] ? (
@@ -269,7 +275,7 @@ const handleAddToCart = async (buyNow = false) => {
                 )}
               </div>
 
-              <div className="flex flex-col gap-2 lg:grid lg:h-full lg:grid-rows-4 lg:gap-3">
+              <div className="flex flex-col gap-2 lg:grid lg:h-full lg:grid-rows-4 lg:gap-2.5">
                 {images.map((src, i) => (
                   <button
                     key={i}
@@ -285,171 +291,170 @@ const handleAddToCart = async (buyNow = false) => {
               </div>
             </Reveal>
 
-            {/* ─── RIGHT: info + actions ─── */}
-            <Reveal delay={120} className="flex flex-col gap-3">
-              {/* Info card */}
-              <div className="border border-border bg-white p-5 lg:p-6">
-                <div className="flex items-start justify-between gap-4">
-                  <h1 className="font-sans text-lg font-medium text-[#414141] lg:text-xl">
-                    {name}
-                  </h1>
-                  <button
-                    onClick={() => setWishlisted((w) => !w)}
-                    aria-label="Add to wishlist"
-                    className={`shrink-0 transition ${
-                      wishlisted ? "text-[#663f29]" : "text-[#414141] hover:text-[#663f29]"
-                    }`}
-                  >
-                    <HeartIcon filled={wishlisted} />
-                  </button>
-                </div>
+            {/* ─── RIGHT: info + actions, flex column h-full ─── */}
+            <Reveal delay={120} className="flex min-h-0 flex-col gap-3 lg:h-full">
 
-                {product.brand && (
-                  <p className="mt-1 font-sans text-xs uppercase tracking-wide text-[#808080]">
-                    {product.brand}
-                  </p>
-                )}
-
-                <div className="mt-2">
-                  <div className="flex items-baseline gap-2">
-                    <span className="font-sans text-base font-bold text-[#414141] lg:text-lg">
-                      {formatCurrency(price)}
-                    </span>
-                    {mrp && (
-                      <span className="font-sans text-sm text-[#808080] line-through">
-                        {formatCurrency(mrp)}
-                      </span>
-                    )}
+              {/* Info card — scrolls internally if needed, never overflows parent */}
+              <div className="min-h-0 flex-1 overflow-hidden border border-border bg-white p-4 lg:p-5">
+                <div className="flex h-full flex-col">
+                  {/* Title + wishlist */}
+                  <div className="flex items-start justify-between gap-4">
+                    <h1 className="font-sans text-base font-medium text-[#414141] lg:text-lg">
+                      {name}
+                    </h1>
+                    <button
+                      onClick={() => setWishlisted((w) => !w)}
+                      aria-label="Add to wishlist"
+                      className={`shrink-0 transition ${
+                        wishlisted ? "text-[#663f29]" : "text-[#414141] hover:text-[#663f29]"
+                      }`}
+                    >
+                      <HeartIcon filled={wishlisted} />
+                    </button>
                   </div>
-                  <p className="mt-1 font-sans text-xs text-[#808080]">
-                    MRP incl. of all taxes
-                  </p>
-                </div>
 
-                <div className="mt-4 h-px bg-border" />
+                  {product.brand && (
+                    <p className="mt-1 font-sans text-[11px] uppercase tracking-wide text-[#808080]">
+                      {product.brand}
+                    </p>
+                  )}
 
-                {/* Color variants */}
-                {variants.length > 0 && (
-                  <div className="mt-4">
-                    <div className="flex items-center justify-between">
-                      <p className="font-sans text-xs uppercase tracking-wide text-[#808080]">
-                        Color
-                      </p>
-                      {activeVariant?.color && (
-                        <span className="font-sans text-xs text-[#414141]">
-                          {activeVariant.color}
+                  {/* Price */}
+                  <div className="mt-2">
+                    <div className="flex flex-wrap items-baseline gap-2">
+                      <span className="font-sans text-base font-bold text-[#414141] lg:text-lg">
+                        {formatCurrency(price)}
+                      </span>
+                      {mrp && (
+                        <span className="font-sans text-sm text-[#808080] line-through">
+                          {formatCurrency(mrp)}
+                        </span>
+                      )}
+                      {percentOff > 0 && (
+                        <span className="font-sans text-xs font-medium text-emerald-700">
+                          {percentOff}% off
                         </span>
                       )}
                     </div>
+                    <p className="mt-0.5 font-sans text-[11px] text-[#808080]">
+                      MRP incl. of all taxes
+                    </p>
+                  </div>
+
+                  <div className="mt-3 h-px bg-border" />
+
+                  {/* Color variants */}
+                  {variants.length > 0 && (
+                    <div className="mt-3">
+                      <div className="flex items-center justify-between">
+                        <p className="font-sans text-[11px] uppercase tracking-wide text-[#808080]">
+                          Color
+                        </p>
+                        {activeVariant?.color && (
+                          <span className="font-sans text-[11px] text-[#414141]">
+                            {activeVariant.color}
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {variants.map((v) => {
+                          const swatch = v.color_code || COLOR_SWATCH[v.color] || "#cccccc";
+                          const active = v.id === activeVariant?.id;
+                          return (
+                            <button
+                              key={v.id}
+                              type="button"
+                              onClick={() => setSelectedVariantId(v.id)}
+                              title={v.color}
+                              aria-label={v.color}
+                              className={`grid size-7 place-items-center rounded-sm ring-1 transition ${
+                                active ? "ring-ink" : "ring-border hover:ring-[#808080]"
+                              }`}
+                            >
+                              <span
+                                className="size-5 rounded-sm"
+                                style={{ backgroundColor: swatch }}
+                              />
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Sizes */}
+                  <div className="mt-3">
+                    <div className="flex items-center justify-between">
+                      <p className="font-sans text-[11px] uppercase tracking-wide text-[#808080]">
+                        Size
+                      </p>
+                      <button className="font-sans text-[10px] uppercase tracking-wide text-[#414141] underline underline-offset-2 transition hover:text-[#663f29]">
+                        Size Guide
+                      </button>
+                    </div>
                     <div className="mt-2 flex flex-wrap gap-2">
-                      {variants.map((v) => {
-                        const swatch = v.color_code || COLOR_SWATCH[v.color] || "#cccccc";
-                        const active = v.id === activeVariant?.id;
+                      {sizes.length === 0 && (
+                        <p className="font-sans text-xs text-[#808080]">No sizes available</p>
+                      )}
+                      {sizes.map((s) => {
+                        const out = Number(s.stock) <= 0;
+                        const active = selectedSize === s.size;
                         return (
                           <button
-                            key={v.id}
+                            key={s.sku || s.size}
                             type="button"
-                            onClick={() => setSelectedVariantId(v.id)}
-                            title={v.color}
-                            aria-label={v.color}
-                            className={`grid size-8 place-items-center rounded-sm ring-1 transition ${
-                              active ? "ring-ink" : "ring-border hover:ring-[#808080]"
+                            disabled={out}
+                            onClick={() => setSelectedSize(s.size)}
+                            className={`h-8 min-w-[36px] border px-2 font-sans text-sm transition ${
+                              active
+                                ? "border-ink bg-ink text-cream"
+                                : out
+                                ? "cursor-not-allowed border-border text-[#c4c4c4] line-through"
+                                : "border-border text-[#414141] hover:border-ink"
                             }`}
                           >
-                            <span
-                              className="size-6 rounded-sm"
-                              style={{ backgroundColor: swatch }}
-                            />
+                            {s.size}
                           </button>
                         );
                       })}
                     </div>
                   </div>
-                )}
 
-                {/* Sizes */}
-                <div className="mt-4">
-                  <div className="flex items-center justify-between">
-                    <p className="font-sans text-xs uppercase tracking-wide text-[#808080]">Size</p>
-                    <button className="font-sans text-[11px] uppercase tracking-wide text-[#414141] underline underline-offset-2 transition hover:text-[#663f29]">
-                      Size Guide
-                    </button>
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {sizes.length === 0 && (
-                      <p className="font-sans text-xs text-[#808080]">No sizes available</p>
-                    )}
-                    {sizes.map((s) => {
-                      const out = Number(s.stock) <= 0;
-                      const active = selectedSize === s.size;
-                      return (
-                        <button
-                          key={s.sku || s.size}
-                          type="button"
-                          disabled={out}
-                          onClick={() => setSelectedSize(s.size)}
-                          className={`h-9 min-w-[40px] border px-2.5 font-sans text-sm transition ${
-                            active
-                              ? "border-ink bg-ink text-cream"
-                              : out
-                              ? "cursor-not-allowed border-border text-[#c4c4c4] line-through"
-                              : "border-border text-[#414141] hover:border-ink"
-                          }`}
-                        >
-                          {s.size}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                  <div className="mt-3 h-px bg-border" />
 
-                <div className="mt-4 h-px bg-border" />
-
-                {/* Pincode */}
-                <div className="mt-4">
-                  <p className="font-sans text-sm text-[#808080]">
-                    Enter Pincode To Check Delivery Date
-                  </p>
-                  <div className="mt-2 flex">
-                    <div className="relative flex-1">
-                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#b0b0b0]">
-                        <PinIcon />
-                      </span>
-                      <input
-                        value={pincode}
-                        onChange={(e) =>
-                          setPincode(e.target.value.replace(/\D/g, "").slice(0, 6))
-                        }
-                        placeholder="Enter your shipping pincode"
-                        inputMode="numeric"
-                        className="h-10 w-full border border-border bg-white pl-9 pr-3 font-sans text-sm text-[#414141] outline-none placeholder:text-[#b0b0b0] focus:border-ink"
-                      />
-                    </div>
-                    <button className="h-10 bg-ink px-4 font-sans text-xs font-medium uppercase tracking-wide text-cream transition hover:bg-[#663f29]">
-                      Check
-                    </button>
-                  </div>
+                  {/* Pincode */}
+  
                 </div>
               </div>
 
-              {/* Actions card */}
-              <div className="border border-border bg-white p-3">
+              {/* Actions card — pinned at bottom */}
+              <div className="shrink-0 border border-border bg-white p-3">
                 <button
                   disabled={!selectedSize}
                   onClick={() => handleAddToCart(true)}
-                  className="h-12 w-full bg-ink font-sans text-sm font-medium uppercase tracking-wide text-cream transition hover:bg-[#663f29] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="h-11 w-full bg-ink font-sans text-sm font-medium uppercase tracking-wide text-cream transition hover:bg-[#663f29] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Buy Now
                 </button>
                 <button
                   disabled={!selectedSize}
                   onClick={() => handleAddToCart(false)}
-                  className="mt-2 h-12 w-full border border-ink bg-white font-sans text-sm font-medium uppercase tracking-wide text-[#414141] transition hover:bg-ink hover:text-cream disabled:cursor-not-allowed disabled:opacity-50"
+                  className="mt-2 h-11 w-full border border-ink bg-white font-sans text-sm font-medium uppercase tracking-wide text-[#414141] transition hover:bg-ink hover:text-cream disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Add to Bag
                 </button>
-                {!selectedSize && (
-                  <p className="mt-2 text-center font-sans text-xs text-[#c0392b]">
+
+                {/* Validation error — right panel, right below buttons */}
+                {validationError && (
+                  <p
+                    role="alert"
+                    className="mt-2 text-center font-sans text-xs text-[#c0392b]"
+                  >
+                    {validationError}
+                  </p>
+                )}
+                {!validationError && !selectedSize && (
+                  <p className="mt-2 text-center font-sans text-xs text-[#808080]">
                     Please select a size
                   </p>
                 )}
@@ -457,8 +462,9 @@ const handleAddToCart = async (buyNow = false) => {
             </Reveal>
           </div>
 
-          {/* Accordions */}
-          <div className="mt-6 border-t border-border">
+          {/* Accordions — right column width on lg, full width on mobile.
+              These now sit BELOW the fixed-height grid, inside normal page flow. */}
+          <div className="mt-4 border-t border-border w-full">
             <Accordion title="Product Details and Overview" defaultOpen>
               <p className="capitalize">
                 {[product.material, product.fit, activeVariant?.color]

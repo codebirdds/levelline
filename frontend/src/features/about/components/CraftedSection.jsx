@@ -1,28 +1,38 @@
 import ArrowLink from "../../../components/ui/ArrowLink";
 import { Reveal } from "../../../components/animation";
 import ServicesGrid from "./ServicesGrid";
-import { ABOUT_IMAGES } from "../content";
+import * as content from "../content";
+
+// Safe access — falls back to null if ABOUT_IMAGES isn't exported
+const ABOUT_IMAGES = content?.ABOUT_IMAGES || {};
+const heroImage = ABOUT_IMAGES.premiumFabric || null;
 
 export default function CraftedSection({ services = [] }) {
   return (
-    <section className="px-5 pb-12 pt-12 sm:px-8 lg:px-[3%] lg:pb-16 lg:pt-16">
-      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-[260px_290px_minmax(0,1fr)] lg:items-start lg:gap-8 xl:gap-10">
+    <section className="px-5 py-10 sm:px-8 lg:px-[3%] lg:py-12">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-[200px_240px_minmax(0,1fr)] lg:items-start lg:gap-6 xl:gap-8">
         {/* ── LEFT: image ── */}
         <Reveal variant="fade" className="self-start">
-          <div className="aspect-[400/500] w-full overflow-hidden bg-[#F5F1E9] lg:max-w-[260px]">
-            <img
-              src={ABOUT_IMAGES.premiumFabric}
-              alt=""
-              loading="lazy"
-              className="size-full object-cover"
-            />
+          <div className="aspect-[400/500] w-full overflow-hidden bg-[#F5F1E9] lg:max-w-[200px]">
+            {heroImage ? (
+              <img
+                src={heroImage}
+                alt=""
+                loading="lazy"
+                className="size-full object-cover"
+              />
+            ) : (
+              <div className="grid size-full place-items-center text-xs text-[#808080]">
+                No image
+              </div>
+            )}
           </div>
         </Reveal>
 
         {/* ── MIDDLE: text ── */}
-        <div className="self-start lg:pt-2">
+        <div className="self-start">
           <Reveal>
-            <h2 className="font-sans text-xl font-medium leading-snug text-[#6b6b6b] lg:text-2xl">
+            <h2 className="font-sans text-xl font-medium leading-snug text-[#6b6b6b] lg:text-[22px]">
               Crafted with Precision, <br />
               Designed for You
             </h2>

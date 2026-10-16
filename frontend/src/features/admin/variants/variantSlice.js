@@ -43,7 +43,7 @@ export const selectVariants      = (s) => s.variants.items;
 export const selectVariantLoading = (s) => s.variants.loading;
 export const selectVariantFormOpen = (s) => s.variants.formOpen;
 export const selectVariantEditing  = (s) => s.variants.editing;
-export const selectSubmitting     = (s) => s.variants.submitting;
+export const selectVariantSubmitting = (s) => s.variants.submitting;
 export const selectSelectedProductId = (s) => s.variants.selectedProductId;
 
 export default slice.reducer;

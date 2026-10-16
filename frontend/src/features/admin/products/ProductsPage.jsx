@@ -10,7 +10,7 @@ import ProductTable from "./components/ProductTable";
 import ProductFormModal from "./components/ProductFormModal";
 import VariantsModal from "./components/VariantsModal";
 import ConfirmDialog from "../../../components/common/ConfirmDialog";
-import Spinner from "../../../components/common/Spinner";
+
 
 export default function ProductsPage() {
   const dispatch = useDispatch();
@@ -58,7 +58,10 @@ export default function ProductsPage() {
 
       <div className="bg-surface border border-border rounded-lg">
         {loading ? (
-          <Spinner full />
+          <div className="flex flex-col items-center justify-center gap-4 py-12">
+            <div className="h-8 w-8 rounded-full border-2 border-brand border-t-transparent animate-spin" />
+            <p className="text-sm text-muted">Loading products…</p>
+          </div>
         ) : (
           <ProductTable
             items={items}

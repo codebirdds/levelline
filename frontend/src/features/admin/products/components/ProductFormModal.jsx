@@ -80,7 +80,7 @@ export default function ProductFormModal() {
             disabled={submitting}
             className="px-4 py-2 text-sm font-semibold bg-brand text-white rounded-md hover:bg-brand-dark disabled:opacity-60"
           >
-            {submitting ? "Saving…" : editing ? "Save Changes" : "Create"}
+            {submitting ? "Saving…" : editing ? "Update" : "Save"}
           </button>
         </>
       }

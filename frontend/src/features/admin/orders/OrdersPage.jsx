@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
 import api from "../../../api/axiosInstance";
-import Spinner from "../../../components/common/Spinner";
 import { formatCurrency } from "../../../utils/formatCurrency";
 import Button from "../../../components/common/Button";
 
@@ -408,7 +407,10 @@ export default function OrdersPage() {
 
       <div className="overflow-x-auto rounded-lg border border-border bg-surface">
         {loading ? (
-          <Spinner full />
+          <div className="flex flex-col items-center justify-center gap-4 py-12">
+            <div className="h-8 w-8 rounded-full border-2 border-brand border-t-transparent animate-spin" />
+            <p className="text-sm text-muted">Loading orders…</p>
+          </div>
         ) : !orders.length ? (
           <p className="p-8 text-center text-sm text-muted">No orders found.</p>
         ) : (

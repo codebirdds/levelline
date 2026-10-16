@@ -51,7 +51,17 @@ export default function Checkout() {
   };
 
   if (loading && !fetched) {
-    return <><SimpleHeader /><main className="bg-white"><div className="container-x py-24 text-center text-sm text-[#808080]">Loading your bag…</div></main></>;
+    return (
+      <>
+        <SimpleHeader />
+        <main className="bg-white">
+          <div className="container-x py-24 flex flex-col items-center gap-4 text-center">
+            <div className="h-8 w-8 rounded-full border-2 border-brand border-t-transparent animate-spin" />
+            <p className="text-sm text-[#808080]">Loading your bag…</p>
+          </div>
+        </main>
+      </>
+    );
   }
 
   if (order) {
@@ -111,7 +121,7 @@ export default function Checkout() {
             <OrderSummary confirmation={stage === 4} />
             <div className="flex gap-3">
               {stage > 2 && <button onClick={() => { setError(""); setStage(stage - 1); }} className="h-12 flex-1 border border-[#414141] font-sans text-sm font-medium uppercase tracking-wide text-[#414141]">Back</button>}
-              {stage < 4 ? <button onClick={next} className="h-12 flex-1 bg-ink font-sans text-sm font-medium uppercase tracking-wide text-cream transition hover:bg-[#663f29]">Continue</button> : <button onClick={placeOrder} disabled={!confirmed || submitting} className="h-12 flex-1 bg-ink font-sans text-sm font-medium uppercase tracking-wide text-cream transition hover:bg-[#663f29] disabled:cursor-not-allowed disabled:opacity-50">{submitting ? "Placing order…" : "Place COD order"}</button>}
+              {stage < 4 ? <button onClick={next} className="h-12 flex-1 bg-ink font-sans text-sm font-medium uppercase tracking-wide text-cream transition hover:bg-[#663f29]">Continue</button> : <button onClick={placeOrder} disabled={!confirmed || submitting} className="h-12 flex-1 bg-ink font-sans text-sm font-medium uppercase tracking-wide text-cream transition hover:bg-[#663f29] disabled:cursor-not-allowed disabled:opacity-50 flex items-center justify-center gap-2"><span>{submitting ? "Placing order…" : "Place COD order"}</span>{submitting && <span className="h-4 w-4 rounded-full border-2 border-cream/70 border-t-transparent animate-spin" />}</button>}
             </div>
           </div>
         </div>

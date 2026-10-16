@@ -7,13 +7,14 @@ import MobileMenu from "./MobileMenu";
 import SmartLink from "../common/SmartLink";
 import logo from "../../assets/images/LandingPage/header/levelin.png";
 import { selectUser } from "../../features/auth/authSlice";
+import BookAppointmentModal from "../../features/contact/components/BookAppointmentModal";
 
 const linkCls =
   "font-sans text-[10px] font-medium uppercase tracking-wide transition";
 
-const isExternal = (href) => !href || href.startsWith("#") || /^https?:/.test(href);
+const isExternal = (href) =>
+  !href || href.startsWith("#") || /^https?:/.test(href);
 
-// Renders <Link> for internal paths ("/about"), <SmartLink> for "#..." or "http..."
 const NavLink = ({ href, className, children }) =>
   isExternal(href) ? (
     <SmartLink href={href} className={className}>
@@ -29,6 +30,7 @@ export default function Header({ scroll }) {
   const user = useSelector(selectUser);
   const [scrolled, setScrolled] = useState(scroll);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [bookingOpen, setBookingOpen] = useState(false);
 
   useEffect(() => {
     let lastY = window.scrollY;
@@ -37,9 +39,7 @@ export default function Header({ scroll }) {
       const y = window.scrollY;
 
       if (y < 40) {
-        if (!scroll) {
-          setScrolled(false);
-        }
+        if (!scroll) setScrolled(false);
       } else if (y > lastY) {
         setScrolled(false);
       } else {
@@ -51,7 +51,7 @@ export default function Header({ scroll }) {
 
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [scroll]);
 
   return (
     <>
@@ -65,7 +65,7 @@ export default function Header({ scroll }) {
           }`}
       >
         {!scrolled && (
-          <div className="absolute inset-0 z-0 bg-gradient-to-b from-black/60 via-black/25 to-transparent pointer-events-none" />
+          <div className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-b from-black/60 via-black/25 to-transparent" />
         )}
 
         <div className="container-x relative z-10 flex h-full items-center">
@@ -97,9 +97,9 @@ export default function Header({ scroll }) {
             <img
               src={logo}
               alt="Levelline"
-              className={`h-7 w-auto ${scrolled ? "lg:h-10" : "lg:h-20 mt-14"} transition-all duration-300 ${
-                scrolled ? "brightness-0" : ""
-              }`}
+              className={`h-7 w-auto ${
+                scrolled ? "lg:h-10" : "mt-14 lg:h-20"
+              } transition-all duration-300 ${scrolled ? "brightness-0" : ""}`}
             />
           </Link>
 
@@ -117,34 +117,35 @@ export default function Header({ scroll }) {
                 </NavLink>
               ))}
             </nav>
+
             <div className="flex items-center gap-3">
-              {/* {user?.role === "user" && (
-                <Link
-                  to={ROUTES.TRACK_ORDER}
-                  className={`font-sans text-[9.5px] font-medium uppercase tracking-wide transition ${
-                    scrolled ? "text-[#6b6b6b] hover:text-black" : "text-cream hover:text-gold"
-                  }`}
-                >
-                  Track order
-                </Link>
-              )} */}
-              <SmartLink
-                href={BOOK_CTA.href}
-                className={`rounded-sm border-[1px] px-3 py-2 font-sans text-[9.5px] ${!scrolled ? "mt-4" : ""} font-medium uppercase transition ${
+              <button
+                type="button"
+                onClick={() => setBookingOpen(true)}
+                className={`rounded-sm border-[1px] px-3 py-2 font-sans text-[9.5px] ${
+                  !scrolled ? "mt-4" : ""
+                } font-medium uppercase transition ${
                   scrolled
                     ? "border-[#6b6b6b] text-[#6b6b6b] hover:bg-black hover:text-white"
                     : "border-cream text-cream hover:bg-cream hover:text-ink"
                 }`}
               >
                 {BOOK_CTA.label}
-              </SmartLink>
+              </button>
             </div>
           </div>
 
           <span className="w-8 lg:hidden" aria-hidden="true" />
         </div>
       </header>
+
       <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
+
+      {/* Book appointment modal */}
+      <BookAppointmentModal
+        open={bookingOpen}
+        onClose={() => setBookingOpen(false)}
+      />
     </>
   );
 }
