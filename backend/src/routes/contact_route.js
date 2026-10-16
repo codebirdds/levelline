@@ -9,6 +9,7 @@ router.post('/', contactController.createContact);
 
 // Get all contacts (admin only)
 router.get('/', authenticate, requireAdmin, contactController.getAllContacts);
+router.get('/email', authenticate, requireAdmin, contactController.getContactByUserEmail);
 
 // Get contact by ID (admin only)
 router.get('/:id', authenticate, requireAdmin, contactController.getContactById);
