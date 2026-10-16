@@ -1,4 +1,6 @@
 const db = require('../models');
+const { Op } = require('sequelize');
+
 const Contact = db.Contact;
 
 class ContactService {
@@ -12,11 +14,6 @@ class ContactService {
       throw new Error('Name, email, and project description are required');
     }
 
-    // Check for existing contact with same email (optional - depends on business logic)
-    // const existing = await Contact.findOne({ where: { email } });
-    // if (existing) {
-    //   throw new Error('Contact with this email already exists');
-    // }
 
     const contact = await Contact.create({
       name,
@@ -32,13 +29,39 @@ class ContactService {
   }
 
   // GET ALL CONTACTS (for admin dashboard)
-  async getAllContacts() {
+  async getAllContacts(filters = {}) {
+    const where = {};
+
+    if (filters.status) {
+      where.status = filters.status;
+    }
+
+    if (filters.email) {
+      where.email = {
+        [Op.like]: `%${filters.email}%`
+      };
+    }
+
+    if (filters.phone) {
+      where.phone = {
+        [Op.like]: `%${filters.phone}%`
+      };
+    }
+
+    if (filters.name) {
+      where.name = {
+        [Op.like]: `%${filters.name}%`
+      };
+    }
+
     const contacts = await Contact.findAll({
+      where,
       order: [['createdAt', 'DESC']]
     });
 
     return contacts;
   }
+
 
   // GET CONTACT BY ID
   async getContactById(id) {
@@ -48,6 +71,16 @@ class ContactService {
       throw new Error('Contact not found');
     }
 
+    return contact;
+  }
+
+
+  // GET CONTACT BY ID
+  async getContactByUserEmail(email) {
+    const contact = await Contact.findByPk(email);
+    if (!contact) {
+      throw new Error('Contact not found');
+    }
     return contact;
   }
 
