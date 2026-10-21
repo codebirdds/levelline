@@ -3,17 +3,18 @@ import { Reveal } from "../../../components/animation";
 import ServicesGrid from "./ServicesGrid";
 import * as content from "../content";
 
-// Safe access — falls back to null if ABOUT_IMAGES isn't exported
 const ABOUT_IMAGES = content?.ABOUT_IMAGES || {};
 const heroImage = ABOUT_IMAGES.premiumFabric || null;
 
 export default function CraftedSection({ services = [] }) {
   return (
-    <section className="px-5 py-10 sm:px-8 lg:px-[3%] lg:py-12">
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-[200px_240px_minmax(0,1fr)] lg:items-start lg:gap-6 xl:gap-8">
+    <section className="mx-auto w-full container-x px-5 py-10 sm:px-8 lg:px-[3%] lg:py-12">
+      {/* Changed to 220px and 260px to give the right side (1fr) more room */}
+      <div className="grid gap-6 md:grid-cols-[220px_260px_minmax(0,1fr)] lg:items-start lg:gap-8 xl:gap-12">
+        
         {/* ── LEFT: image ── */}
         <Reveal variant="fade" className="self-start">
-          <div className="aspect-[400/500] w-full overflow-hidden bg-[#F5F1E9] lg:max-w-[200px]">
+          <div className="aspect-[400/500] w-full overflow-hidden bg-[#F5F1E9] lg:max-w-[220px]">
             {heroImage ? (
               <img
                 src={heroImage}

@@ -23,7 +23,7 @@ export default function ChoosePath({
   return (
     <section
       id="custom"
-      className="mx-auto w-full max-w-[1441px] px-4 pt-20 pb-10 sm:px-6 lg:px-8 xl:px-[clamp(32px,2.5vw,36px)]"
+      className="mx-auto w-full max-w-[1920px] px-4 pt-20 pb-10 sm:px-6 lg:px-8 xl:px-[clamp(32px,2.5vw,36px)]"
     >
       {/* Centered heading + subtitle */}
       <Reveal

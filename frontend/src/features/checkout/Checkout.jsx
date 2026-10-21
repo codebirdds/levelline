@@ -66,17 +66,30 @@ export default function Checkout() {
 
   if (order) {
     return (
-      <><SimpleHeader /><main className="container-x py-20 text-center">
-        <h1 className="text-2xl font-semibold text-[#414141]">Order placed</h1>
-        <Link to={ROUTES.TRACK_ORDER} className="mt-6 inline-block bg-ink px-5 py-3 text-sm font-medium uppercase tracking-wide text-cream transition hover:bg-[#663f29]">Track your order</Link>
-        <p className="mt-3 text-sm text-[#6b6b6b]">Order {order.order_number} is confirmed. Pay {formatCurrency(order.total_amount)} in cash on delivery.</p>
-        <Link to={ROUTES.READY_TO_WEAR} className="mt-6 inline-block text-sm text-[#663f29] underline">Continue shopping</Link>
-      </main></>
+      <>
+        <SimpleHeader />
+        <main className="container-x py-20 text-center">
+          <h1 className="text-2xl font-semibold text-[#414141]">Order placed</h1>
+          <Link to={ROUTES.TRACK_ORDER} className="mt-6 inline-block bg-ink px-5 py-3 text-sm font-medium uppercase tracking-wide text-cream transition hover:bg-[#663f29]">Track your order</Link>
+          <p className="mt-3 text-sm text-[#6b6b6b]">Order {order.order_number} is confirmed. Pay {formatCurrency(order.total_amount)} in cash on delivery.</p>
+          <Link to={ROUTES.READY_TO_WEAR} className="mt-6 inline-block text-sm text-[#663f29] underline">Continue shopping</Link>
+        </main>
+      </>
     );
   }
 
   if (!items.length) {
-    return <><SimpleHeader /><main className="min-h-[60vh] bg-white"><div className="container-x py-24 text-center"><p className="font-sans text-lg text-[#6b6b6b]">Your bag is empty.</p><Link to={ROUTES.READY_TO_WEAR} className="mt-4 inline-block font-sans text-sm text-[#663f29] underline underline-offset-2">Continue shopping</Link></div></main></>;
+    return (
+      <>
+        <SimpleHeader />
+        <main className="min-h-[60vh] bg-white">
+          <div className="container-x py-24 text-center">
+            <p className="font-sans text-lg text-[#6b6b6b]">Your bag is empty.</p>
+            <Link to={ROUTES.READY_TO_WEAR} className="mt-4 inline-block font-sans text-sm text-[#663f29] underline underline-offset-2">Continue shopping</Link>
+          </div>
+        </main>
+      </>
+    );
   }
 
   const next = () => {
@@ -91,39 +104,98 @@ export default function Checkout() {
       <CheckoutStepper current={stage} />
       <div className="container-x pb-16">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-8 xl:grid-cols-[minmax(0,1fr)_420px]">
+          
+          {/* LEFT PANEL */}
           <div>
-            {stage === 2 && <>
-              <h1 className="mb-4 font-sans text-lg font-medium text-[#414141]">1. Select delivery address</h1>
-              <DeliverTo />
-            </>}
-            {stage === 3 && <section className="border border-border bg-white p-5">
-              <h1 className="font-sans text-lg font-medium text-[#414141]">2. Payment method</h1>
-              {address && <p className="mt-3 text-sm text-[#6b6b6b]">Delivering to {address.full_name}, {address.address_line1}, {address.city}, {address.state} {address.postal_code}</p>}
-              <label className="mt-5 flex cursor-pointer items-start gap-3 border border-[#663f29] bg-[#F5F1E9] p-4">
-                <input type="radio" checked readOnly className="mt-1 accent-[#663f29]" />
-                <span><span className="block text-sm font-medium text-[#414141]">Cash on Delivery</span><span className="mt-1 block text-xs text-[#808080]">Pay the order total in cash when your order is delivered.</span></span>
-              </label>
-            </section>}
-            {stage === 4 && <section className="border border-border bg-white p-5">
-              <h1 className="font-sans text-lg font-medium text-[#414141]">3. Confirm your bag</h1>
-              <p className="mt-2 text-sm text-[#808080]">Review the items below, then confirm to place your COD order.</p>
-              <div className="mt-5 space-y-4">{items.map((item, idx) => <BagItem key={`${item.id}-${item.size}-${idx}`} item={item} />)}</div>
-              <label className="mt-5 flex items-start gap-3 text-sm text-[#414141]">
-                <input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} className="mt-1 accent-[#663f29]" />
-                I confirm these cart items and quantities.
-              </label>
-            </section>}
-            <h2 className="mt-7 font-sans text-base font-medium text-[#414141]">Shopping bag ({items.reduce((n, item) => n + Number(item.quantity || 0), 0)} items)</h2>
-            {stage !== 4 && <div className="mt-4 space-y-4">{items.map((item, idx) => <BagItem key={`${item.id}-${item.size}-${idx}`} item={item} />)}</div>}
+            {stage === 2 && (
+              <>
+                <h1 className="mb-4 font-sans text-lg font-medium text-[#414141]">1. Select delivery address</h1>
+                <DeliverTo />
+              </>
+            )}
+            
+            {stage === 3 && (
+              <section className="border border-border bg-white p-5">
+                <h1 className="font-sans text-lg font-medium text-[#414141]">2. Payment method</h1>
+                {address && <p className="mt-3 text-sm text-[#6b6b6b]">Delivering to {address.full_name}, {address.address_line1}, {address.city}, {address.state} {address.postal_code}</p>}
+                <label className="mt-5 flex cursor-pointer items-start gap-3 border border-[#663f29] bg-[#F5F1E9] p-4">
+                  <input type="radio" checked readOnly className="mt-1 accent-[#663f29]" />
+                  <span>
+                    <span className="block text-sm font-medium text-[#414141]">Cash on Delivery</span>
+                    <span className="mt-1 block text-xs text-[#808080]">Pay the order total in cash when your order is delivered.</span>
+                  </span>
+                </label>
+              </section>
+            )}
+            
+            {stage === 4 && (
+              <section className="border border-border bg-white p-5">
+                <h1 className="font-sans text-lg font-medium text-[#414141]">3. Confirm your bag</h1>
+                <p className="mt-2 text-sm text-[#808080]">Review the items below, then confirm to place your COD order.</p>
+                <div className="mt-5 space-y-4">
+                  {items.map((item, idx) => (
+                    <BagItem key={`${item.id}-${item.size}-${idx}`} item={item} />
+                  ))}
+                </div>
+                {/* Checkbox removed from here */}
+              </section>
+            )}
+
+            <h2 className="mt-7 font-sans text-base font-medium text-[#414141]">
+              Shopping bag ({items.reduce((n, item) => n + Number(item.quantity || 0), 0)} items)
+            </h2>
+            
+            {stage !== 4 && (
+              <div className="mt-4 space-y-4">
+                {items.map((item, idx) => (
+                  <BagItem key={`${item.id}-${item.size}-${idx}`} item={item} />
+                ))}
+              </div>
+            )}
+            
             {error && <p role="alert" className="mt-4 text-sm text-[#c0392b]">{error}</p>}
           </div>
+
+          {/* RIGHT PANEL */}
           <div className="space-y-4 lg:sticky lg:top-[120px] lg:self-start">
-            <OrderSummary confirmation={stage === 4} />
+            
+            {/* Pass confirmed state down */}
+            <OrderSummary 
+              confirmation={stage === 4} 
+              confirmed={confirmed}
+              setConfirmed={setConfirmed}
+            />
+            
             <div className="flex gap-3">
-              {stage > 2 && <button onClick={() => { setError(""); setStage(stage - 1); }} className="h-12 flex-1 border border-[#414141] font-sans text-sm font-medium uppercase tracking-wide text-[#414141]">Back</button>}
-              {stage < 4 ? <button onClick={next} className="h-12 flex-1 bg-ink font-sans text-sm font-medium uppercase tracking-wide text-cream transition hover:bg-[#663f29]">Continue</button> : <button onClick={placeOrder} disabled={!confirmed || submitting} className="h-12 flex-1 bg-ink font-sans text-sm font-medium uppercase tracking-wide text-cream transition hover:bg-[#663f29] disabled:cursor-not-allowed disabled:opacity-50 flex items-center justify-center gap-2"><span>{submitting ? "Placing order…" : "Place COD order"}</span>{submitting && <span className="h-4 w-4 rounded-full border-2 border-cream/70 border-t-transparent animate-spin" />}</button>}
+              {stage > 2 && (
+                <button 
+                  onClick={() => { setError(""); setStage(stage - 1); }} 
+                  className="h-12 flex-1 border border-[#414141] font-sans text-sm font-medium uppercase tracking-wide text-[#414141]"
+                >
+                  Back
+                </button>
+              )}
+              
+              {stage < 4 ? (
+                <button 
+                  onClick={next} 
+                  className="h-12 flex-1 bg-ink font-sans text-sm font-medium uppercase tracking-wide text-cream transition hover:bg-[#663f29]"
+                >
+                  Continue
+                </button>
+              ) : (
+                <button 
+                  onClick={placeOrder} 
+                  disabled={!confirmed || submitting} 
+                  className="h-12 flex-1 bg-ink font-sans text-sm font-medium uppercase tracking-wide text-cream transition hover:bg-[#663f29] disabled:cursor-not-allowed disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <span>{submitting ? "Placing order…" : "Place COD order"}</span>
+                  {submitting && <span className="h-4 w-4 rounded-full border-2 border-cream/70 border-t-transparent animate-spin" />}
+                </button>
+              )}
             </div>
           </div>
+          
         </div>
       </div>
     </main>

@@ -84,6 +84,6 @@
   --shadow-md: 0 6px 16px rgba(26, 22, 20, 0.12);
   --shadow-lg: 0 16px 40px rgba(26, 22, 20, 0.20);
 
-  --container-max: 1360px;
+  --container-max: 1920px;
   --header-h: 72px;
 }

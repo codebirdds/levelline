@@ -8,32 +8,33 @@ function ServiceCard({ title, text, iconKey, delay, onClick }) {
       delay={delay}
       duration={700}
       distance={20}
-      className="group flex aspect-[5/4] h-full w-full flex-col bg-[#F5F1E9] p-3 transition-colors hover:bg-[#efeae0]"
+      // Removed h-full and min-h. It will now size naturally to the text.
+      className="group flex flex-col bg-[#F5F1E9] p-4 transition-colors hover:bg-[#efeae0]"
     >
       {iconKey && (
         <span className="self-start text-[#414141]">
-          <ServiceIcon name={iconKey} className="h-4 w-4" />
+          <ServiceIcon name={iconKey} className="h-[18px] w-[18px]" />
         </span>
       )}
 
-      <h3 className="mt-2 font-sans text-[10px] font-medium leading-snug text-[#414141]">
+      <h3 className="mt-2.5 font-sans text-xs font-medium leading-snug text-[#414141]">
         {title}
       </h3>
 
-      <p className="mt-1.5 font-sans text-[9px] leading-[1.5] text-[#808080]">
+      <p className="mt-2 font-sans text-[11px] leading-[1.5] text-[#808080]">
         {text}
       </p>
 
-      {/* Arrow button — nice hover state, ready for onClick */}
+      {/* Arrow button pushes to bottom naturally */}
       <button
         type="button"
         onClick={onClick}
         aria-label={`${title} — learn more`}
-        className="mt-auto flex h-6 w-6 items-center justify-center self-start rounded-full text-[#414141] transition-all duration-300 hover:bg-[#414141] hover:text-white group-hover:translate-x-1"
+        className="mt-auto pt-4 flex h-6 w-6 items-center justify-center self-start text-[#414141] transition-all duration-300 hover:translate-x-1 group-hover:translate-x-1"
       >
         <svg
-          width="12"
-          height="12"
+          width="14"
+          height="10"
           viewBox="0 0 18 12"
           fill="none"
           stroke="currentColor"
@@ -52,7 +53,8 @@ function ServiceCard({ title, text, iconKey, delay, onClick }) {
 export default function ServicesGrid({ items = [], className = "", onItemClick }) {
   return (
     <div
-      className={`grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 lg:gap-2 ${className}`}
+      // Changed lg:grid-cols-4 to lg:grid-cols-3, and xl:grid-cols-4
+      className={`grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 lg:gap-4 ${className}`}
     >
       {items.map((s, i) => (
         <ServiceCard

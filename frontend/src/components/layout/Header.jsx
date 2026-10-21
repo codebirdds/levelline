@@ -10,7 +10,7 @@ import { selectUser } from "../../features/auth/authSlice";
 import BookAppointmentModal from "../../features/contact/components/BookAppointmentModal";
 
 const linkCls =
-  "font-sans text-[10px] font-medium uppercase tracking-wide transition";
+  "font-sans  text-[10px] min-[1400px]:text-[15px] font-medium uppercase tracking-wide transition";
 
 const isExternal = (href) =>
   !href || href.startsWith("#") || /^https?:/.test(href);
@@ -122,7 +122,7 @@ export default function Header({ scroll }) {
               <button
                 type="button"
                 onClick={() => setBookingOpen(true)}
-                className={`rounded-sm border-[1px] px-3 py-2 font-sans text-[9.5px] ${
+                className={`rounded-sm border-[1px] px-3 py-2 font-sans text-[9.5px] min-[1400px]:text-[15px] font-medium uppercase transition ${
                   !scrolled ? "mt-4" : ""
                 } font-medium uppercase transition ${
                   scrolled
