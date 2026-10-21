@@ -31,13 +31,6 @@ const HeartIcon = ({ filled }) => (
   </svg>
 );
 
-const PinIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 22s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12z" />
-    <circle cx="12" cy="10" r="2.5" />
-  </svg>
-);
-
 function Accordion({ title, defaultOpen = false, children }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
@@ -73,10 +66,8 @@ export default function ProductDetail() {
   const [selectedVariantId, setSelectedVariantId] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState(null);
-  const [pincode, setPincode] = useState("");
   const [wishlisted, setWishlisted] = useState(false);
 
-  // Validation error shown on the right panel
   const [validationError, setValidationError] = useState("");
 
   useEffect(() => {
@@ -139,7 +130,6 @@ export default function ProductDetail() {
     setValidationError("");
   }, [activeVariant?.id]);
 
-  // Clear the error as soon as the user picks a size
   useEffect(() => {
     if (selectedSize) setValidationError("");
   }, [selectedSize]);
@@ -196,7 +186,7 @@ export default function ProductDetail() {
       <>
         <SimpleHeader />
         <main className="bg-white">
-          <div className="mx-auto max-w-[1441px] px-4 py-24 text-center font-sans text-sm text-[#808080] lg:px-8">
+          <div className="mx-auto max-w-[1200px] px-4 py-24 text-center font-sans text-sm text-[#808080] lg:px-8">
             Loading…
           </div>
         </main>
@@ -209,7 +199,7 @@ export default function ProductDetail() {
       <>
         <SimpleHeader />
         <main className="bg-white">
-          <div className="mx-auto max-w-[1441px] px-4 py-24 text-center lg:px-8">
+          <div className="mx-auto max-w-[1200px] px-4 py-24 text-center lg:px-8">
             <p className="font-sans text-lg text-[#6b6b6b]">Product not found.</p>
             <Link
               to={ROUTES.READY_TO_WEAR}
@@ -225,7 +215,6 @@ export default function ProductDetail() {
 
   const name = product.name || product.title;
 
-  // Final price = price − discount_price
   const basePrice = Number(product.price) || 0;
   const discountAmt = Number(product.discount_price) || 0;
   const price =
@@ -238,8 +227,7 @@ export default function ProductDetail() {
     <>
       <SimpleHeader />
       <main className="bg-white">
-        {/* Breadcrumb */}
-        <div className="mx-auto w-full max-w-[1441px] px-4 pt-4 lg:px-8 lg:pt-5">
+        <div className="mx-auto w-full max-w-[1200px] px-4 pt-4 lg:px-8 lg:pt-5">
           <nav className="font-sans text-xs text-[#808080] lg:text-sm">
             <Link to={ROUTES.HOME} className="transition hover:text-[#663f29]">Home</Link>
             <span className="mx-1.5">/</span>
@@ -249,55 +237,56 @@ export default function ProductDetail() {
           </nav>
         </div>
 
-        {/* ✅ FIX #1: Removed `lg:h-[calc(100vh-100px)]` from this wrapper.
-            Now the wrapper grows naturally and the accordions below are part of the page flow. */}
-        <div className="mx-auto w-full max-w-[1441px] px-4 pb-10 lg:px-8">
-          {/* ✅ FIX #2: Moved the fixed viewport height onto the grid itself
-              (used 140px to leave room for breadcrumb + header). Adjust if needed. */}
-          <div className="mt-4 grid gap-6 lg:mt-5 lg:h-[calc(100vh-140px)] lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-8 xl:grid-cols-[minmax(0,1fr)_420px] xl:gap-10">
-
+        <div className="mx-auto w-full max-w-[1200px] px-4 pb-10 lg:px-8">
+          {/* ✅ FIX: Changed to Flexbox to shrink-wrap to content, and center everything */}
+          <div className="mt-4 flex flex-col gap-6 lg:mt-5 lg:h-[calc(100vh-140px)] lg:w-fit lg:mx-auto lg:flex-row lg:items-stretch lg:gap-12">
+            
             {/* ─── LEFT: gallery ─── */}
             <Reveal
               variant="fade"
-              className="grid grid-cols-[minmax(0,1fr)_60px] gap-2.5 sm:grid-cols-[minmax(0,1fr)_76px] lg:h-full lg:grid-cols-[minmax(0,1fr)_88px] lg:gap-3"
+              className="flex h-full w-full min-h-0 items-center justify-center lg:w-auto"
             >
-              <div className="relative aspect-[3/4] overflow-hidden bg-[#F5F1E9] lg:aspect-auto lg:h-full">
-                {images[selectedImage] ? (
-                  <img
-                    src={images[selectedImage]}
-                    alt={name}
-                    className="absolute inset-0 size-full object-contain"
-                  />
-                ) : (
-                  <div className="grid size-full place-items-center font-sans text-xs text-[#808080]">
-                    No image
-                  </div>
-                )}
-              </div>
+              <div className="flex h-full w-full items-stretch gap-3 lg:w-auto lg:max-w-[600px]">
+                
+                {/* Main image container — background tightly hugs the image */}
+                <div className="relative flex h-full items-center justify-center overflow-hidden bg-[#F5F1E9] p-4 lg:p-6">
+                  {images[selectedImage] ? (
+                    <img
+                      src={images[selectedImage]}
+                      alt={name}
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  ) : (
+                    <div className="grid size-full place-items-center font-sans text-xs text-[#808080]">
+                      No image
+                    </div>
+                  )}
+                </div>
 
-              <div className="flex flex-col gap-2 lg:grid lg:h-full lg:grid-rows-4 lg:gap-2.5">
-                {images.map((src, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setSelectedImage(i)}
-                    aria-label={`View image ${i + 1}`}
-                    className={`relative aspect-square overflow-hidden bg-[#F5F1E9] transition lg:aspect-auto lg:h-full ${
-                      selectedImage === i ? "ring-1 ring-ink" : "opacity-70 hover:opacity-100"
-                    }`}
-                  >
-                    <img src={src} alt="" className="absolute inset-0 size-full object-contain" />
-                  </button>
-                ))}
+                {/* Thumbnail rail — 5 images */}
+                <div className="flex w-[60px] shrink-0 flex-col gap-2 overflow-hidden sm:w-[76px] lg:w-[88px] lg:gap-2.5">
+                  {images.slice(0, 5).map((src, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setSelectedImage(i)}
+                      aria-label={`View image ${i + 1}`}
+                      className={`relative flex flex-1 w-full items-center justify-center overflow-hidden bg-[#F5F1E9] p-1 transition ${
+                        selectedImage === i ? "border border-ink" : "opacity-70 hover:opacity-100"
+                      }`}
+                    >
+                      <img src={src} alt="" className="max-h-full max-w-full object-contain" />
+                    </button>
+                  ))}
+                </div>
               </div>
             </Reveal>
 
-            {/* ─── RIGHT: info + actions, flex column h-full ─── */}
-            <Reveal delay={120} className="flex min-h-0 flex-col gap-3 lg:h-full">
+            {/* ─── RIGHT: info + actions ─── */}
+            <Reveal delay={120} className="flex min-h-0 w-full flex-col gap-3 lg:w-[420px] lg:h-full">
 
-              {/* Info card — scrolls internally if needed, never overflows parent */}
-              <div className="min-h-0 flex-1 overflow-hidden border border-border bg-white p-4 lg:p-5">
-                <div className="flex h-full flex-col">
-                  {/* Title + wishlist */}
+              <div className="min-h-0 flex-1 overflow-y-auto border border-border bg-white p-4 lg:p-5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+                <div className="flex flex-col">
+                  
                   <div className="flex items-start justify-between gap-4">
                     <h1 className="font-sans text-base font-medium text-[#414141] lg:text-lg">
                       {name}
@@ -319,7 +308,6 @@ export default function ProductDetail() {
                     </p>
                   )}
 
-                  {/* Price */}
                   <div className="mt-2">
                     <div className="flex flex-wrap items-baseline gap-2">
                       <span className="font-sans text-base font-bold text-[#414141] lg:text-lg">
@@ -343,9 +331,8 @@ export default function ProductDetail() {
 
                   <div className="mt-3 h-px bg-border" />
 
-                  {/* Color variants */}
                   {variants.length > 0 && (
-                    <div className="mt-3">
+                    <div className="mt-2.5">
                       <div className="flex items-center justify-between">
                         <p className="font-sans text-[11px] uppercase tracking-wide text-[#808080]">
                           Color
@@ -382,8 +369,7 @@ export default function ProductDetail() {
                     </div>
                   )}
 
-                  {/* Sizes */}
-                  <div className="mt-3">
+                  <div className="mt-2.5">
                     <div className="flex items-center justify-between">
                       <p className="font-sans text-[11px] uppercase tracking-wide text-[#808080]">
                         Size
@@ -420,14 +406,11 @@ export default function ProductDetail() {
                     </div>
                   </div>
 
-                  <div className="mt-3 h-px bg-border" />
-
-                  {/* Pincode */}
-  
+                  <div className="h-2" />
                 </div>
               </div>
 
-              {/* Actions card — pinned at bottom */}
+              {/* Actions Card */}
               <div className="shrink-0 border border-border bg-white p-3">
                 <button
                   disabled={!selectedSize}
@@ -444,7 +427,6 @@ export default function ProductDetail() {
                   Add to Bag
                 </button>
 
-                {/* Validation error — right panel, right below buttons */}
                 {validationError && (
                   <p
                     role="alert"
@@ -453,18 +435,11 @@ export default function ProductDetail() {
                     {validationError}
                   </p>
                 )}
-                {!validationError && !selectedSize && (
-                  <p className="mt-2 text-center font-sans text-xs text-[#808080]">
-                    Please select a size
-                  </p>
-                )}
               </div>
             </Reveal>
           </div>
 
-          {/* Accordions — right column width on lg, full width on mobile.
-              These now sit BELOW the fixed-height grid, inside normal page flow. */}
-          <div className="mt-4 border-t border-border w-full">
+          <div className="mt-4 border-t border-border w-full max-w-[1000px] mx-auto">
             <Accordion title="Product Details and Overview" defaultOpen>
               <p className="capitalize">
                 {[product.material, product.fit, activeVariant?.color]
