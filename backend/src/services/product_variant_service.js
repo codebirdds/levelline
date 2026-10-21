@@ -12,7 +12,7 @@ class ProductVariantService {
             throw new Error('At least one size is required');
         }
 
-        const seenSizes = new Set();
+        const seenSizes = new Set();    
         const seenSkus = new Set();
 
         for (const item of sizes) {
@@ -79,7 +79,7 @@ class ProductVariantService {
 
     // CREATE VARIANT
     async create(data, userId) {
-        const { product_id, color, sizes } = data;
+        const { product_id, color, sizes, price, discount_price } = data;
 
         await this.validateProduct(product_id);
 
@@ -99,6 +99,10 @@ class ProductVariantService {
         const existingVariants = await ProductVariant.findAll({
             attributes: ['id', 'sizes']
         });
+
+        if(!price){
+            throw new Error('price is required');
+        }
 
         const requestedSkus = new Set(
             sizes.map(item => item.sku.trim().toUpperCase())
@@ -120,6 +124,8 @@ class ProductVariantService {
         return await ProductVariant.create({
             product_id,
             color: color.trim(),
+            price,
+            discount_price,
             color_code: data.color_code || null,
             sizes,
             images,
