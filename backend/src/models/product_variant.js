@@ -30,6 +30,17 @@ module.exports = (sequelize, DataTypes) => {
                 allowNull: true
             },
 
+                  // Variant-level pricing
+            price: {
+                type: DataTypes.DECIMAL(10, 2),
+                allowNull: true
+            },
+
+            discount_price: {
+                type: DataTypes.DECIMAL(10, 2),
+                allowNull: true
+            },
+
             // Array of sizes with individual SKU and stock
             sizes: {
                 type: DataTypes.JSON,

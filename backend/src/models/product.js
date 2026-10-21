@@ -113,7 +113,7 @@ module.exports = (sequelize, DataTypes) => {
 
             price: {
                 type: DataTypes.DECIMAL(10, 2),
-                allowNull: false
+                allowNull: true
             },
 
             discount_price: {
@@ -130,6 +130,12 @@ module.exports = (sequelize, DataTypes) => {
             },
 
             is_featured: {
+                type: DataTypes.BOOLEAN,
+                allowNull: false,
+                defaultValue: false
+            },
+
+            is_outfit: {
                 type: DataTypes.BOOLEAN,
                 allowNull: false,
                 defaultValue: false
