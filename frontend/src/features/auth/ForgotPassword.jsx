@@ -16,21 +16,25 @@ export default function ForgotPassword() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const onSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
     try {
-      const response = await dispatch(forgotPasswordThunk(email,password));
-      debugger
-      if (response?.success){
+      const response = await dispatch(forgotPasswordThunk(email, password));
+      if (response?.success) {
         setSent(true);
         setEmail("");
         setPassword("");
         setConfirmPassword("");
       }
-    } catch(err){
-      
+    } catch (err) {
       setError(err.response?.data?.message || "Password reset failed");
-  }}
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
@@ -50,7 +54,7 @@ export default function ForgotPassword() {
             <p className="text-sm text-red-500">Passwords do not match</p>
           )}
           {error && <p className="text-sm text-red-500">{error}</p>}
-          <Button type="submit" className="w-full" disabled={password !== confirmPassword}>
+          <Button type="submit" className="w-full" disabled={password !== confirmPassword || loading} loading={loading}>
             Reset Password
           </Button>
         </>

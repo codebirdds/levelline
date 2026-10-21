@@ -9,7 +9,7 @@ import { fetchVariantsThunk, fetchVariantsByProductThunk, deleteVariantThunk } f
 import VariantTable from "./components/VariantTable";
 import VariantFormModal from "./components/VariantFormModal";
 import ConfirmDialog from "../../../components/common/ConfirmDialog";
-import Spinner from "../../../components/common/Spinner";
+
 
 const EMPTY_PRODUCT = { id: null, name: "" };
 
@@ -55,7 +55,14 @@ export default function VariantsPage() {
       </div>
 
       <div className="bg-surface border border-border rounded-lg">
-        {loading ? <Spinner full /> : <VariantTable items={items} onEdit={(v) => dispatch(openForm(v))} onDelete={setDeleting} onFilterByProduct={onFilterByProduct} />}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center gap-4 py-12">
+            <div className="h-8 w-8 rounded-full border-2 border-brand border-t-transparent animate-spin" />
+            <p className="text-sm text-muted">Loading variants…</p>
+          </div>
+        ) : (
+          <VariantTable items={items} onEdit={(v) => dispatch(openForm(v))} onDelete={setDeleting} onFilterByProduct={onFilterByProduct} />
+        )}
       </div>
 
       <VariantFormModal />

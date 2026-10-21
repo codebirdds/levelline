@@ -22,10 +22,12 @@ export default function Login() {
   const from = location.state?.from?.pathname || ROUTES.HOME;
   const intent = location.state?.intent; // "buy" | "add" | undefined
 
+  const [submitting, setSubmitting] = useState(false);
+
   const onSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
     try {
-      // ✅ plain thunk → just await it (no .unwrap())
       const user = await dispatch(loginThunk(form));
 
       if (user?.role === "admin") {
@@ -41,6 +43,8 @@ export default function Login() {
       navigate(from, { replace: true });
     } catch {
       // error already in the slice
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -68,7 +72,7 @@ export default function Login() {
 
       {error && <p className="text-sm text-red-500">{error}</p>}
 
-      <Button type="submit" loading={status === "loading"} className="w-full">
+      <Button type="submit" loading={submitting || status === "loading"} className="w-full">
         Login
       </Button>
 

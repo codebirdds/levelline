@@ -4,7 +4,7 @@ import Modal from "../../../../components/common/Modal";
 import {
   selectVariantFormOpen,
   selectVariantEditing,
-  selectSubmitting,
+  selectVariantSubmitting,
   closeForm,
 } from "../variantSlice";
 import { createVariantThunk, updateVariantThunk } from "../variantThunks";
@@ -26,7 +26,7 @@ export default function VariantFormModal() {
   const dispatch = useDispatch();
   const open       = useSelector(selectVariantFormOpen);
   const editing    = useSelector(selectVariantEditing);
-  const submitting = useSelector(selectSubmitting);
+  const submitting = useSelector(selectVariantSubmitting);
 
   const [form, setForm]                     = useState(EMPTY);
   const [existingImages, setExistingImages] = useState([]); // urls already on server
@@ -198,7 +198,7 @@ export default function VariantFormModal() {
             disabled={submitting}
             className="px-4 py-2 text-sm font-semibold bg-brand text-white rounded-md hover:bg-brand-dark disabled:opacity-60"
           >
-            {submitting ? "Saving…" : isEdit ? "Save Changes" : "Create"}
+            {submitting ? "Saving…" : isEdit ? "Update" : "Save"}
           </button>
         </>
       }

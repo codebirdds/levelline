@@ -23,6 +23,7 @@ import Checkout from "../features/checkout/Checkout";
 import TrackOrder from "../features/trackOrder/TrackOrder";
 import Fabric from "../features/fabric/Fabric";
 import About from "../features/about/About";
+import ContactsPage from "../features/admin/contacts/ContactsPage";
 export default function AppRouter() {
   return (
     <BrowserRouter>
@@ -57,6 +58,8 @@ export default function AppRouter() {
             <Route path={ROUTES.ADMIN_CATEGORIES} element={<CategoriesPage />} />
             {/* <Route path={ROUTES.ADMIN_VARIANTS}   element={<VariantsPage />} /> */}
             <Route path={ROUTES.ADMIN_ORDERS}     element={<OrdersPage />} />
+            <Route path={ROUTES.ADMIN_CONTACTS} element={<ContactsPage />} />
+
           </Route>
         </Route>
 

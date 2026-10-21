@@ -9,7 +9,7 @@ import {
 } from "../addressSlice";
 import { fetchAddressesThunk } from "../addressThunks";
 import AddressFormModal from "./AddressFormModal";
-import Spinner from "../../../components/common/Spinner";
+
 
 export default function AddressListModal({ open, onClose }) {
   const dispatch = useDispatch();
@@ -30,7 +30,10 @@ export default function AddressListModal({ open, onClose }) {
     <Modal open={open} onClose={onClose} title="Select Delivery Address" footer={null}>
       <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
         {loading ? (
-          <Spinner full />
+          <div className="flex flex-col items-center justify-center gap-4 py-6">
+            <div className="h-6 w-6 rounded-full border-2 border-brand border-t-transparent animate-spin" />
+            <p className="text-xs text-muted">Loading addresses…</p>
+          </div>
         ) : items.length === 0 ? (
           <p className="text-sm text-muted text-center py-6">No addresses yet.</p>
         ) : (

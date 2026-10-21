@@ -21,8 +21,11 @@ export default function ChoosePath({
   headingDistance,
 }) {
   return (
-    <section id="custom" className="container-x pt-20 pb-10 ">
-      {/* Centered heading + subtitle — Reveal (fade + slide) */}
+    <section
+      id="custom"
+      className="mx-auto w-full max-w-[1920px] px-4 pt-20 pb-10 sm:px-6 lg:px-8 xl:px-[clamp(32px,2.5vw,36px)]"
+    >
+      {/* Centered heading + subtitle */}
       <Reveal
         variant={headingVariant}
         delay={headingDelay}
@@ -41,7 +44,7 @@ export default function ChoosePath({
       </Reveal>
 
       {/* Full-width cards — ImageReveal (zoom / wipe) */}
-      <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 lg:mt-14 lg:gap-2">
+      <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 lg:mt-14 lg:gap-2 xl:mt-[clamp(56px,4.38vw,63px)] xl:gap-[clamp(8px,0.63vw,9px)]">
         {PATHS.map((p, i) => (
           <ImageReveal
             key={p.title}
@@ -52,24 +55,31 @@ export default function ChoosePath({
             threshold={revealThreshold}
             rootMargin={revealRootMargin}
             once={revealOnce}
-            className="w-full aspect-[400/270]"
+            className="aspect-[400/270] w-full"
           >
             <ImageCard
               image={p.image}
               alt={p.title}
               className="size-full"
             >
-              <h3 className="font-sans text-2xl font-medium text-[#ffffff] lg:text-3xl">
+              <h3 className="font-sans text-2xl font-medium text-[#ffffff] lg:text-3xl xl:text-[clamp(30px,2.34vw,33.8px)]">
                 {p.title}
               </h3>
-              <p className="mt-3 font-sans text-sm text-[#f3f3f3] lg:text-sm">
+              <p className="mt-3 font-sans text-sm text-[#f3f3f3] lg:text-sm xl:text-[clamp(14px,1.09vw,15.8px)]">
                 {p.lines.map((l) => (
                   <span key={l} className="block">
                     {l}
                   </span>
                 ))}
               </p>
-              <ArrowLink href={p.href} light className="mt-7 self-start" lightColor="#f3f3f3" lightHoverColor="" hoverBold={true}>
+              <ArrowLink
+                href={p.href}
+                light
+                className="mt-7 self-start xl:mt-[clamp(28px,2.19vw,31.5px)]"
+                lightColor="#f3f3f3"
+                lightHoverColor=""
+                hoverBold={true}
+              >
                 {p.cta}
               </ArrowLink>
             </ImageCard>

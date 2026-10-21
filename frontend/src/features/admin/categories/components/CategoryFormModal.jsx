@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Modal from "../../../../components/common/Modal";
 import {
-  selectCategoryFormOpen, selectCategoryEditing,
+  selectCategoryFormOpen, selectCategoryEditing, selectCategorySubmitting,
   closeForm,
 } from "../categorySlice";
 import { createCategoryThunk, updateCategoryThunk } from "../categoryThunks";
@@ -13,6 +13,7 @@ export default function CategoryFormModal() {
   const dispatch = useDispatch();
   const open    = useSelector(selectCategoryFormOpen);
   const editing = useSelector(selectCategoryEditing);
+  const submitting = useSelector(selectCategorySubmitting);
   const [form, setForm] = useState(EMPTY);
   const [preview, setPreview] = useState(null);
 
@@ -27,7 +28,7 @@ export default function CategoryFormModal() {
     }
   }, [editing, open]);
 
-  const onClose = () => dispatch(closeForm());
+  const onClose = () => !submitting && dispatch(closeForm());
 
   const onImageChange = (e) => {
     const file = e.target.files[0];
@@ -55,9 +56,9 @@ export default function CategoryFormModal() {
       title={editing ? "Edit Category" : "Add Category"}
       footer={
         <>
-          <button onClick={onClose} className="px-4 py-2 text-sm border border-border rounded-md hover:bg-hover">Cancel</button>
-          <button form="category-form" type="submit" className="px-4 py-2 text-sm font-semibold bg-brand text-white rounded-md hover:bg-brand-dark">
-            {editing ? "Save Changes" : "Create"}
+          <button onClick={onClose} disabled={submitting} className="px-4 py-2 text-sm border border-border rounded-md hover:bg-hover disabled:opacity-60">Cancel</button>
+          <button form="category-form" type="submit" disabled={submitting} className="px-4 py-2 text-sm font-semibold bg-brand text-white rounded-md hover:bg-brand-dark disabled:opacity-60">
+            {submitting ? "Saving…" : editing ? "Update" : "Save"}
           </button>
         </>
       }

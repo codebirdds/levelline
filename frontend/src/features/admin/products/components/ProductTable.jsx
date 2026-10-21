@@ -31,8 +31,12 @@ export default function ProductTable({ items, onEdit, onDelete, onManageVariants
               variants[0]?.images?.find((i) => i.is_primary)?.url ||
               variants[0]?.images?.[0]?.url ||
               null;
-            const price = Number(p.discount_price) || Number(p.price) || 0;
-            const mrp   = Number(p.price) || 0;
+
+            // ── Price: final = price − discount_price, mrp = original price
+            const base = Number(p.price) || 0;
+            const discount = Number(p.discount_price) || 0;
+            const finalPrice = discount > 0 ? Math.max(base - discount, 0) : base;
+            const hasDiscount = discount > 0 && base > 0;
 
             return (
               <tr key={p.id} className="border-b border-border last:border-0 hover:bg-hover">
@@ -58,12 +62,16 @@ export default function ProductTable({ items, onEdit, onDelete, onManageVariants
                 {/* Category */}
                 <td className="px-4 py-3 text-muted capitalize">{p.category?.name || "—"}</td>
 
-                {/* Price */}
+                {/* Price — final price + strikethrough original */}
                 <td className="px-4 py-3">
                   <div className="flex flex-col">
-                    <span className="font-medium text-ink">{formatCurrency(price)}</span>
-                    {mrp > price && (
-                      <span className="text-xs text-subtle line-through">{formatCurrency(mrp)}</span>
+                    <span className="font-medium text-ink">
+                      {formatCurrency(finalPrice)}
+                    </span>
+                    {hasDiscount && (
+                      <span className="text-xs text-subtle line-through">
+                        {formatCurrency(base)}
+                      </span>
                     )}
                   </div>
                 </td>

@@ -16,4 +16,5 @@ export const ROUTES = {
   ADMIN_CATEGORIES:"/admin/categories",
   ADMIN_VARIANTS:  "/admin/variants",
   ADMIN_ORDERS:    "/admin/orders",
+  ADMIN_CONTACTS: "/admin/contacts",
 };

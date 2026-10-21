@@ -38,7 +38,7 @@ router.put(
     '/variant/:id',
     authMiddleware,
     roleMiddleware('admin'),
-    upload.array('images', 5),
+    upload.array('images', 10),
     variantController.update
 );
 

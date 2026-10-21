@@ -4,6 +4,9 @@ import { ROUTES } from "../../routes/routePaths";
 
 
 const img = (name) => `/images/home/${name}`;
+import HC from "./Assets/HC.png";
+import VOA from "./Assets/VOA.png";
+import VFS from "./Assets/VFS.png";
 import RTW from "./Assets/RTW.png";
 import MTM from "./Assets/MTM.png";
 import RTW2 from "./Assets/RTW2.png";
@@ -95,21 +98,21 @@ export const SHOP_OPTIONS = [
     title: "Home Consultation",
     text: "Personalized fitting and curated fabric selections, brought directly to your home or office.",
     cta: "Book Home Visit",
-    image: RTW2,
+    image: HC,
     href: "#",
   },
   {
     title: "Visit Our Atelier",
     text: "Experience our private studio, explore fine imported fabrics, and consult with master tailors.",
     cta: "View Atelier Location",
-    image: step5,
+    image: VOA,
     href: "#",
   },
   {
     title: "Virtual Fitting & Styling",
     text: "Connect live with our stylists from anywhere to discuss custom cuts and sartorial guidance.",
     cta: "Schedule Video Call",
-    image: MTM2,
+    image: VFS,
     href: "#",
   },
 ];
