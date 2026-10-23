@@ -163,16 +163,16 @@ export default function Header({ scroll }) {
 
                 {profileOpen && (
                   <div className="absolute right-0 top-full pt-4">
-                    <div className="w-[220px] border border-border bg-white p-3 shadow-xl">
+                    <div className="w-[150px] border border-border bg-white p-1 shadow-xl">
                       {isLoggedIn ? (
                         <div className="flex flex-col">
-                          <span className="px-2 py-2 font-sans text-xs text-[#808080]">
+                          <span className="px-2 py-1 font-sans text-xs text-[#808080]">
                             Hi, {user?.first_name || user?.name || "there"}
                           </span>
                           <Link
                             to={ROUTES.TRACK_ORDER}
                             onClick={() => setProfileOpen(false)}
-                            className="block px-2 py-2 font-sans text-sm text-[#414141] transition hover:text-[#663f29]"
+                            className="block px-2 py-1 font-sans text-xs text-[#414141] transition hover:text-[#663f29]"
                           >
                             Track your orders
                           </Link>
@@ -181,7 +181,7 @@ export default function Header({ scroll }) {
                               dispatch(logoutThunk());
                               setProfileOpen(false);
                             }}
-                            className="px-2 py-2 text-left font-sans text-sm text-[#414141] transition hover:text-[#663f29]"
+                            className="px-2 py-1 text-left font-sans text-xs text-[#414141] transition hover:text-[#663f29]"
                           >
                             Logout
                           </button>

@@ -1,25 +1,38 @@
 import ProductCard from "./ProductCard";
 import { ImageReveal } from "../../../components/animation";
-import { EDITORIALS } from "../content";
+import { Link } from "react-router-dom";
 
 const gridCls = "grid grid-cols-2 content-start gap-x-1.5 gap-y-8 lg:gap-y-10";
 
 const Cards = ({ items, cols = 4 }) =>
-  items.map((p, i) => <ProductCard key={p.id} product={p} delay={(i % cols) * 90} />);
+  items.map((p, i) => <ProductCard key={p.displayKey || p.id} product={p} delay={(i % cols) * 90} />);
 
-const Editorial = ({ src }) => (
-  <ImageReveal variant="zoom" className="aspect-[4/5] bg-tile lg:aspect-auto lg:h-full">
-    <img src={src} alt="Levelline ready-to-wear editorial" loading="lazy" className="size-full object-cover" />
-  </ImageReveal>
+const Editorial = ({ src, outfit }) => (
+  <Link to={`/ready-to-wear/${outfit.slug || outfit.id}`} state={{ product: outfit }} className="group block h-full">
+    <ImageReveal variant="zoom" className="aspect-[4/5] bg-tile lg:aspect-auto lg:h-full">
+      <div className="relative size-full overflow-hidden">
+        <img 
+          src={src} 
+          alt={outfit.name} 
+          loading="lazy" 
+          className="size-full object-cover transition-transform duration-700 group-hover:scale-105" 
+        />
+        <div className="absolute inset-0 bg-black/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100 flex items-end justify-center p-6">
+          <span className="bg-white px-6 py-3 text-sm font-semibold uppercase tracking-wider text-black">
+            Shop Full Outfit
+          </span>
+        </div>
+      </div>
+    </ImageReveal>
+  </Link>
 );
 
-const FeatureBlock = ({ items, image, imageFirst }) => (
+const FeatureBlock = ({ outfit, items }) => (
   <div className="grid gap-y-8 lg:grid-cols-2 lg:gap-x-1.5">
-    {imageFirst && <Editorial src={image} />}
+    <Editorial src={outfit.images?.[0]?.url || outfit.images?.[0]} outfit={outfit} />
     <div className={gridCls}>
       <Cards items={items} cols={2} />
     </div>
-    {!imageFirst && <Editorial src={image} />}
   </div>
 );
 
@@ -32,29 +45,87 @@ export default function ProductGrid({ products, editorial }) {
     );
   }
 
+  const outfits = products.filter((p) => p.is_outfit);
+  const regulars = products.filter((p) => !p.is_outfit);
+
+  // 1. Flatten regular products into variant cards
+  const regularCards = regulars.flatMap((p) => {
+    return (p.variants || []).map((v) => ({
+      ...p,
+      displayKey: `${p.id}-${v.id}`,
+      displayName: v.name || p.name,
+      displayImage: v.images?.[0]?.url || v.images?.[0] || p.images?.[0]?.url || p.images?.[0] || "",
+      displayPrice: Number(v.price) || Number(p.price) || 0,
+      displayDiscount: Number(v.discount_price) || Number(p.discount_price) || 0,
+      type: "variant",
+      variant: v,
+    }));
+  });
+
+  // 2. If not editorial (e.g. filtered), show regulars first then outfits
   if (!editorial) {
+    const allCards = [
+      ...regularCards,
+      ...outfits.map(o => ({
+        ...o,
+        displayKey: `outfit-${o.id}`,
+        displayName: o.name,
+        displayImage: o.images?.[0]?.url || o.images?.[0] || "",
+        displayPrice: Number(o.price) || 0,
+        displayDiscount: Number(o.discount_price) || 0,
+        type: "outfit",
+      }))
+    ];
+
     return (
       <div className="grid grid-cols-2 gap-x-1.5 gap-y-8 px-4 lg:grid-cols-4 lg:gap-y-10">
-        <Cards items={products} />
+        <Cards items={allCards} />
       </div>
     );
   }
 
-  const a = products.slice(0, 8);
-  const b = products.slice(8, 12);
-  const c = products.slice(12, 16);
-  const rest = products.slice(16);
+  // 3. Editorial mode logic: Split regulars into first 12 and the rest
+  const firstTwelveRegulars = regularCards.slice(0, 12);
+  const remainingRegulars = regularCards.slice(12);
 
   return (
     <div className="space-y-8 px-4 lg:space-y-10">
-      <div className="grid grid-cols-2 gap-x-1.5 gap-y-8 lg:grid-cols-4 lg:gap-y-10">
-        <Cards items={a} />
-      </div>
-      {b.length > 0 && <FeatureBlock items={b} image={EDITORIALS[0]} imageFirst />}
-      {c.length > 0 && <FeatureBlock items={c} image={EDITORIALS[1]} />}
-      {rest.length > 0 && (
+      
+      {/* 1st Section: First 12 Regular Variants (if any) */}
+      {firstTwelveRegulars.length > 0 && (
         <div className="grid grid-cols-2 gap-x-1.5 gap-y-8 lg:grid-cols-4 lg:gap-y-10">
-          <Cards items={rest} />
+          <Cards items={firstTwelveRegulars} />
+        </div>
+      )}
+
+      {/* 2nd Section: Outfits / Editorial Blocks (if any) */}
+      {outfits.map((outfit) => {
+        const variantCards = (outfit.variants || []).map((v) => ({
+          ...outfit,
+          displayKey: `${outfit.id}-${v.id}`,
+          displayName: v.name || outfit.name,
+          displayImage: v.images?.[0]?.url || v.images?.[0] || outfit.images?.[0]?.url || outfit.images?.[0] || "",
+          displayPrice: Number(v.price) || Number(outfit.price) || 0,
+          displayDiscount: Number(v.discount_price) || Number(outfit.discount_price) || 0,
+          type: "variant",
+          variant: v,
+        }));
+
+        if (!variantCards.length) return null;
+
+        return (
+          <FeatureBlock
+            key={outfit.id}
+            outfit={outfit}
+            items={variantCards}
+          />
+        );
+      })}
+
+      {/* 3rd Section: Remaining Regular Variants (if any) */}
+      {remainingRegulars.length > 0 && (
+        <div className="grid grid-cols-2 gap-x-1.5 gap-y-8 lg:grid-cols-4 lg:gap-y-10 mt-10">
+          <Cards items={remainingRegulars} />
         </div>
       )}
     </div>

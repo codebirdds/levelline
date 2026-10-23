@@ -8,18 +8,33 @@ import { selectIsAuthed, selectUser } from "../../features/auth/authSlice";
 import { logoutThunk } from "../../features/auth/authThunks";
 import logo from "../../assets/images/LandingPage/header/levelin.png";
 
-const PHONE = "1800-833-4488";
-const itemImage = (i) =>
-  i.variant?.images?.find?.((x) => x.is_primary)?.url ||
-  i.variant?.images?.[0]?.url ||
-  i.product?.images?.[0]?.url ||
-  (typeof i.product?.images?.[0] === "string" ? i.product.images[0] : "") ||
-  i.product?.image ||
-  i.image ||
-  "";
+const PHONE = "+91 9717367918";
 
-const itemName = (i) => i.product?.name || i.product?.title || i.title || "";
-const itemPrice = (i) => Number(i.unit_price ?? i.price ?? 0);
+// ✅ Updated Image Logic (Prioritizes Variant Images)
+const itemImage = (i) => {
+  if (Array.isArray(i.variant?.images) && i.variant.images.length > 0) {
+    const primary = i.variant.images.find((x) => x.is_primary) || i.variant.images[0];
+    return typeof primary === "string" ? primary : primary.url;
+  }
+  if (Array.isArray(i.product?.images) && i.product.images.length > 0) {
+    const primary = i.product.images[0];
+    return typeof primary === "string" ? primary : primary.url;
+  }
+  return i.image || "";
+};
+
+// ✅ Updated Name Logic (Prioritizes Variant Name)
+const itemName = (i) => i.variant?.name || i.product?.name || i.product?.title || i.title || "";
+
+// ✅ Updated Price Logic (Calculates price - discount_price)
+const itemPrice = (i) => {
+  const product = i.product || {};
+  const variant = i.variant || {};
+  const basePrice = Number(variant.price) || Number(product.price) || 0;
+  const discountAmt = Number(variant.discount_price) || Number(product.discount_price) || 0;
+  return Math.max(basePrice - discountAmt, 0);
+};
+
 const itemQty = (i) => Number(i.quantity ?? i.qty ?? 1);
 
 export default function SimpleHeader() {
@@ -27,6 +42,7 @@ export default function SimpleHeader() {
   const isLoggedIn = useSelector(selectIsAuthed);
   const user = useSelector(selectUser);
   const items = useSelector(selectCartItems) || [];
+  
   const count = items.reduce((s, i) => s + itemQty(i), 0);
   const total = items.reduce((s, i) => s + itemPrice(i) * itemQty(i), 0);
 
@@ -37,7 +53,7 @@ export default function SimpleHeader() {
     <header className="sticky top-0 z-40 h-[60px] border-b border-border bg-white">
       <div className="container-x relative flex h-full items-center justify-between">
         <a
-          href={`tel:${PHONE.replace(/-/g, "")}`}
+          href={`tel:${PHONE.replace(/[^0-9+]/g, "")}`}
           className="flex items-center gap-2 font-sans text-sm text-[#414141] transition hover:text-[#663f29]"
         >
           <PhoneIcon />
@@ -107,6 +123,7 @@ export default function SimpleHeader() {
                                 {formatCurrency(itemPrice(i))}
                               </p>
                               <p className="mt-0.5 font-sans text-xs text-[#808080]">
+                                {i.variant?.color ? `${i.variant.color} · ` : ""}
                                 Size: {i.size} · Qty: {itemQty(i)}
                               </p>
                             </div>
@@ -152,7 +169,7 @@ export default function SimpleHeader() {
                 <div className="w-[220px] border border-border bg-white p-3 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
                   {isLoggedIn ? (
                     <div className="flex flex-col">
-                      <span className="px-2 py-2 font-sans text-xs text-[#808080]">Hi, {user?.name || "there"}</span>
+                      <span className="px-2 py-2 font-sans text-xs text-[#808080]">Hi, {user?.first_name || user?.name || "there"}</span>
                       <Link to={ROUTES.TRACK_ORDER} onClick={() => setProfileOpen(false)} className="block px-2 py-2 font-sans text-sm text-[#414141] transition hover:text-[#663f29]">Track your orders</Link>
                       <button onClick={() => dispatch(logoutThunk())} className="px-2 py-2 text-left font-sans text-sm text-[#414141] transition hover:text-[#663f29]">Logout</button>
                     </div>

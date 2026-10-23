@@ -1,6 +1,6 @@
 import SectionHeading from "../../../components/common/SectionHeading";
 import ImageCard from "../../../components/ui/ImageCard";
-import ArrowLink from "../../../components/ui/ArrowLink";
+import SmartLink from "../../../components/common/SmartLink";
 import { ImageReveal, Reveal } from "../../../components/animation";
 import { PATHS } from "../content";
 
@@ -57,32 +57,46 @@ export default function ChoosePath({
             once={revealOnce}
             className="aspect-[400/270] w-full"
           >
-            <ImageCard
-              image={p.image}
-              alt={p.title}
-              className="size-full"
+            {/* ✅ Wrapped in SmartLink to make the whole card clickable */}
+            <SmartLink
+              href={p.href}
+              className="group block size-full cursor-pointer"
             >
-              <h3 className="font-sans text-2xl font-medium text-[#ffffff] lg:text-3xl xl:text-[clamp(30px,2.34vw,33.8px)]">
-                {p.title}
-              </h3>
-              <p className="mt-3 font-sans text-sm text-[#f3f3f3] lg:text-sm xl:text-[clamp(14px,1.09vw,15.8px)]">
-                {p.lines.map((l) => (
-                  <span key={l} className="block">
-                    {l}
-                  </span>
-                ))}
-              </p>
-              <ArrowLink
-                href={p.href}
-                light
-                className="mt-7 self-start xl:mt-[clamp(28px,2.19vw,31.5px)]"
-                lightColor="#f3f3f3"
-                lightHoverColor=""
-                hoverBold={true}
+              <ImageCard
+                image={p.image}
+                alt={p.title}
+                className="size-full"
               >
-                {p.cta}
-              </ArrowLink>
-            </ImageCard>
+                <h3 className="font-sans text-2xl font-medium text-[#ffffff] lg:text-3xl xl:text-[clamp(30px,2.34vw,33.8px)]">
+                  {p.title}
+                </h3>
+                <p className="mt-3 font-sans text-sm text-[#f3f3f3] lg:text-sm xl:text-[clamp(14px,1.09vw,15.8px)]">
+                  {p.lines.map((l) => (
+                    <span key={l} className="block">
+                      {l}
+                    </span>
+                  ))}
+                </p>
+                
+                {/* ✅ Replaced ArrowLink with a visual span to prevent nested <a> tags */}
+                <span className="mt-7 inline-flex items-center gap-2 self-start font-sans text-sm uppercase tracking-wide text-[#f3f3f3] transition-all xl:mt-[clamp(28px,2.19vw,31.5px)] group-hover:font-bold">
+                  {p.cta}
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="transition-transform duration-300 group-hover:translate-x-1"
+                  >
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </span>
+              </ImageCard>
+            </SmartLink>
           </ImageReveal>
         ))}
       </div>

@@ -22,6 +22,10 @@ const STATUS_STYLE = {
 };
 
 const getItemImage = (item) => {
+  if (Array.isArray(item.variant?.images) && item.variant.images.length > 0) {
+    const primary = item.variant.images.find((i) => i.is_primary) || item.variant.images[0];
+    return typeof primary === "string" ? primary : primary.url || "";
+  }
   const imgs = Array.isArray(item.images) ? item.images : [];
   if (imgs.length) {
     const primary = imgs.find((i) => i.is_primary) || imgs[0];
@@ -37,8 +41,8 @@ const PAYMENT_LABEL = {
   card: "Card",
 };
 
-// Statuses that can still be cancelled by the customer
 const CANCELLABLE = ["pending", "confirmed", "processing"];
+const TERMINAL = ["delivered", "cancelled", "returned"];
 
 export default function OrderCard({ order, selected, onTrack, onCancel }) {
   const date = order.createdAt
@@ -54,113 +58,112 @@ export default function OrderCard({ order, selected, onTrack, onCancel }) {
   const statusLabel = STATUS_LABEL[status] || status;
   const statusCls = STATUS_STYLE[status] || "bg-[#F5F1E9] text-[#663f29]";
 
-  const subtotal = Number(order.subtotal ?? 0);
-  const discount = Number(order.discount_amount ?? 0);
+  const isDead = status === "cancelled" || status === "returned";
+  const isTerminal = TERMINAL.includes(status);
+  const canCancel = CANCELLABLE.includes(status);
+
+  let computedSubtotal = 0;
+  let computedDiscount = 0;
+
+  const processedItems = items.map((item) => {
+    const variant = item.variant || {};
+    const product = item.product || {};
+    const qty = Number(item.quantity) || 1;
+    
+    const basePrice = Number(item.unit_price) || Number(variant.price) || Number(product.price) || 0;
+    const discountAmt = Number(item.discounted_unit_price) || Number(item.discount_amount) || Number(variant.discount_price) || 0;
+    
+    const finalPrice = Math.max(basePrice - discountAmt, 0);
+    
+    computedSubtotal += basePrice * qty;
+    computedDiscount += discountAmt * qty;
+
+    return {
+      ...item,
+      displayName: variant.name || product.name || item.product_name || "Product",
+      displayColor: variant.color || item.color,
+      displaySize: item.size,
+      displaySku: item.sku || (Array.isArray(variant.sizes) ? variant.sizes.find(s => s.size === item.size)?.sku : null),
+      basePrice,
+      finalPrice,
+      lineTotal: finalPrice * qty,
+      lineOriginal: basePrice * qty,
+      qty,
+    };
+  });
+
   const shipping = Number(order.shipping_fee ?? 0);
   const tax = Number(order.tax_amount ?? 0);
-  const total = Number(order.total_amount ?? subtotal - discount + shipping + tax);
-
-  const isDead = status === "cancelled" || status === "returned";
-  const canCancel = CANCELLABLE.includes(status);
+  const total = computedSubtotal - computedDiscount + shipping + tax;
 
   return (
     <article className="border border-border bg-white">
       {/* ── Header ── */}
       <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border p-4 sm:p-5">
         <div>
-          <p className="text-xs uppercase tracking-wide text-[#808080]">
-            Order number
-          </p>
-          <h2 className="mt-1 font-medium text-[#414141]">{order.order_number}</h2>
-          <p className="mt-1 text-xs text-[#808080]">Placed {date}</p>
+          <p className="text-[10px] uppercase tracking-wide text-[#808080]">Order number</p>
+          <h2 className="mt-1 font-sans text-sm font-medium text-[#414141]">{order.order_number}</h2>
+          <p className="mt-1 text-[11px] text-[#808080]">Placed {date}</p>
         </div>
 
         <div className="flex flex-col items-end gap-2">
-          <span
-            className={`inline-block rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide ${statusCls}`}
-          >
+          <span className={`inline-block rounded-full px-2.5 py-1 text-[9px] font-semibold uppercase tracking-wide ${statusCls}`}>
             {statusLabel}
           </span>
           <div className="text-right">
-            <p className="font-semibold text-[#414141]">{formatCurrency(total)}</p>
-            <p className="mt-1 text-xs uppercase text-[#808080]">
+            <p className="font-sans text-sm font-semibold text-[#414141]">{formatCurrency(total)}</p>
+            <p className="mt-1 text-[10px] uppercase text-[#808080]">
               {PAYMENT_LABEL[order.payment_method] || order.payment_method || ""}
             </p>
           </div>
         </div>
       </div>
 
+      {/* ✅ Top Progress Bar (Only if not Delivered/Cancelled/Returned) */}
+      {!isTerminal && (
+        <div className="border-b border-border bg-[#fafafa] px-4 py-5 sm:px-6">
+          <OrderTimeline status={status} />
+        </div>
+      )}
+
       {/* ── Body ── */}
-      <div className="grid gap-5 p-4 sm:p-5 md:grid-cols-[minmax(0,1fr)_220px]">
-        {/* LEFT: items + price summary */}
+      <div className={isTerminal ? "grid gap-5 p-4 sm:p-5 md:grid-cols-[minmax(0,1fr)_260px]" : "p-4 sm:p-5"}>
+        
+        {/* LEFT: items + price summary (Full width if not terminal) */}
         <div>
-          <p className="mb-3 text-xs uppercase tracking-wide text-[#808080]">
-            Items
-          </p>
+          <p className="mb-3 text-[10px] uppercase tracking-wide text-[#808080]">Items</p>
 
           <div className="space-y-3">
-            {items.slice(0, 3).map((item, index) => {
-              const lineTotal = Number(
-                item.subtotal ??
-                  item.discounted_unit_price * item.quantity ??
-                  item.unit_price * item.quantity ??
-                  0
-              );
-              const hasDiscount =
-                Number(item.discount_amount || 0) > 0 &&
-                Number(item.unit_price) > Number(item.discounted_unit_price);
-
+            {processedItems.slice(0, 3).map((item, index) => {
+              const hasDiscount = item.basePrice > item.finalPrice;
               return (
-                <div
-                  key={`${item.product_variant_id ?? item.product_id}-${item.size}-${index}`}
-                  className="flex gap-3"
-                >
-                  <div className="aspect-[3/4] w-14 shrink-0 overflow-hidden bg-[#F5F1E9]">
-                    <img
-                      src={getItemImage(item)}
-                      alt={item.product_name}
-                      className="size-full object-contain"
-                    />
+                <div key={`${item.product_variant_id ?? item.product_id}-${item.size}-${index}`} className="flex gap-3">
+                  <div className="aspect-[3/4] w-12 shrink-0 overflow-hidden bg-[#F5F1E9]">
+                    <img src={getItemImage(item)} alt={item.displayName} className="size-full object-contain" />
                   </div>
-
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-[#414141]">
-                      {item.product_name}
-                    </p>
-                    <p className="mt-0.5 text-xs text-[#808080]">
-                      {[
-                        item.size && `Size ${item.size}`,
-                        item.color,
-                        `Qty ${item.quantity}`,
-                      ]
+                    <p className="truncate font-sans text-xs font-medium text-[#414141]">{item.displayName}</p>
+                    <p className="mt-0.5 font-sans text-[10px] text-[#808080]">
+                      {[item.displayColor, item.displaySize && `Size ${item.displaySize}`, `Qty ${item.qty}`]
                         .filter(Boolean)
                         .join(" · ")}
                     </p>
-
                     <div className="mt-1 flex items-baseline gap-2">
-                      <span className="text-sm font-semibold text-[#414141]">
-                        {formatCurrency(lineTotal)}
-                      </span>
+                      <span className="font-sans text-xs font-semibold text-[#414141]">{formatCurrency(item.lineTotal)}</span>
                       {hasDiscount && (
-                        <span className="text-xs text-[#808080] line-through">
-                          {formatCurrency(Number(item.unit_price) * item.quantity)}
-                        </span>
+                        <span className="font-sans text-[10px] text-[#808080] line-through">{formatCurrency(item.lineOriginal)}</span>
                       )}
                     </div>
-
-                    {item.sku && (
-                      <p className="mt-0.5 text-[10px] uppercase tracking-wide text-[#a0a0a0]">
-                        SKU: {item.sku}
-                      </p>
+                    {item.displaySku && (
+                      <p className="mt-0.5 text-[9px] uppercase tracking-wide text-[#a0a0a0]">SKU: {item.displaySku}</p>
                     )}
                   </div>
                 </div>
               );
             })}
-
-            {items.length > 3 && (
-              <p className="text-xs text-[#808080]">
-                + {items.length - 3} more item{items.length - 3 === 1 ? "" : "s"}
+            {processedItems.length > 3 && (
+              <p className="text-[10px] text-[#808080]">
+                + {processedItems.length - 3} more item{processedItems.length - 3 === 1 ? "" : "s"}
               </p>
             )}
           </div>
@@ -168,58 +171,46 @@ export default function OrderCard({ order, selected, onTrack, onCancel }) {
           {/* Price summary */}
           {items.length > 0 && (
             <div className="mt-4 border-t border-border pt-3">
-              <div className="flex justify-between text-xs text-[#6b6b6b]">
+              <div className="flex justify-between font-sans text-[10px] text-[#6b6b6b]">
                 <span>Subtotal</span>
-                <span>{formatCurrency(subtotal)}</span>
+                <span>{formatCurrency(computedSubtotal)}</span>
               </div>
-
-              {discount > 0 && (
-                <div className="mt-1 flex justify-between text-xs text-[#c0392b]">
+              {computedDiscount > 0 && (
+                <div className="mt-1 flex justify-between font-sans text-[10px] text-[#c0392b]">
                   <span>Discount</span>
-                  <span>− {formatCurrency(discount)}</span>
+                  <span>− {formatCurrency(computedDiscount)}</span>
                 </div>
               )}
-
-              {shipping > 0 ? (
-                <div className="mt-1 flex justify-between text-xs text-[#6b6b6b]">
-                  <span>Shipping</span>
-                  <span>{formatCurrency(shipping)}</span>
-                </div>
-              ) : (
-                <div className="mt-1 flex justify-between text-xs text-[#6b6b6b]">
-                  <span>Shipping</span>
-                  <span>Free</span>
-                </div>
-              )}
-
+              <div className="mt-1 flex justify-between font-sans text-[10px] text-[#6b6b6b]">
+                <span>Shipping</span>
+                <span>{shipping > 0 ? formatCurrency(shipping) : "Free"}</span>
+              </div>
               {tax > 0 && (
-                <div className="mt-1 flex justify-between text-xs text-[#6b6b6b]">
+                <div className="mt-1 flex justify-between font-sans text-[10px] text-[#6b6b6b]">
                   <span>Tax</span>
                   <span>{formatCurrency(tax)}</span>
                 </div>
               )}
-
-              <div className="mt-2 flex justify-between border-t border-border pt-2 text-sm font-semibold text-[#414141]">
+              <div className="mt-2 flex justify-between border-t border-border pt-2 font-sans text-xs font-semibold text-[#414141]">
                 <span>Total</span>
                 <span>{formatCurrency(total)}</span>
               </div>
             </div>
           )}
 
-          {/* ── Actions ── */}
+          {/* Actions */}
           {!isDead && (
             <div className="mt-4 flex flex-wrap items-center gap-4">
               <button
                 onClick={() => onTrack(order.id)}
-                className="text-xs font-medium uppercase tracking-wide text-[#663f29] underline underline-offset-2 transition hover:text-[#414141]"
+                className="text-[10px] font-medium uppercase tracking-wide text-[#663f29] underline underline-offset-2 transition hover:text-[#414141]"
               >
                 {selected ? "Refresh tracking" : "Track order"}
               </button>
-
               {canCancel && (
                 <button
                   onClick={() => onCancel?.(order.id)}
-                  className="text-xs font-medium uppercase tracking-wide text-[#c0392b] underline underline-offset-2 transition hover:text-[#8a2820]"
+                  className="text-[10px] font-medium uppercase tracking-wide text-[#c0392b] underline underline-offset-2 transition hover:text-[#8a2820]"
                 >
                   Cancel order
                 </button>
@@ -228,13 +219,34 @@ export default function OrderCard({ order, selected, onTrack, onCancel }) {
           )}
         </div>
 
-        {/* RIGHT: timeline */}
-        <div className="md:border-l md:border-border md:pl-5">
-          <p className="mb-3 text-xs uppercase tracking-wide text-[#808080]">
-            {isDead ? "Order status" : "Delivery progress"}
-          </p>
-          <OrderTimeline status={status} />
-        </div>
+        {/* ✅ RIGHT: Terminal Status Block (Only for Delivered/Cancelled/Returned) */}
+        {isTerminal && (
+          <div className="md:border-l md:border-border md:pl-5 flex flex-col justify-start">
+            <p className="mb-3 text-[10px] uppercase tracking-wide text-[#808080]">
+              Order Status
+            </p>
+            <div className={`flex items-start gap-3 rounded-md border p-4 ${
+              status === "delivered" ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"
+            }`}>
+              {status === "delivered" ? (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 shrink-0"><path d="M5 12l5 5L20 7" /></svg>
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c0392b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 shrink-0"><path d="M18 6L6 18M6 6l12 12" /></svg>
+              )}
+              <div>
+                <p className={`font-sans text-xs font-semibold capitalize ${status === "delivered" ? "text-emerald-700" : "text-red-700"}`}>
+                  {statusLabel}
+                </p>
+                <p className="mt-1 text-[10px] leading-relaxed text-[#808080]">
+                  {status === "delivered" 
+                    ? "Your package was delivered successfully." 
+                    : "This order has been closed and is no longer active."}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </article>
   );

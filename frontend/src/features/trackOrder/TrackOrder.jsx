@@ -34,7 +34,6 @@ export default function TrackOrder() {
 
   const trackOrder = (id) => dispatch(fetchMyOrderThunk(id));
 
-  // ── Cancel order — passes order_id to the thunk
   const cancelOrder = async (orderId) => {
     if (!orderId) return;
 
@@ -47,7 +46,6 @@ export default function TrackOrder() {
       await dispatch(cancelMyOrderThunk(orderId));
       toast.success("Order cancelled");
 
-      // Refresh the list + any currently open tracking panel
       dispatch(fetchMyOrdersThunk());
       if (selectedOrder?.id === orderId) {
         dispatch(fetchMyOrderThunk(orderId));
@@ -74,18 +72,12 @@ export default function TrackOrder() {
         </div>
 
         {error && (
-          <div
-            role="alert"
-            className="mb-5 border border-red-200 bg-red-50 p-4 text-sm text-red-700"
-          >
+          <div role="alert" className="mb-5 border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             {error}
           </div>
         )}
         {detailError && (
-          <div
-            role="alert"
-            className="mb-5 border border-red-200 bg-red-50 p-4 text-sm text-red-700"
-          >
+          <div role="alert" className="mb-5 border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             {detailError}
           </div>
         )}
@@ -100,10 +92,7 @@ export default function TrackOrder() {
         )}
 
         {selectedOrder && !detailLoading && (
-          <section
-            className="mb-6 border border-[#663f29]/30 bg-[#F5F1E9] p-4 sm:p-5"
-            aria-live="polite"
-          >
+          <section className="mb-6 border border-[#663f29]/30 bg-[#F5F1E9] p-4 sm:p-5" aria-live="polite">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-wide text-[#808080]">

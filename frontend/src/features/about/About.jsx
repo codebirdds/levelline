@@ -58,7 +58,7 @@ export default function About() {
         </p>
       </SplitSection>
 
-      <StoreStrip images={STORE_IMAGES} className="mt-14 lg:mt-[227px]" />
+      <StoreStrip images={STORE_IMAGES} className="mt-14 lg:mt-[156px]" />
 
       <div className="lg:mt-[100px]">
         <ThreeWaysToShop />

@@ -15,9 +15,11 @@ router.post(
     '/',
     authMiddleware,
     roleMiddleware('admin'),
+        upload.array('images', 3),
+
     controller.create
 );
-router.put('/:id', authMiddleware, roleMiddleware('admin'), controller.update);
+router.put('/:id', authMiddleware, roleMiddleware('admin'), upload.array('images', 3), controller.update);
 router.delete('/:id', authMiddleware, roleMiddleware('admin'), controller.remove);
 
 router.get('/', controller.getAll);

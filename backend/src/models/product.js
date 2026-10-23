@@ -105,6 +105,12 @@ module.exports = (sequelize, DataTypes) => {
                 allowNull: true
             },
 
+             images: {
+                type: DataTypes.JSON,
+                allowNull: false,
+                defaultValue: []
+            },
+
             // Additional product specifications
             details: {
                 type: DataTypes.JSON,

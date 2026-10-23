@@ -23,6 +23,8 @@ export default function VariantTable({ items, onEdit, onDelete, onFilterByProduc
           <tr className="text-left text-xs uppercase tracking-wide text-muted border-b border-border">
             <th className="px-4 py-3">Image</th>
             <th className="px-4 py-3">Product</th>
+            {/* ✅ Added Name Column */}
+            <th className="px-4 py-3">Variant Name</th>
             <th className="px-4 py-3">Color</th>
             <th className="px-4 py-3">Sizes</th>
             <th className="px-4 py-3">Stock</th>
@@ -41,6 +43,13 @@ export default function VariantTable({ items, onEdit, onDelete, onFilterByProduc
                 )}
               </td>
               <td className="px-4 py-3 font-medium text-ink">{v.product?.name || `#${v.product_id}`}</td>
+              
+              {/* ✅ Render Name & Description */}
+              <td className="px-4 py-3">
+                <p className="font-medium text-ink">{v.name || "—"}</p>
+                {v.description && <p className="text-xs text-muted truncate max-w-[150px]">{v.description}</p>}
+              </td>
+
               <td className="px-4 py-3">
                 <div className="flex items-center gap-2">
                   {v.color_code && (

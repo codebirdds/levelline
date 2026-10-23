@@ -79,7 +79,7 @@ class ProductVariantService {
 
     // CREATE VARIANT
     async create(data, userId) {
-        const { product_id, color, sizes, price, discount_price } = data;
+        const { product_id, color, sizes, price, discount_price, name, description } = data;
 
         await this.validateProduct(product_id);
 
@@ -123,6 +123,8 @@ class ProductVariantService {
 
         return await ProductVariant.create({
             product_id,
+            name,
+            description,
             color: color.trim(),
             price,
             discount_price,
@@ -235,7 +237,9 @@ class ProductVariantService {
             sizes,
             images,
             color_code,
-            status
+            status,
+            name,
+            description
         } = data;
 
         if (product_id !== undefined) {
@@ -283,7 +287,9 @@ class ProductVariantService {
             ...(color_code !== undefined && { color_code }),
             ...(sizes !== undefined && { sizes }),
             ...(images !== undefined && { images }),
-            ...(status !== undefined && { status })
+            ...(status !== undefined && { status }),
+            ...(name !== undefined && { name }),
+            ...(description !== undefined && { description })
         });
 
         return await this.findById(id);

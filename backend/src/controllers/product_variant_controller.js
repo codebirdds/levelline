@@ -24,7 +24,7 @@ exports.create = async (req, res) => {
 
         if (!Array.isArray(body.sizes) || body.sizes.length === 0) {
             throw new Error('At least one size is required');
-        }
+        }   
 
         // Handle Cloudinary-uploaded images.
         if (req.files && req.files.length > 0) {

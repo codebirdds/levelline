@@ -23,60 +23,64 @@ function Chevron() {
 
 export default function HowItWorks() {
   return (
-    <section className="py-10">
+    <section className="py-10 overflow-hidden">
       <div className="container-x">
         <Reveal>
           <SectionHeading title="How it works" underline />
         </Reveal>
 
         {/* ---------- Desktop: 3 aligned rows ---------- */}
-        <div className="hidden lg:block mt-12">
-          {/* Title row with chevrons between — stagger each title + chevron */}
+        <div className="hidden lg:block mt-12 px-4">
+          
+          {/* Title row with chevrons between */}
           <Stagger
-            className="grid grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr_auto_1fr] items-center gap-x-6"
+            className="relative grid grid-cols-5 gap-4 xl:gap-12 items-center"
             step={90}
             delay={100}
           >
             {STEPS.map((step, i) => (
-              <Fragment key={step.title}>
-                <h3 className="text-center font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-heading whitespace-nowrap">
+              <div key={step.title} className="relative flex justify-center w-full">
+                <h3 className="text-center font-sans text-[10px] min-[1400px]:text-[12px] font-medium uppercase tracking-[0.18em] text-heading whitespace-nowrap">
                   {step.title}
                 </h3>
+                
+                {/* Chevron perfectly centered in the gap */}
                 {i < STEPS.length - 1 && (
-                  <span className="text-muted/70 flex flex-row gap-0 items-center justify-center">
+                  <span className="absolute top-1/2 -translate-y-1/2 text-muted/70 -right-2 translate-x-1/2 xl:-right-6">
                     <Chevron />
                   </span>
                 )}
-              </Fragment>
+              </div>
             ))}
           </Stagger>
 
           {/* Image row — cascade in after the titles */}
-          <Stagger className="grid grid-cols-5 gap-20 mt-4 ml-9" step={130} delay={250}>
+          <Stagger className="grid grid-cols-5 gap-4 mt-6 xl:gap-12" step={130} delay={250}>
             {STEPS.map((step) => (
               <div
                 key={step.title}
-                className="w-full max-w-[160px] aspect-[190/234]"
+                className="w-full flex justify-center"
               >
-                <img
-                  src={step.image}
-                  alt={step.title}
-                  loading="lazy"
-                  className="h-full w-auto fit-contain"
-                />
+                <div className="w-full max-w-[160px] aspect-[190/234]">
+                  <img
+                    src={step.image}
+                    alt={step.title}
+                    loading="lazy"
+                    className="h-full w-full object-contain"
+                  />
+                </div>
               </div>
             ))}
           </Stagger>
 
           {/* Description row — cascades in last */}
-          <Stagger className="grid grid-cols-5 gap-16 mt-5" step={110} delay={420}>
+          <Stagger className="grid grid-cols-5 gap-4 mt-5 xl:gap-12" step={110} delay={420}>
             {STEPS.map((step) => (
-              <p
-                key={step.title}
-                className="text-center max-w-[190px] font-sans text-[10px] leading-relaxed text-subheading"
-              >
-                {step.text}
-              </p>
+              <div key={step.title} className="flex justify-center w-full">
+                <p className="text-center max-w-[160px] font-sans text-[10px] leading-relaxed text-subheading">
+                  {step.text}
+                </p>
+              </div>
             ))}
           </Stagger>
         </div>

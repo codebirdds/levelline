@@ -8,8 +8,13 @@ class ProductService {
 
     // CREATE PRODUCT
     async create(data, userId) {
-        const { category_id, variants, ...productData } = data;
 
+        const { category_id, variants, ...productData } = data;
+        
+
+        if (!category_id) {
+            throw new Error('Category ID is required');
+        }
         // Variants must be managed through the variant API.
         if (variants !== undefined) {
             throw new Error(
@@ -149,20 +154,7 @@ class ProductService {
             throw new Error('Product not found');
         }
 
-        const { variants, sku, stock, images, ...productData } = data;
-
-        if (variants !== undefined) {
-            throw new Error(
-                'Update variants through the product variant API.'
-            );
-        }
-
-        if (sku !== undefined || stock !== undefined ||
-            images !== undefined) {
-            throw new Error(
-                'SKU, stock, and images are managed by product variants.'
-            );
-        }
+        const {sku, stock, ...productData } = data;
 
         if (productData.category_id !== undefined) {
             const category = await Category.findByPk(
@@ -173,6 +165,8 @@ class ProductService {
                 throw new Error('Category not found');
             }
         }
+
+        console.log('Updating product with data:', data, 'and userId:', userId);
 
         await product.update({
             ...productData,
