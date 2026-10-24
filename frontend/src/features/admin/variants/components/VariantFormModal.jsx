@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Modal from "../../../../components/common/Modal";
 import {
@@ -10,8 +10,8 @@ import {
 import { createVariantThunk, updateVariantThunk } from "../variantThunks";
 
 const EMPTY = {
-  name: "",          // ✅ Added
-  description: "",   // ✅ Added
+  name: "",
+  description: "",
   color: "",
   color_code: "#000000",
   price: "",
@@ -27,20 +27,38 @@ export default function VariantFormModal() {
   
   const [form, setForm] = useState(EMPTY);
   const [sizes, setSizes] = useState([{ size: "", sku: "", stock: 0 }]);
-  const [imageFiles, setImageFiles] = useState(null);
+  
+  // Image State
+  const [images, setImages] = useState([]);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [draggedIndex, setDraggedIndex] = useState(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (open) {
       if (editing?.id) {
-        // Editing existing variant
         setForm({ ...EMPTY, ...editing });
         setSizes(editing.sizes || [{ size: "", sku: "", stock: 0 }]);
+        
+        if (Array.isArray(editing.images)) {
+          const loadedImages = [...editing.images]
+            .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+            .map((img, idx) => ({
+              id: `existing-${idx}`,
+              url: img.url || img,
+              file: null,
+              is_primary: img.is_primary || idx === 0
+            }));
+          setImages(loadedImages);
+        } else {
+          setImages([]);
+        }
       } else {
-        // Adding new variant (editing contains only product_id)
         setForm({ ...EMPTY, product_id: editing?.product_id });
         setSizes([{ size: "", sku: "", stock: 0 }]);
+        setImages([]);
       }
-      setImageFiles(null);
+      setActiveIndex(0);
     }
   }, [editing, open]);
 
@@ -56,13 +74,59 @@ export default function VariantFormModal() {
   const addSize = () => setSizes([...sizes, { size: "", sku: "", stock: 0 }]);
   const removeSize = (index) => setSizes(sizes.filter((_, i) => i !== index));
 
+  // ── Image Handling ──
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    const newImages = files.map(file => ({
+      id: `new-${Date.now()}-${Math.random()}`,
+      url: URL.createObjectURL(file),
+      file,
+      is_primary: false
+    }));
+
+    setImages(prev => [...prev, ...newImages]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removeImage = (index) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+    if (activeIndex >= index && activeIndex > 0) {
+      setActiveIndex(prev => prev - 1);
+    }
+  };
+
+  // ── Drag and Drop ──
+  const handleDragStart = (e, index) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+    
+    const newImages = [...images];
+    const draggedItem = newImages[draggedIndex];
+    newImages.splice(draggedIndex, 1);
+    newImages.splice(index, 0, draggedItem);
+    
+    setImages(newImages);
+    setDraggedIndex(index);
+    setActiveIndex(index);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+  };
+
   const onSubmit = (e) => {
     e.preventDefault();
 
     const formData = new FormData();
     formData.append("product_id", editing?.product_id || form.product_id);
     
-    // ✅ Append Name and Description
     if (form.name) formData.append("name", form.name);
     if (form.description) formData.append("description", form.description);
     
@@ -74,10 +138,19 @@ export default function VariantFormModal() {
     
     formData.append("sizes", JSON.stringify(sizes));
 
-    if (imageFiles && imageFiles.length > 0) {
-      Array.from(imageFiles).forEach(file => {
+    const newFiles = images.filter(img => img.file).map(img => img.file);
+    
+    if (newFiles.length > 0) {
+      newFiles.forEach(file => {
         formData.append("images", file);
       });
+    } else if (editing?.id && images.length > 0) {
+      const existingImagesJson = images.map((img, idx) => ({
+        url: img.url,
+        is_primary: idx === 0,
+        sort_order: idx + 1
+      }));
+      formData.append("images", JSON.stringify(existingImagesJson));
     }
 
     if (editing?.id) {
@@ -92,6 +165,7 @@ export default function VariantFormModal() {
       open={open}
       onClose={onClose}
       title={editing?.id ? "Edit Variant" : "Add Variant"}
+      className="max-w-4xl" 
       footer={
         <>
           <button onClick={onClose} className="px-4 py-2 text-sm border border-border rounded-md hover:bg-hover">Cancel</button>
@@ -106,9 +180,9 @@ export default function VariantFormModal() {
         </>
       }
     >
-      <form id="variant-form" onSubmit={onSubmit} className="space-y-4">
+      <form id="variant-form" onSubmit={onSubmit} className="space-y-5">
         
-        {/* ✅ Name & Description */}
+        {/* 1. Name & Description */}
         <div className="grid grid-cols-2 gap-4">
           <Field label="Variant Name">
             <input value={form.name} onChange={(e) => set("name", e.target.value)}
@@ -122,6 +196,7 @@ export default function VariantFormModal() {
           </Field>
         </div>
 
+        {/* 2. Color & Swatch */}
         <div className="grid grid-cols-2 gap-4">
           <Field label="Color Name *">
             <input required value={form.color} onChange={(e) => set("color", e.target.value)}
@@ -134,6 +209,7 @@ export default function VariantFormModal() {
           </Field>
         </div>
 
+        {/* 3. Price & Discount */}
         <div className="grid grid-cols-2 gap-4">
           <Field label="Price (₹) *">
             <input required type="number" min="0" value={form.price}
@@ -147,6 +223,7 @@ export default function VariantFormModal() {
           </Field>
         </div>
 
+        {/* 4. Sizes & Stock */}
         <div>
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-muted">Sizes & Stock *</span>
@@ -171,10 +248,84 @@ export default function VariantFormModal() {
           </div>
         </div>
 
-        <Field label="Variant Images">
-          <input type="file" multiple accept="image/*" onChange={(e) => setImageFiles(e.target.files)}
-            className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-brand file:text-white hover:file:bg-brand-dark" />
-        </Field>
+        {/* 5. Image Manager UI (Moved to bottom) */}
+        <div className="flex flex-col gap-4 rounded-lg border border-border bg-surface p-4 w-full">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-muted uppercase tracking-wide">Images</span>
+            <div>
+              <input 
+                type="file" 
+                multiple 
+                accept="image/*" 
+                onChange={handleImageUpload} 
+                ref={fileInputRef} 
+                className="hidden" 
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="text-xs font-semibold bg-white border border-border px-3 py-1.5 rounded hover:bg-gray-50 transition"
+              >
+                + Add Images
+              </button>
+            </div>
+          </div>
+
+          {images.length === 0 ? (
+            <div className="flex aspect-video w-full items-center justify-center rounded-md border-2 border-dashed border-border bg-white text-sm text-muted">
+              No images uploaded yet.
+            </div>
+          ) : (
+            <div className="flex flex-col md:flex-row gap-4 w-full">
+              {/* Big Preview */}
+              <div className="relative flex flex-1 items-center justify-center overflow-hidden rounded-md border border-border bg-white h-[300px] md:h-[400px]">
+                <img
+                  src={images[activeIndex]?.url}
+                  alt="Main preview"
+                  className="max-h-full max-w-full object-contain"
+                />
+                <span className="absolute left-2 top-2 rounded bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white">
+                  {activeIndex === 0 ? "Primary (Main)" : `Image ${activeIndex + 1}`}
+                </span>
+              </div>
+
+              {/* Thumbnails (Draggable) */}
+              <div className="flex w-full md:w-24 shrink-0 flex-row md:flex-col gap-2 overflow-x-auto md:overflow-y-auto">
+                {images.map((img, idx) => (
+                  <div
+                    key={img.id}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, idx)}
+                    onDragOver={(e) => handleDragOver(e, idx)}
+                    onDragEnd={handleDragEnd}
+                    onClick={() => setActiveIndex(idx)}
+                    className={`group relative flex aspect-square w-20 md:w-full shrink-0 cursor-grab items-center justify-center overflow-hidden rounded border bg-white transition-all ${
+                      activeIndex === idx ? "border-brand ring-2 ring-brand/20" : "border-border opacity-70 hover:opacity-100"
+                    }`}
+                  >
+                    <img src={img.url} alt="" className="size-full object-contain p-1" />
+                    
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); removeImage(idx); }}
+                      className="absolute right-1 top-1 flex size-5 items-center justify-center rounded-full bg-red-100 text-red-600 opacity-0 transition hover:bg-red-200 group-hover:opacity-100"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                    </button>
+                    
+                    <span className="absolute bottom-1 left-1 rounded bg-black/50 px-1 text-[9px] text-white">
+                      {idx === 0 ? "Main" : idx + 1}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          <p className="text-[10px] text-muted">
+            Drag and drop the images to reorder. The first image will be used as the primary display image.
+          </p>
+        </div>
+
       </form>
     </Modal>
   );

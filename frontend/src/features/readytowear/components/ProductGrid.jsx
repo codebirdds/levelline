@@ -48,21 +48,24 @@ export default function ProductGrid({ products, editorial }) {
   const outfits = products.filter((p) => p.is_outfit);
   const regulars = products.filter((p) => !p.is_outfit);
 
-  // 1. Flatten regular products into variant cards
-  const regularCards = regulars.flatMap((p) => {
-    return (p.variants || []).map((v) => ({
+  // ✅ FIX: Map over regular products (only 1 card per product)
+  const regularCards = regulars.map((p) => {
+    // Find the lowest price among variants for the display
+    const variantPrices = (p.variants || []).map(
+      (v) => Math.max(Number(v.price) - Number(v.discount_price || 0), 0)
+    );
+    const minVariantPrice = variantPrices.length > 0 ? Math.min(...variantPrices) : Number(p.price);
+
+    return {
       ...p,
-      displayKey: `${p.id}-${v.id}`,
-      displayName: v.name || p.name,
-      displayImage: v.images?.[0]?.url || v.images?.[0] || p.images?.[0]?.url || p.images?.[0] || "",
-      displayPrice: Number(v.price) || Number(p.price) || 0,
-      displayDiscount: Number(v.discount_price) || Number(p.discount_price) || 0,
-      type: "variant",
-      variant: v,
-    }));
+      displayKey: `product-${p.id}`,
+      displayName: p.name,
+      displayPrice: minVariantPrice,
+      type: "product", // Treat as single product card
+    };
   });
 
-  // 2. If not editorial (e.g. filtered), show regulars first then outfits
+  // If not editorial (e.g. filtered), show regulars first then outfits
   if (!editorial) {
     const allCards = [
       ...regularCards,
@@ -84,14 +87,14 @@ export default function ProductGrid({ products, editorial }) {
     );
   }
 
-  // 3. Editorial mode logic: Split regulars into first 12 and the rest
+  // Editorial mode logic: Split regulars into first 12 and the rest
   const firstTwelveRegulars = regularCards.slice(0, 12);
   const remainingRegulars = regularCards.slice(12);
 
   return (
     <div className="space-y-8 px-4 lg:space-y-10">
       
-      {/* 1st Section: First 12 Regular Variants (if any) */}
+      {/* 1st Section: First 12 Regular Products (if any) */}
       {firstTwelveRegulars.length > 0 && (
         <div className="grid grid-cols-2 gap-x-1.5 gap-y-8 lg:grid-cols-4 lg:gap-y-10">
           <Cards items={firstTwelveRegulars} />
@@ -122,7 +125,7 @@ export default function ProductGrid({ products, editorial }) {
         );
       })}
 
-      {/* 3rd Section: Remaining Regular Variants (if any) */}
+      {/* 3rd Section: Remaining Regular Products (if any) */}
       {remainingRegulars.length > 0 && (
         <div className="grid grid-cols-2 gap-x-1.5 gap-y-8 lg:grid-cols-4 lg:gap-y-10 mt-10">
           <Cards items={remainingRegulars} />
