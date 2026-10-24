@@ -228,13 +228,13 @@ class OrderService {
                     { transaction }
                 );
 
-                const originalUnitCents = toCents(product.price);
+                const originalUnitCents = toCents(variant.price);
 
                 const discountedUnitCents =
-                    product.discount_price !== null &&
-                        product.discount_price !== undefined &&
-                        product.discount_price !== ''
-                        ? toCents(product.discount_price)
+                    variant.discount_price !== null &&
+                        variant.discount_price !== undefined &&
+                        variant.discount_price !== ''
+                        ? toCents(variant.discount_price)
                         : originalUnitCents;
 
                 if (
@@ -243,7 +243,7 @@ class OrderService {
                     discountedUnitCents > originalUnitCents
                 ) {
                     throw createHttpError(
-                        `Invalid pricing for ${product.name}`
+                        `Invalid pricing for ${variant.name}`
                     );
                 }
 
@@ -259,7 +259,7 @@ class OrderService {
                     cart_id: cart.id,
                     product_id: product.id,
                     product_variant_id: variant.id,
-                    product_name: product.name,
+                    product_name: variant.name,
                     sku: sizeEntry.sku,
                     size: sizeEntry.size,
                     color: variant.color,

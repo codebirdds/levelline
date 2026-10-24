@@ -20,6 +20,16 @@ module.exports = (sequelize, DataTypes) => {
                 allowNull: false
             },
 
+            name: {
+                type: DataTypes.STRING,
+                allowNull: true
+            },
+
+            description: {
+                type: DataTypes.TEXT,
+                allowNull: true
+            },
+
             color: {
                 type: DataTypes.STRING,
                 allowNull: false
@@ -30,7 +40,7 @@ module.exports = (sequelize, DataTypes) => {
                 allowNull: true
             },
 
-                  // Variant-level pricing
+            // Variant-level pricing
             price: {
                 type: DataTypes.DECIMAL(10, 2),
                 allowNull: true

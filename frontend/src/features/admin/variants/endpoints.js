@@ -3,5 +3,5 @@ export const ADMIN_VARIANTS = {
   CREATE: { method: "POST",   url: "v1/product/variant" },
   UPDATE: { method: "PUT",    url: (id) => `v1/product/variant/${id}` },
   DELETE: { method: "DELETE", url: (id) => `v1/product/variant/${id}` },
-  BY_PRODUCT: { method: "GET", url: (id) => `v1/product/variant` },
+  BY_PRODUCT: { method: "GET", url: (id) => `v1/product/variant/product/${id}` },
 };

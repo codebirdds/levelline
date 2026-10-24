@@ -3,7 +3,14 @@ import { ADMIN_PRODUCTS } from "./endpoints";
 
 const call = ({ method, url }, { data, args = [] } = {}) => {
   const resolvedUrl = typeof url === "function" ? url(...args) : url;
-  return api({ method, url: resolvedUrl, data }).then((r) => r.data);
+  
+  // ✅ ADDED: FormData handling for images
+  const isFormData = typeof FormData !== "undefined" && data instanceof FormData;
+  const config = isFormData
+    ? { headers: { "Content-Type": "multipart/form-data" } }
+    : {};
+
+  return api({ method, url: resolvedUrl, data, ...config }).then((r) => r.data);
 };
 
 export const listProducts = async () => {
@@ -16,7 +23,6 @@ export const createProduct = async (payload) => {
 };
 
 export const updateProduct = async (id, payload) => {
-  console.log("Updating product with ID:", id, "and payload:", payload); // Debugging log
   return call(ADMIN_PRODUCTS.UPDATE, { data: payload, args: [id] });
 };
 

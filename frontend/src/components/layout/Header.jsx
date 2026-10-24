@@ -1,16 +1,18 @@
 import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { ROUTES } from "../../routes/routePaths";
 import { NAV_LEFT, NAV_RIGHT, BOOK_CTA } from "../../features/home/content";
 import MobileMenu from "./MobileMenu";
 import SmartLink from "../common/SmartLink";
 import logo from "../../assets/images/LandingPage/header/levelin.png";
-import { selectUser } from "../../features/auth/authSlice";
+import { selectIsAuthed, selectUser } from "../../features/auth/authSlice";
+import { logoutThunk } from "../../features/auth/authThunks";
+import { selectCartItems } from "../../features/cart/cartSlice";
 import BookAppointmentModal from "../../features/contact/components/BookAppointmentModal";
 
 const linkCls =
-  "font-sans  text-[10px] min-[1400px]:text-[15px] font-medium uppercase tracking-wide transition";
+  "font-sans text-[10px] min-[1400px]:text-[15px] font-medium uppercase tracking-wide transition";
 
 const isExternal = (href) =>
   !href || href.startsWith("#") || /^https?:/.test(href);
@@ -27,10 +29,16 @@ const NavLink = ({ href, className, children }) =>
   );
 
 export default function Header({ scroll }) {
+  const dispatch = useDispatch();
+  const isLoggedIn = useSelector(selectIsAuthed);
   const user = useSelector(selectUser);
+  const items = useSelector(selectCartItems) || [];
+  const count = items.reduce((s, i) => s + Number(i.quantity ?? i.qty ?? 1), 0);
+
   const [scrolled, setScrolled] = useState(scroll);
   const [menuOpen, setMenuOpen] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   useEffect(() => {
     let lastY = window.scrollY;
@@ -118,13 +126,86 @@ export default function Header({ scroll }) {
               ))}
             </nav>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
+              
+              {/* ── Cart Icon (Only shows when logged in) ── */}
+              {isLoggedIn && (
+                <Link
+                  to={ROUTES.CHECKOUT}
+                  aria-label="Cart"
+                  className={`relative flex size-9 items-center justify-center transition ${
+                    scrolled ? "text-black hover:text-gold" : "text-cream hover:text-gold"
+                  }`}
+                >
+                  <BagIcon />
+                  {count > 0 && (
+                    <span className="absolute right-0 top-1 flex size-4 items-center justify-center rounded-full bg-[#1a1a1a] text-[9px] font-medium text-white">
+                      {count}
+                    </span>
+                  )}
+                </Link>
+              )}
+
+              {/* ── Profile Dropdown ── */}
+              <div
+                className="relative"
+                onMouseEnter={() => setProfileOpen(true)}
+                onMouseLeave={() => setProfileOpen(false)}
+              >
+                <button
+                  aria-label="Profile"
+                  className={`flex size-9 items-center justify-center transition ${
+                    scrolled ? "text-black hover:text-gold" : "text-cream hover:text-gold"
+                  }`}
+                >
+                  <UserIcon />
+                </button>
+
+                {profileOpen && (
+                  <div className="absolute right-0 top-full pt-4">
+                    <div className="w-[150px] border border-border bg-white p-1 shadow-xl">
+                      {isLoggedIn ? (
+                        <div className="flex flex-col">
+                          <span className="px-2 py-1 font-sans text-xs text-[#808080]">
+                            Hi, {user?.first_name || user?.name || "there"}
+                          </span>
+                          <Link
+                            to={ROUTES.TRACK_ORDER}
+                            onClick={() => setProfileOpen(false)}
+                            className="block px-2 py-1 font-sans text-xs text-[#414141] transition hover:text-[#663f29]"
+                          >
+                            Track your orders
+                          </Link>
+                          <button
+                            onClick={() => {
+                              dispatch(logoutThunk());
+                              setProfileOpen(false);
+                            }}
+                            className="px-2 py-1 text-left font-sans text-xs text-[#414141] transition hover:text-[#663f29]"
+                          >
+                            Logout
+                          </button>
+                        </div>
+                      ) : (
+                        <Link
+                          to={ROUTES.LOGIN}
+                          className="flex h-10 w-full items-center justify-center border border-[#414141] font-sans text-xs font-medium uppercase tracking-wide text-[#414141] transition hover:bg-ink hover:text-cream"
+                        >
+                          Log in / Register
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* ── Book Appointment Button ── */}
               <button
                 type="button"
                 onClick={() => setBookingOpen(true)}
-                className={`rounded-sm border-[1px] px-3 py-2 font-sans text-[9.5px] min-[1400px]:text-[15px] font-medium uppercase transition ${
+                className={`rounded-sm border-[1px] px-3 py-2 font-sans text-[9.5px] min-[1400px]:text-[15px] font-medium uppercase tracking-wide transition ${
                   !scrolled ? "mt-4" : ""
-                } font-medium uppercase transition ${
+                } ${
                   scrolled
                     ? "border-[#6b6b6b] text-[#6b6b6b] hover:bg-black hover:text-white"
                     : "border-cream text-cream hover:bg-cream hover:text-ink"
@@ -141,7 +222,6 @@ export default function Header({ scroll }) {
 
       <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
 
-      {/* Book appointment modal */}
       <BookAppointmentModal
         open={bookingOpen}
         onClose={() => setBookingOpen(false)}
@@ -149,3 +229,18 @@ export default function Header({ scroll }) {
     </>
   );
 }
+
+// ── Icons ──
+const UserIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="8" r="4" />
+    <path d="M4 21a8 8 0 0 1 16 0" />
+  </svg>
+);
+
+const BagIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M5 8h14l-1 13H6L5 8z" />
+    <path d="M9 8V6a3 3 0 0 1 6 0v2" />
+  </svg>
+);

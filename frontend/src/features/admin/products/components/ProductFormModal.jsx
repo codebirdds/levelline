@@ -23,10 +23,11 @@ const EMPTY = {
   occasion: "",
   country_of_origin: "",
   care_instructions: "",
-  price: "",
-  discount_price: "",
   status: "active",
   is_featured: false,
+  is_outfit: false,
+  price: "",
+  discount_price: "",
 };
 
 const slugify = (s) =>
@@ -37,8 +38,10 @@ export default function ProductFormModal() {
   const open       = useSelector(selectFormOpen);
   const editing    = useSelector(selectEditing);
   const submitting = useSelector(selectSubmitting);
+  
   const [form, setForm] = useState(EMPTY);
   const [categories, setCategories] = useState([]);
+  const [imageFiles, setImageFiles] = useState(null);
 
   useEffect(() => {
     listCategories().then((data) => setCategories(Array.isArray(data) ? data : [])).catch(() => {});
@@ -46,31 +49,47 @@ export default function ProductFormModal() {
 
   useEffect(() => {
     setForm(editing ? { ...EMPTY, ...editing, category_id: editing.category_id || "" } : EMPTY);
+    setImageFiles(null);
   }, [editing, open]);
 
   const onClose = () => !submitting && dispatch(closeForm());
-
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   const onSubmit = (e) => {
     e.preventDefault();
-    const payload = {
-      ...form,
-      price: Number(form.price),
-      discount_price: form.discount_price ? Number(form.discount_price) : null,
-    };
-    if(payload.variants){
-      delete payload.variants; // Remove variants if present, as they are not part of the main product payload
+    
+    const formData = new FormData();
+    
+    Object.keys(form).forEach(key => {
+      if (key !== "variants" && key !== "images" && key !== "price" && key !== "discount_price") {
+        formData.append(key, form[key]);
+      }
+    });
+
+    if (form.is_outfit) {
+      formData.append("price", Number(form.price));
+      if (form.discount_price) formData.append("discount_price", Number(form.discount_price));
+      
+      if (imageFiles && imageFiles.length > 0) {
+        Array.from(imageFiles).forEach(file => {
+          formData.append("images", file);
+        });
+      }
     }
-    if (editing) dispatch(updateProductThunk(editing.id, payload));
-    else         dispatch(createProductThunk(payload));
+
+    // ✅ THE FIX: Check editing?.id instead of just editing
+    if (editing?.id) {
+      dispatch(updateProductThunk(editing.id, formData));
+    } else {
+      dispatch(createProductThunk(formData));
+    }
   };
 
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title={editing ? "Edit Product" : "Add Product"}
+      title={editing?.id ? "Edit Product" : "Add Product"}
       footer={
         <>
           <button onClick={onClose} className="px-4 py-2 text-sm border border-border rounded-md hover:bg-hover">Cancel</button>
@@ -80,7 +99,7 @@ export default function ProductFormModal() {
             disabled={submitting}
             className="px-4 py-2 text-sm font-semibold bg-brand text-white rounded-md hover:bg-brand-dark disabled:opacity-60"
           >
-            {submitting ? "Saving…" : editing ? "Update" : "Save"}
+            {submitting ? "Saving…" : editing?.id ? "Update" : "Save"}
           </button>
         </>
       }
@@ -121,8 +140,7 @@ export default function ProductFormModal() {
 
         <div className="grid grid-cols-3 gap-4">
           <Field label="Category *">
-            <select required value={form.category_id}
-              onChange={(e) => set("category_id", Number(e.target.value))}
+            <select required value={form.category_id} onChange={(e) => set("category_id", Number(e.target.value))}
               className="w-full border border-border rounded-md px-3 py-2 text-sm focus:border-brand outline-none bg-surface">
               <option value="">Select category</option>
               {categories.map((c) => (
@@ -160,19 +178,6 @@ export default function ProductFormModal() {
             <input value={form.country_of_origin} onChange={(e) => set("country_of_origin", e.target.value)}
               className="w-full border border-border rounded-md px-3 py-2 text-sm focus:border-brand outline-none" />
           </Field>
-          <Field label="Price (₹) *">
-            <input required type="number" min="0" value={form.price}
-              onChange={(e) => set("price", e.target.value)}
-              className="w-full border border-border rounded-md px-3 py-2 text-sm focus:border-brand outline-none" />
-          </Field>
-          <Field label="Discount Price">
-            <input type="number" min="0" value={form.discount_price}
-              onChange={(e) => set("discount_price", e.target.value)}
-              className="w-full border border-border rounded-md px-3 py-2 text-sm focus:border-brand outline-none" />
-          </Field>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
           <Field label="Care Instructions">
             <input value={form.care_instructions} onChange={(e) => set("care_instructions", e.target.value)}
               className="w-full border border-border rounded-md px-3 py-2 text-sm focus:border-brand outline-none" />
@@ -184,6 +189,33 @@ export default function ProductFormModal() {
             </select>
           </Field>
         </div>
+
+        <label className="flex items-center gap-2 text-sm font-medium">
+          <input type="checkbox" checked={form.is_outfit} onChange={(e) => set("is_outfit", e.target.checked)} className="w-4 h-4 accent-brand" />
+          Is this a Full Outfit?
+        </label>
+
+        {form.is_outfit && (
+          <div className="p-4 border border-border rounded-md bg-surface space-y-4">
+            <p className="text-xs text-muted font-medium mb-2">Outfit specific fields:</p>
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Price (₹) *">
+                <input required={form.is_outfit} type="number" min="0" value={form.price}
+                  onChange={(e) => set("price", e.target.value)}
+                  className="w-full border border-border rounded-md px-3 py-2 text-sm focus:border-brand outline-none" />
+              </Field>
+              <Field label="Discount Price">
+                <input type="number" min="0" value={form.discount_price}
+                  onChange={(e) => set("discount_price", e.target.value)}
+                  className="w-full border border-border rounded-md px-3 py-2 text-sm focus:border-brand outline-none" />
+              </Field>
+            </div>
+            <Field label="Outfit Images">
+              <input type="file" multiple accept="image/*" onChange={(e) => setImageFiles(e.target.files)}
+                className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-brand file:text-white hover:file:bg-brand-dark" />
+            </Field>
+          </div>
+        )}
 
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={form.is_featured} onChange={(e) => set("is_featured", e.target.checked)} />

@@ -7,8 +7,9 @@ let _store;
 export const injectStore = (store) => { _store = store; };
 
 const TOKEN_KEY = "auth_token";
+const USER_KEY = "auth_user";
 
-// Attach token from localStorage to every outgoing request
+// Attach token
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem(TOKEN_KEY);
@@ -21,50 +22,28 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Refresh interceptor (from previous message) — keep as-is
-let isRefreshing = false;
-let queue = [];
-const flushQueue = (err) => {
-  queue.forEach(({ resolve, reject }) => (err ? reject(err) : resolve()));
-  queue = [];
-};
-
+// Handle 401
 api.interceptors.response.use(
   (res) => res,
   async (error) => {
-    const original = error.config;
     const is401 = error.response?.status === 401;
-    const isRefreshCall = original?.url?.includes("/auth/refresh");
-    const retried = original?._retry;
 
-    if (!is401 || isRefreshCall || retried) return Promise.reject(error);
-
-    if (isRefreshing) {
-      return new Promise((resolve, reject) => queue.push({ resolve, reject }))
-        .then(() => api(original));
-    }
-
-    original._retry = true;
-    isRefreshing = true;
-
-    try {
-      await axios.post(
-        `${axiosConfig.baseURL}/auth/refresh`,
-        {},
-        { withCredentials: true }
-      );
-      flushQueue(null);
-      return api(original);
-    } catch (refreshErr) {
-      flushQueue(refreshErr);
+    if (is401) {
+      // 1. Clear Local Storage (this removes the stuff in your screenshot)
       localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+
+      // 2. Dispatch Redux logout so the UI updates immediately
       const { logout } = await import("../features/auth/authSlice");
       _store?.dispatch(logout());
-      if (window.location.pathname !== "/login") window.location.href = "/login";
-      return Promise.reject(refreshErr);
-    } finally {
-      isRefreshing = false;
+
+      // 3. Redirect to login page
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
     }
+
+    return Promise.reject(error);
   }
 );
 

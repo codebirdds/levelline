@@ -24,12 +24,13 @@ import GPF from "./Assets/GPF.png";
 import HeroVIdeo from "./Assets/HeroVideo.mp4";
 import defineFit from "./Assets/defineFit.mp4";
 export const NAV_LEFT = [
-  { label: "Custom Clothing", href: "#custom" },
-  { label: "Fabrics", href: ROUTES.FABRIC },
+  { label: "Home", href: "/" },
+  { label: "Custom Clothing", href: "#" },
+  { label: "Fabrics", href: "#" },
 ];
 
 export const NAV_RIGHT = [
-  { label: "Services", href: ROUTES.READY_TO_WEAR },
+  { label: "Services", href: "#" },
   { label: "About Us", href: ROUTES.ABOUT },
 ];
 export const BOOK_CTA = { label: "Book an appointment", href: "#services" }; // TODO: booking route

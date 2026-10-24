@@ -24,12 +24,14 @@ export default function BookAppointmentModal({ open, onClose }) {
 
   const [step, setStep] = useState(1);
   const [form, setForm] = useState(EMPTY);
+  const [countryCode, setCountryCode] = useState("+91");
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (open) {
       setStep(1);
       setForm(EMPTY);
+      setCountryCode("+91");
       setError("");
       dispatch(resetContact());
     }
@@ -51,7 +53,22 @@ export default function BookAppointmentModal({ open, onClose }) {
     if (!form.last_name.trim()) return "Last name is required";
     if (!form.email.trim()) return "Email is required";
     if (!/^\S+@\S+\.\S+$/.test(form.email)) return "Enter a valid email";
+    
+    if (!countryCode.trim()) return "Country code is required";
     if (!form.phone.trim()) return "Phone is required";
+    
+    // ✅ Strict validation for India (+91)
+    if (countryCode === "+91") {
+      if (form.phone.length !== 10) {
+        return "Indian phone numbers must be exactly 10 digits";
+      }
+    } else {
+      // Loose validation for other countries
+      if (form.phone.length < 5) {
+        return "Please enter a valid phone number";
+      }
+    }
+    
     if (!form.project_description.trim()) return "Please write a short message";
     return "";
   };
@@ -62,7 +79,12 @@ export default function BookAppointmentModal({ open, onClose }) {
 
     setError("");
     try {
-      await dispatch(submitContactThunk(form));
+      const finalPayload = {
+        ...form,
+        phone: `${countryCode}${form.phone}`,
+      };
+      
+      await dispatch(submitContactThunk(finalPayload));
       toast.success("Appointment request sent! We'll be in touch.");
       setStep(2);
     } catch {
@@ -72,13 +94,13 @@ export default function BookAppointmentModal({ open, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-end bg-black/40 "
+      className="fixed inset-0 z-50 flex items-center justify-end bg-black/40"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
     >
       <div
-        className="flex h-[100vh] w-full max-w-[560px] flex-col border border-[#d9d9d9] bg-white shadow-xl"
+        className="flex h-[100vh] w-full max-w-[560px] flex-col border-l border-[#d9d9d9] bg-white shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Header ── */}
@@ -100,27 +122,8 @@ export default function BookAppointmentModal({ open, onClose }) {
           </button>
         </div>
 
-        {/* ── Stepper ── */}
-        <div className="flex items-center justify-center gap-3 px-7 py-5">
-          <span
-            className={`flex size-7 items-center justify-center rounded-full text-xs font-semibold ${
-              step >= 1 ? "bg-[#1a1a1a] text-white" : "bg-[#e5e5e5] text-[#808080]"
-            }`}
-          >
-            1
-          </span>
-          <span className={`h-[2px] w-[60px] ${step >= 2 ? "bg-[#1a1a1a]" : "bg-[#e5e5e5]"}`} />
-          <span
-            className={`flex size-7 items-center justify-center rounded-full text-xs font-semibold ${
-              step >= 2 ? "bg-[#1a1a1a] text-white" : "bg-[#e5e5e5] text-[#808080]"
-            }`}
-          >
-            2
-          </span>
-        </div>
-
         {/* ── Body ── */}
-        <div className="flex-1 overflow-y-auto border-t border-[#e5e5e5] px-7 py-6">
+        <div className="flex-1 overflow-y-auto px-7 py-6">
           {step === 1 && (
             <>
               <h3 className="mb-6 font-sans text-[15px] font-medium text-[#414141]">
@@ -151,14 +154,40 @@ export default function BookAppointmentModal({ open, onClose }) {
                     value={form.email}
                     onChange={set("email")}
                   />
-                  <Field
-                    label="Phone"
-                    required
-                    type="tel"
-                    placeholder="Phone number"
-                    value={form.phone}
-                    onChange={set("phone")}
-                  />
+                  
+                  {/* ✅ Country Code + Phone Input */}
+                  <div>
+                    <label className="mb-1.5 block font-sans text-[13px] font-medium text-[#808080]">
+                      Phone<span className="text-[#1a1a1a]">*</span>
+                    </label>
+                    <div className="flex h-10 w-full border border-[#d9d9d9] bg-white transition-colors focus-within:border-[#1a1a1a]">
+                      {/* Country Code */}
+                      <input
+                        type="text"
+                        value={countryCode}
+                        onChange={(e) => {
+                          let val = e.target.value;
+                          if (!val.startsWith("+")) val = "+" + val.replace(/\D/g, "");
+                          else val = "+" + val.slice(1).replace(/\D/g, "");
+                          setCountryCode(val.slice(0, 4));
+                        }}
+                        className="w-[64px] shrink-0 border-r border-[#d9d9d9] bg-[#fafafa] px-2 text-center font-sans text-sm text-[#414141] outline-none"
+                      />
+                      {/* Phone Number */}
+                      <input
+                        type="tel"
+                        placeholder="Phone number"
+                        value={form.phone}
+                        onChange={(e) => {
+                          // ✅ Limit to 10 digits ONLY if country code is +91
+                          const maxLen = countryCode === "+91" ? 10 : 15;
+                          const val = e.target.value.replace(/\D/g, "").slice(0, maxLen);
+                          setForm((f) => ({ ...f, phone: val }));
+                        }}
+                        className="w-full flex-1 bg-transparent px-3 font-sans text-sm text-[#414141] outline-none placeholder:text-[#b0b0b0]"
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <div>
@@ -181,23 +210,24 @@ export default function BookAppointmentModal({ open, onClose }) {
             </>
           )}
 
+          {/* Success Screen */}
           {step === 2 && (
-            <div className="py-6 text-center">
-              <div className="mx-auto mb-5 grid size-14 place-items-center rounded-full bg-emerald-50">
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <div className="flex h-full flex-col items-center justify-center py-10 text-center">
+              <div className="mx-auto mb-5 grid size-16 place-items-center rounded-full bg-emerald-50">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12l5 5L20 7" />
                 </svg>
               </div>
-              <h3 className="font-sans text-lg font-medium text-[#1a1a1a]">
+              <h3 className="font-sans text-xl font-medium text-[#1a1a1a]">
                 Request Received
               </h3>
-              <p className="mx-auto mt-2 max-w-[340px] font-sans text-sm leading-relaxed text-[#808080]">
+              <p className="mx-auto mt-3 max-w-[340px] font-sans text-sm leading-relaxed text-[#808080]">
                 Our team will reach out within 24 hours to confirm your
                 appointment.
               </p>
               <button
                 onClick={onClose}
-                className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#1a1a1a] px-8 py-3 font-sans text-xs font-semibold uppercase tracking-[0.1em] text-white transition hover:bg-[#663f29]"
+                className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#1a1a1a] px-10 py-3.5 font-sans text-xs font-semibold uppercase tracking-[0.1em] text-white transition hover:bg-[#663f29]"
               >
                 Done
               </button>
@@ -205,7 +235,7 @@ export default function BookAppointmentModal({ open, onClose }) {
           )}
         </div>
 
-        {/* ── Footer ── */}
+        {/* Footer */}
         {step === 1 && (
           <div className="flex items-center justify-between border-t border-[#e5e5e5] px-7 py-4">
             <button

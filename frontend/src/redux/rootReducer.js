@@ -18,7 +18,8 @@ const rootReducer = combineReducers({
   products:      productReducer,
   adminProducts: adminProductReducer,
   categories:    categoryReducer,
-  variants:      variantReducer,
+    adminVariants: variantReducer, 
+
   cart:          cartReducer,
   address:       addressReducer,
   readyToWear:   readyToWearReducer,

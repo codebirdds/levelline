@@ -10,9 +10,6 @@ import VariantTable from "./components/VariantTable";
 import VariantFormModal from "./components/VariantFormModal";
 import ConfirmDialog from "../../../components/common/ConfirmDialog";
 
-
-const EMPTY_PRODUCT = { id: null, name: "" };
-
 export default function VariantsPage() {
   const dispatch = useDispatch();
   const items    = useSelector(selectVariants);
@@ -26,7 +23,11 @@ export default function VariantsPage() {
   }, [dispatch]);
 
   const onFilterByProduct = (p) => {
-    if (!p) { dispatch(fetchVariantsThunk()); dispatch(setProduct(null)); return; }
+    if (!p) { 
+      dispatch(fetchVariantsThunk()); 
+      dispatch(setProduct(null)); 
+      return; 
+    }
     dispatch(setProduct(p.id));
     dispatch(fetchVariantsByProductThunk(p.id));
   };
@@ -61,7 +62,12 @@ export default function VariantsPage() {
             <p className="text-sm text-muted">Loading variants…</p>
           </div>
         ) : (
-          <VariantTable items={items} onEdit={(v) => dispatch(openForm(v))} onDelete={setDeleting} onFilterByProduct={onFilterByProduct} />
+          <VariantTable 
+            items={items} 
+            onEdit={(v) => dispatch(openForm(v))} 
+            onDelete={setDeleting} 
+            onFilterByProduct={onFilterByProduct} 
+          />
         )}
       </div>
 
