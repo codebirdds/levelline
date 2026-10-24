@@ -108,18 +108,18 @@ class ProductVariantService {
             sizes.map(item => item.sku.trim().toUpperCase())
         );
 
-        for (const variant of existingVariants) {
-            const existingSizes = variant.sizes || [];
+        // for (const variant of existingVariants) {
+        //     const existingSizes = variant.sizes || [];
 
-            for (const item of existingSizes) {
-                if (
-                    item.sku &&
-                    requestedSkus.has(item.sku.trim().toUpperCase())
-                ) {
-                    throw new Error(`SKU already exists: ${item.sku}`);
-                }
-            }
-        }
+        //     for (const item of existingSizes) {
+        //         if (
+        //             item.sku &&
+        //             requestedSkus.has(item.sku.trim().toUpperCase())
+        //         ) {
+        //             throw new Error(`SKU already exists: ${item.sku}`);
+        //         }
+        //     }
+        // }
 
         return await ProductVariant.create({
             product_id,
@@ -246,32 +246,32 @@ class ProductVariantService {
             throw new Error('Color cannot be empty');
         }
 
-        if (sizes !== undefined) {
-            this.validateSizes(sizes);
+        // if (sizes !== undefined) {
+        //     this.validateSizes(sizes);
 
-            // Exclude the current variant when checking SKU conflicts.
-            const otherVariants = await ProductVariant.findAll({
-                where: {
-                    id: { [Op.ne]: id }
-                },
-                attributes: ['sizes']
-            });
+        //     // Exclude the current variant when checking SKU conflicts.
+        //     const otherVariants = await ProductVariant.findAll({
+        //         where: {
+        //             id: { [Op.ne]: id }
+        //         },
+        //         attributes: ['sizes']
+        //     });
 
-            for (const other of otherVariants) {
-                for (const item of other.sizes || []) {
-                    if (
-                        item.sku &&
-                        sizes.some(
-                            size =>
-                                size.sku.trim().toUpperCase() ===
-                                item.sku.trim().toUpperCase()
-                        )
-                    ) {
-                        throw new Error(`SKU already exists: ${item.sku}`);
-                    }
-                }
-            }
-        }
+        //     for (const other of otherVariants) {
+        //         for (const item of other.sizes || []) {
+        //             if (
+        //                 item.sku &&
+        //                 sizes.some(
+        //                     size =>
+        //                         size.sku.trim().toUpperCase() ===
+        //                         item.sku.trim().toUpperCase()
+        //                 )
+        //             ) {
+        //                 throw new Error(`SKU already exists: ${item.sku}`);
+        //             }
+        //         }
+        //     }
+        // }
 
         if (images !== undefined && !Array.isArray(images)) {
             throw new Error('Images must be an array');
