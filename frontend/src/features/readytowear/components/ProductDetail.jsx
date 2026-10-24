@@ -46,6 +46,10 @@ export default function ProductDetail() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedVariantId, setSelectedVariantId] = useState(null);
+  
+  // ✅ Tracks which variant image to show in the left gallery
+  const [viewVariantId, setViewVariantId] = useState(null);
+
   const [selectedImage, setSelectedImage] = useState(0);
   
   const [selectedSize, setSelectedSize] = useState(null);
@@ -65,6 +69,7 @@ export default function ProductDetail() {
     setSelectedSize(null);
     setSelectedSizes({});
     setSelectedVariantId(null);
+    setViewVariantId(null);
     setValidationError("");
 
     if (stateProduct) {
@@ -72,9 +77,10 @@ export default function ProductDetail() {
       
       if (stateProduct.variant?.id) {
         setSelectedVariantId(stateProduct.variant.id);
+        setViewVariantId(stateProduct.variant.id);
         setBuyWholeOutfit(false);
       } else {
-        setSelectedVariantId(stateProduct.variants?.[0]?.id ?? null);
+        setSelectedVariantId(stateProduct.is_outfit ? null : stateProduct.variants?.[0]?.id ?? null);
         setBuyWholeOutfit(stateProduct.is_outfit === true);
       }
       
@@ -87,7 +93,7 @@ export default function ProductDetail() {
       .then((p) => {
         if (cancelled) return;
         setProduct(p || null);
-        setSelectedVariantId(p?.variants?.[0]?.id ?? null);
+        setSelectedVariantId(p?.is_outfit ? null : p?.variants?.[0]?.id ?? null);
         setBuyWholeOutfit(p?.is_outfit === true);
       })
       .finally(() => { if (!cancelled) setLoading(false); });
@@ -104,29 +110,37 @@ export default function ProductDetail() {
 
   const activeVariant = useMemo(() => {
     if (!variants.length) return null;
-    return variants.find((v) => v.id === selectedVariantId) || variants[0];
-  }, [variants, selectedVariantId]);
+    if (isOutfit && buyWholeOutfit) return null;
+    return variants.find((v) => String(v.id) === String(selectedVariantId)) || variants[0];
+  }, [variants, selectedVariantId, isOutfit, buyWholeOutfit]);
 
+  // ✅ Image logic uses viewVariantId for outfit mode
   const images = useMemo(() => {
-    const rawList = (isOutfit && buyWholeOutfit)
-      ? product?.images || []
-      : activeVariant?.images?.length ? activeVariant.images : product?.images || [];
+    let rawList = [];
+    if (isOutfit && buyWholeOutfit) {
+      const viewingVariant = viewVariantId ? variants.find(v => String(v.id) === String(viewVariantId)) : null;
+      rawList = viewingVariant?.images?.length ? viewingVariant.images : product?.images || [];
+    } else if (activeVariant?.images?.length) {
+      rawList = activeVariant.images;
+    } else {
+      rawList = product?.images || [];
+    }
       
     return rawList
       .slice()
       .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
       .map((i) => (typeof i === "string" ? i : i.url))
       .filter(Boolean);
-  }, [activeVariant, product, isOutfit, buyWholeOutfit]);
+  }, [activeVariant, product, isOutfit, buyWholeOutfit, viewVariantId, variants]);
 
   const sizes = activeVariant?.sizes || [];
 
   useEffect(() => {
     setSelectedImage(0);
-  }, [activeVariant?.id]);
+  }, [activeVariant?.id, buyWholeOutfit, viewVariantId]);
 
   useEffect(() => {
-    if (selectedSize && !sizes.some(s => s.size === selectedSize)) {
+    if (selectedSize && sizes.length > 0 && !sizes.some(s => s.size === selectedSize)) {
       setSelectedSize(null);
     }
   }, [activeVariant?.id]);
@@ -135,11 +149,26 @@ export default function ProductDetail() {
     if (selectedSize || Object.keys(selectedSizes).length > 0) setValidationError("");
   }, [selectedSize, selectedSizes, selectedVariantId]);
 
+  // ✅ Clicking a size in outfit mode ALSO changes the left image
   const handleSelectSize = (variantId, size) => {
     if (isOutfit && buyWholeOutfit) {
       setSelectedSizes(prev => ({ ...prev, [variantId]: size }));
+      setViewVariantId(variantId); // <--- Updates the left image
     } else {
       setSelectedSize(size);
+    }
+  };
+
+  // Select / Deselect toggle logic for individual piece
+  const handleVariantSelect = (id) => {
+    if (String(selectedVariantId) === String(id) && isOutfit) {
+      setSelectedVariantId(null);
+      setViewVariantId(null);
+      setBuyWholeOutfit(true);
+    } else {
+      setSelectedVariantId(id);
+      setViewVariantId(id);
+      setBuyWholeOutfit(false);
     }
   };
 
@@ -242,9 +271,10 @@ export default function ProductDetail() {
             >
               <div className="flex h-full w-full items-stretch gap-2 lg:w-auto lg:max-w-[600px] min-[1400px]:max-w-[700px] 2xl:max-w-[800px]">
                 
-                <div className="relative flex h-full items-center justify-center overflow-hidden bg-[#F5F1E9] p-4 lg:p-6 lg:w-[380px] min-[1400px]:w-[480px] 2xl:w-[580px]">
+                <div className="relative flex aspect-[4/5] flex-1 items-center justify-center overflow-hidden bg-[#F5F1E9] p-4 lg:aspect-auto lg:p-6 lg:w-[380px] min-[1400px]:w-[480px] 2xl:w-[580px] lg:h-full">
                   {images[selectedImage] ? (
                     <img
+                      key={`${viewVariantId}-${selectedImage}`}
                       src={images[selectedImage]}
                       alt={name}
                       className="max-h-full max-w-full object-contain"
@@ -291,13 +321,23 @@ export default function ProductDetail() {
                   {isOutfit && (
                     <div className="mt-3 flex gap-1.5 rounded-md bg-gray-100 p-1">
                       <button
-                        onClick={() => setBuyWholeOutfit(true)}
+                        onClick={() => {
+                          setBuyWholeOutfit(true);
+                          setSelectedVariantId(null);
+                          setViewVariantId(null); // Reset view to outfit
+                        }}
                         className={`flex-1 rounded py-1 text-[10px] font-semibold uppercase tracking-wide transition ${buyWholeOutfit ? 'bg-white text-ink shadow-sm' : 'text-gray-500 hover:text-ink'}`}
                       >
                         Complete Outfit
                       </button>
                       <button
-                        onClick={() => setBuyWholeOutfit(false)}
+                        onClick={() => {
+                          setBuyWholeOutfit(false);
+                          if (!selectedVariantId && variants.length > 0) {
+                            setSelectedVariantId(variants[0].id);
+                            setViewVariantId(variants[0].id);
+                          }
+                        }}
                         className={`flex-1 rounded py-1 text-[10px] font-semibold uppercase tracking-wide transition ${!buyWholeOutfit ? 'bg-white text-ink shadow-sm' : 'text-gray-500 hover:text-ink'}`}
                       >
                         Individual Piece
@@ -316,18 +356,29 @@ export default function ProductDetail() {
 
                   <div className="mt-2.5 h-px bg-border" />
 
-                  {/* ✅ FIXED: Proper layout for Complete Outfit variants */}
                   {isOutfit && buyWholeOutfit ? (
                     <div className="mt-3 space-y-3">
                       <p className="font-sans text-[10px] uppercase tracking-wide text-[#808080]">
                         Select size for each piece
                       </p>
                       {variants.map(v => {
-                        const piecePrice = Math.max(Number(v.price) - Number(v.discount_price || 0), 0);
+                        const piecePrice = Number(v.price) || 0;
+                        
+                        // ✅ Check if this row is currently active
+                        const isRowActive = String(viewVariantId) === String(v.id);
+
                         return (
-                          <div key={v.id} className="border border-gray-100 bg-[#fafafa] p-2.5 rounded-sm">
+                          <div 
+                            key={v.id} 
+                            onClick={() => setViewVariantId(v.id)} // ✅ Row click sets active variant
+                            className={`border p-2.5 rounded-sm transition-all cursor-pointer ${
+                              isRowActive 
+                                ? "border-ink bg-white ring-1 ring-ink shadow-sm" 
+                                : "border-gray-100 bg-[#fafafa] hover:border-gray-300"
+                            }`}
+                          >
                             
-                            {/* Variant Header (Name, Color, Price) */}
+                            {/* Variant Header */}
                             <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center gap-1.5">
                                 <span 
@@ -356,8 +407,17 @@ export default function ProductDetail() {
                                     key={s.size}
                                     type="button"
                                     disabled={out}
-                                    onClick={() => handleSelectSize(v.id, s.size)}
-                                    className={`h-7 min-w-[32px] border px-1.5 font-sans text-xs transition ${active ? "border-ink bg-ink text-cream" : out ? "cursor-not-allowed border-border text-[#c4c4c4] line-through" : "border-border bg-white text-[#414141] hover:border-ink"}`}
+                                    onClick={(e) => {
+                                      e.stopPropagation(); // ✅ Prevent row click from firing twice
+                                      handleSelectSize(v.id, s.size);
+                                    }}
+                                    className={`h-7 min-w-[32px] border px-1.5 font-sans text-xs transition ${
+                                      active 
+                                        ? "border-ink bg-ink text-cream" 
+                                        : out 
+                                          ? "cursor-not-allowed border-border text-[#c4c4c4] line-through" 
+                                          : "border-border bg-white text-[#414141] hover:border-ink"
+                                    }`}
                                   >
                                     {s.size}
                                   </button>
@@ -381,12 +441,12 @@ export default function ProductDetail() {
                           <div className="mt-1.5 flex flex-wrap gap-1.5">
                             {variants.map((v) => {
                               const swatch = v.color_code || COLOR_SWATCH[v.color] || "#cccccc";
-                              const active = v.id === activeVariant?.id;
+                              const active = String(v.id) === String(selectedVariantId);
                               return (
                                 <button
                                   key={v.id}
                                   type="button"
-                                  onClick={() => setSelectedVariantId(v.id)}
+                                  onClick={() => handleVariantSelect(v.id)}
                                   className={`grid size-6 place-items-center rounded-sm ring-1 transition ${active ? "ring-ink" : "ring-border hover:ring-[#808080]"}`}
                                 >
                                   <span className="size-4 rounded-sm" style={{ backgroundColor: swatch }} />
@@ -413,7 +473,7 @@ export default function ProductDetail() {
                                 key={s.sku || s.size}
                                 type="button"
                                 disabled={out}
-                                onClick={() => handleSelectSize(activeVariant.id, s.size)}
+                                onClick={() => handleSelectSize(activeVariant?.id, s.size)}
                                 className={`h-7 min-w-[32px] border px-1.5 font-sans text-xs transition ${active ? "border-ink bg-ink text-cream" : out ? "cursor-not-allowed border-border text-[#c4c4c4] line-through" : "border-border text-[#414141] hover:border-ink"}`}
                               >
                                 {s.size}
@@ -427,7 +487,6 @@ export default function ProductDetail() {
                 </div>
               </div>
 
-              {/* Actions */}
               <div className="shrink-0 border border-border bg-white p-2.5">
                 <button
                   disabled={isSelectionIncomplete || submitting}

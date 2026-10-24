@@ -6,41 +6,41 @@ import { formatCurrency } from "../../../utils/formatCurrency";
 export default function ProductCard({ product, delay = 0 }) {
   const name = product.displayName || product.name || product.title;
 
-  // ✅ Collect all unique images from all variants
-  const allImages = [];
-  (product.variants || []).forEach((v) => {
-    if (Array.isArray(v.images)) {
-      v.images.forEach((img) => {
-        const url = typeof img === "string" ? img : img.url;
-        if (url && !allImages.includes(url)) allImages.push(url);
-      });
-    }
-  });
+  // ✅ Get images ONLY from the first variant
+  const firstVariant = product.variants?.[0];
+  let allImages = [];
 
-  // Fallback to product images if no variant images exist
-  if (allImages.length === 0) {
-    if (Array.isArray(product.images)) {
-      product.images.forEach((img) => {
-        const url = typeof img === "string" ? img : img.url;
-        if (url) allImages.push(url);
-      });
-    } else if (product.image) {
-      allImages.push(product.image);
-    }
+  if (Array.isArray(firstVariant?.images) && firstVariant.images.length > 0) {
+    allImages = firstVariant.images
+      .map((img) => (typeof img === "string" ? img : img.url))
+      .filter(Boolean);
+  } else if (Array.isArray(product.images)) {
+    // Fallback to product images if variant has none
+    allImages = product.images
+      .map((img) => (typeof img === "string" ? img : img.url))
+      .filter(Boolean);
+  } else if (product.image) {
+    allImages = [product.image];
   }
 
   const [index, setIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
 
-  // ✅ Auto-slide effect (no buttons)
+  // ✅ Auto-slide only on hover
   useEffect(() => {
-    if (allImages.length <= 1) return;
-    
+    if (!isHovered || allImages.length <= 1) return;
+
     const interval = setInterval(() => {
       setIndex((prev) => (prev + 1) % allImages.length);
-    }, 3000); // Slides every 3 seconds
+    }, 1500); // Slides every 1.5 seconds
 
     return () => clearInterval(interval);
-  }, [allImages.length]);
+  }, [isHovered, allImages.length]);
+
+  // Reset to the first image when mouse leaves
+  useEffect(() => {
+    if (!isHovered) setIndex(0);
+  }, [isHovered]);
 
   const basePrice = product.displayPrice;
   const discountAmt = product.displayDiscount;
@@ -50,7 +50,13 @@ export default function ProductCard({ product, delay = 0 }) {
 
   return (
     <Reveal as="article" delay={delay} duration={800} distance={28} className="group">
-      <Link to={to} state={{ product }} className="block">
+      <Link
+        to={to}
+        state={{ product }}
+        className="block"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
         <div className="relative aspect-[4/5] overflow-hidden bg-[#F5F1E9] p-3 sm:p-4">
           <div className="relative h-full w-full">
             {allImages.length === 0 ? (
@@ -73,7 +79,7 @@ export default function ProductCard({ product, delay = 0 }) {
 
         <div className="mt-2 flex flex-col gap-1">
           <h3 className="line-clamp-1 font-sans text-[13px] font-medium text-[#808080] lg:text-sm">
-            {name} {product.type === "variant" && product.variant?.color ? `- ${product.variant.color}` : ""}
+            {name}
           </h3>
           <div className="flex items-baseline gap-2">
             <p className="font-sans text-[13px] font-bold text-[#414141] lg:text-sm">
