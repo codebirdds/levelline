@@ -25,7 +25,6 @@ import Fabric from "../features/fabric/Fabric";
 import About from "../features/about/About";
 import ContactsPage from "../features/admin/contacts/ContactsPage";
 import ScrollToTop from "../components/common/ScrollToTop";
-
 export default function AppRouter() {
   return (
     <BrowserRouter>
@@ -62,7 +61,6 @@ export default function AppRouter() {
             {/* <Route path={ROUTES.ADMIN_VARIANTS}   element={<VariantsPage />} /> */}
             <Route path={ROUTES.ADMIN_ORDERS}     element={<OrdersPage />} />
             <Route path={ROUTES.ADMIN_CONTACTS} element={<ContactsPage />} />
-
           </Route>
         </Route>
 

@@ -7,6 +7,9 @@ const LINKS = [
   { to: ROUTES.ADMIN_PRODUCTS,   label: "Products",   icon: "M21 16V8l-9-5-9 5v8l9 5 9-5Zm-9-11 6 3.5-6 3.5-6-3.5L12 5Z" },
   // { to: ROUTES.ADMIN_VARIANTS,   label: "Variants",   icon: "M7 7h10v10H7V7Zm0-4h10v2H7V3ZM3 3h2v2H3V3Zm0 16h2v2H3v-2Zm16 0h2v2h-2v-2Zm0-16h2v2h-2V3Z" },
   { to: ROUTES.ADMIN_ORDERS,     label: "Orders",     icon: "M3 4h18v2H3V4Zm0 5h18v2H3V9Zm0 5h12v2H3v-2Zm0 5h12v2H3v-2Z" },
+  
+  // ✅ ADDED CONTACTS HERE
+  { to: ROUTES.ADMIN_CONTACTS,   label: "Contacts",   icon: "M3 5h18v14H3V5Zm2 2v10h14V7l-7 5-7-5Zm0 0 7 5 7-5Z" },
 ];
 
 export default function AdminSidebar({ isOpen, onClose }) {

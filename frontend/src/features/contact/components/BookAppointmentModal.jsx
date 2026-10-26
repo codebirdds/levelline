@@ -94,17 +94,17 @@ export default function BookAppointmentModal({ open, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-end bg-black/40"
+      className="fixed inset-0 z-50 flex items-center justify-center sm:justify-end bg-black/40"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
     >
       <div
-        className="flex h-[100vh] w-full max-w-[560px] flex-col border-l border-[#d9d9d9] bg-white shadow-xl"
+        className="flex h-[100dvh] w-full max-w-[560px] flex-col border-l border-[#d9d9d9] bg-white shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Header ── */}
-        <div className="flex items-start justify-between gap-4 px-7 pt-6 pb-4">
+        <div className="flex items-start justify-between gap-4 px-5 sm:px-7 pt-6 pb-4">
           <div>
             <p className="font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-[#808080]">
               Private Fitting
@@ -123,15 +123,15 @@ export default function BookAppointmentModal({ open, onClose }) {
         </div>
 
         {/* ── Body ── */}
-        <div className="flex-1 overflow-y-auto px-7 py-6">
+        <div className="flex-1 overflow-y-auto px-5 sm:px-7 py-6">
           {step === 1 && (
             <>
               <h3 className="mb-6 font-sans text-[15px] font-medium text-[#414141]">
                 Want the Perfect Fit? Let's Connect
               </h3>
 
-              <div className="space-y-5">
-                <div className="grid gap-5 sm:grid-cols-2">
+              <div className="space-y-4 sm:space-y-5">
+                <div className="grid gap-4 sm:gap-5 sm:grid-cols-2">
                   <Field
                     label="First Name"
                     required
@@ -195,7 +195,7 @@ export default function BookAppointmentModal({ open, onClose }) {
                     Write a message<span className="text-[#1a1a1a]">*</span>
                   </label>
                   <textarea
-                    rows={5}
+                    rows={4}
                     placeholder=""
                     value={form.project_description}
                     onChange={set("project_description")}
@@ -221,7 +221,7 @@ export default function BookAppointmentModal({ open, onClose }) {
               <h3 className="font-sans text-xl font-medium text-[#1a1a1a]">
                 Request Received
               </h3>
-              <p className="mx-auto mt-3 max-w-[340px] font-sans text-sm leading-relaxed text-[#808080]">
+              <p className="mx-auto mt-3 max-w-[340px] px-2 font-sans text-sm leading-relaxed text-[#808080]">
                 Our team will reach out within 24 hours to confirm your
                 appointment.
               </p>
@@ -237,7 +237,7 @@ export default function BookAppointmentModal({ open, onClose }) {
 
         {/* Footer */}
         {step === 1 && (
-          <div className="flex items-center justify-between border-t border-[#e5e5e5] px-7 py-4">
+          <div className="flex items-center justify-between gap-4 border-t border-[#e5e5e5] px-5 sm:px-7 py-4">
             <button
               onClick={onClose}
               className="font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-[#414141] transition hover:text-[#663f29]"
@@ -248,7 +248,7 @@ export default function BookAppointmentModal({ open, onClose }) {
             <button
               onClick={handleSubmit}
               disabled={submitting}
-              className="inline-flex items-center gap-2 rounded-full bg-[#1a1a1a] px-8 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-[#663f29] disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-full bg-[#1a1a1a] px-6 sm:px-8 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-[#663f29] disabled:opacity-60"
             >
               {submitting ? "Submitting…" : "Submit"} <span aria-hidden>→</span>
             </button>
