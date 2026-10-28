@@ -60,7 +60,7 @@ module.exports = (sequelize, DataTypes) => {
             },
 
             payment_method: {
-                type: DataTypes.ENUM('cashfree', 'cod'),
+                type: DataTypes.ENUM('cashfree', 'cod', 'razorpay'),
                 allowNull: false,
                 defaultValue: 'cashfree'
             },
