@@ -234,12 +234,34 @@ export default function VariantFormModal() {
           <div className="space-y-2">
             {sizes.map((sz, i) => (
               <div key={i} className="flex gap-2 items-center">
-                <input placeholder="Size (e.g. M)" required value={sz.size} onChange={(e) => handleSizeChange(i, "size", e.target.value)}
-                  className="w-1/3 border border-border rounded-md px-2 py-1.5 text-sm focus:border-brand outline-none" />
-                <input placeholder="SKU" required value={sz.sku} onChange={(e) => handleSizeChange(i, "sku", e.target.value)}
-                  className="w-1/3 border border-border rounded-md px-2 py-1.5 text-sm focus:border-brand outline-none font-mono" />
-                <input type="number" placeholder="Stock" required min="0" value={sz.stock} onChange={(e) => handleSizeChange(i, "stock", e.target.value)}
-                  className="w-1/4 border border-border rounded-md px-2 py-1.5 text-sm focus:border-brand outline-none" />
+                {/* Size Input (Required) */}
+                <input 
+                  placeholder="Size (e.g. M)" 
+                  required 
+                  value={sz.size} 
+                  onChange={(e) => handleSizeChange(i, "size", e.target.value)}
+                  className="w-1/3 border border-border rounded-md px-2 py-1.5 text-sm focus:border-brand outline-none" 
+                />
+
+                {/* SKU Input (Optional & De-emphasized) */}
+                <input 
+                  placeholder="SKU (Optional)" 
+                  value={sz.sku} 
+                  onChange={(e) => handleSizeChange(i, "sku", e.target.value)}
+                  className="w-1/3 border border-border border-dashed rounded-md px-2 py-1.5 text-xs text-gray-500 placeholder:text-gray-400 bg-gray-50/50 focus:bg-white focus:border-brand focus:border-solid outline-none font-mono transition-all" 
+                />
+
+                {/* Stock Input (Required) */}
+                <input 
+                  type="number" 
+                  placeholder="Stock" 
+                  required 
+                  min="0" 
+                  value={sz.stock} 
+                  onChange={(e) => handleSizeChange(i, "stock", e.target.value)}
+                  className="w-1/4 border border-border rounded-md px-2 py-1.5 text-sm focus:border-brand outline-none" 
+                />
+
                 <button type="button" onClick={() => removeSize(i)} className="text-red-500 hover:text-red-700 font-bold px-1">
                   ×
                 </button>
@@ -248,7 +270,7 @@ export default function VariantFormModal() {
           </div>
         </div>
 
-        {/* 5. Image Manager UI (Moved to bottom) */}
+        {/* 5. Image Manager UI */}
         <div className="flex flex-col gap-4 rounded-lg border border-border bg-surface p-4 w-full">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-muted uppercase tracking-wide">Images</span>

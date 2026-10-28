@@ -18,7 +18,7 @@ const rootReducer = combineReducers({
   products:      productReducer,
   adminProducts: adminProductReducer,
   categories:    categoryReducer,
-    adminVariants: variantReducer, 
+  adminVariants: variantReducer, 
 
   cart:          cartReducer,
   address:       addressReducer,
@@ -27,6 +27,9 @@ const rootReducer = combineReducers({
   fabric: fabricReducer,
   trackOrder: trackOrderReducer,
   contact: contactReducer,
+  adminContacts: adminContactReducer, // <-- ADD THIS
+
+
 });
 
 export default rootReducer;

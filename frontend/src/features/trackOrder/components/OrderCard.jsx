@@ -99,18 +99,21 @@ export default function OrderCard({ order, selected, onTrack, onCancel }) {
   return (
     <article className="border border-border bg-white">
       {/* ── Header ── */}
-      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border p-4 sm:p-5">
+      <div className="flex flex-col gap-4 border-b border-border p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
+        
+        {/* Left Side: Order Info */}
         <div>
           <p className="text-[10px] uppercase tracking-wide text-[#808080]">Order number</p>
           <h2 className="mt-1 font-sans text-sm font-medium text-[#414141]">{order.order_number}</h2>
           <p className="mt-1 text-[11px] text-[#808080]">Placed {date}</p>
         </div>
 
-        <div className="flex flex-col items-end gap-2">
+        {/* Right Side: Status, Price & Payment */}
+        <div className="flex flex-col items-start gap-2 sm:items-end">
           <span className={`inline-block rounded-full px-2.5 py-1 text-[9px] font-semibold uppercase tracking-wide ${statusCls}`}>
             {statusLabel}
           </span>
-          <div className="text-right">
+          <div className="text-left sm:text-right">
             <p className="font-sans text-sm font-semibold text-[#414141]">{formatCurrency(total)}</p>
             <p className="mt-1 text-[10px] uppercase text-[#808080]">
               {PAYMENT_LABEL[order.payment_method] || order.payment_method || ""}
