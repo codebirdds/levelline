@@ -158,7 +158,7 @@ exports.verifyRazorpayPayment = async (data, userId) => {
         const payment = await Payment.findOne({
             where: {
                 order_id: order.id,
-                razorpay_order_id
+                gateway_order_id :razorpay_order_id
             },
             transaction,
             lock: transaction.LOCK.UPDATE
@@ -172,7 +172,7 @@ exports.verifyRazorpayPayment = async (data, userId) => {
         if (
             order.payment_status === 'paid' &&
             payment.payment_status === 'paid' &&
-            payment.razorpay_payment_id === razorpay_payment_id
+            payment.gateway_order_id === razorpay_order_id
         ) {
             await transaction.commit();
 
@@ -205,7 +205,7 @@ exports.verifyRazorpayPayment = async (data, userId) => {
         }
 
         await payment.update({
-            razorpay_payment_id,
+            gateway_order_id :razorpay_order_id,
             payment_status: 'paid'
         }, { transaction });
 
