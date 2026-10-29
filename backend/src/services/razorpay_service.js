@@ -68,7 +68,7 @@ exports.createRazorpayOrder = async (orderId, userId) => {
         await Payment.create({
             user_id:userId,
             order_id: order.id,
-            amount: (amount / 100).toFixed(2),
+            amount: amount,
             currency,
             gateway:'razorpay',
             payment_method: 'razorpay',
@@ -123,9 +123,9 @@ exports.verifyRazorpayPayment = async (data, userId) => {
         .update(`${razorpay_order_id}|${razorpay_payment_id}`)
         .digest();
 
-    if (!/^[a-f0-9]{128}$/i.test(razorpay_signature)) {
-        throw createError('Invalid payment signature');
-    }
+    // if (!/^[a-f0-9]{128}$/i.test(razorpay_signature)) {
+    //     throw createError('Invalid payment signature');
+    // }
 
     const receivedSignature = Buffer.from(razorpay_signature, 'hex');
 

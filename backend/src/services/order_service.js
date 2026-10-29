@@ -229,31 +229,9 @@ class OrderService {
                 );
 
                 const originalUnitCents = toCents(variant.price);
-
-                const discountedUnitCents =
-                    variant.discount_price !== null &&
-                        variant.discount_price !== undefined &&
-                        variant.discount_price !== ''
-                        ? toCents(variant.discount_price)
-                        : originalUnitCents;
-
-                if (
-                    originalUnitCents < 0 ||
-                    discountedUnitCents < 0 ||
-                    discountedUnitCents > originalUnitCents
-                ) {
-                    throw createHttpError(
-                        `Invalid pricing for ${variant.name}`
-                    );
-                }
-
                 const lineSubtotal = originalUnitCents * quantity;
 
-                const lineDiscount =
-                    (originalUnitCents - discountedUnitCents) * quantity;
-
                 subtotalCents += lineSubtotal;
-                discountCents += lineDiscount;
 
                 items.push({
                     cart_id: cart.id,
@@ -266,9 +244,7 @@ class OrderService {
                     images: variant.images || [],
                     quantity,
                     unit_price: fromCents(originalUnitCents),
-                    discounted_unit_price: fromCents(discountedUnitCents),
-                    discount_amount: fromCents(lineDiscount),
-                    subtotal: fromCents(discountedUnitCents * quantity)
+                    subtotal: fromCents(originalUnitCents * quantity)
                 });
             }
 
@@ -277,7 +253,7 @@ class OrderService {
             const taxCents = 0;
 
             const totalCents =
-                subtotalCents - discountCents + shippingCents + taxCents;
+                subtotalCents;
 
             if (totalCents <= 0) {
                 throw createHttpError('Order total must be greater than zero');
@@ -290,7 +266,6 @@ class OrderService {
                     address_id: address.id,
                     items,
                     subtotal: fromCents(subtotalCents),
-                    discount_amount: fromCents(discountCents),
                     shipping_fee: fromCents(shippingCents),
                     tax_amount: fromCents(taxCents),
                     total_amount: fromCents(totalCents),
