@@ -7,6 +7,7 @@ import { ROUTES } from "../../routes/routePaths";
 import Button from "../../components/common/Button";
 import Input from "../../components/common/Input";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { toast } from "react-hot-toast";
 
 export default function Login() {
   const dispatch = useDispatch();
@@ -18,9 +19,13 @@ export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
 
-  // Destination after login
   const from = location.state?.from?.pathname || ROUTES.HOME;
-  const intent = location.state?.intent; // "buy" | "add" | undefined
+  const intent = location.state?.intent; 
+  // ✅ DEBUG LOGS YAHAN ADD KAR
+  console.log("=== DEBUG: Login Page Loaded ===");
+  console.log("1. Login Location State:", location.state);
+  console.log("2. Extracted 'from':", from);
+  console.log("3. Extracted 'intent':", intent);
 
   const [submitting, setSubmitting] = useState(false);
 
@@ -28,21 +33,26 @@ export default function Login() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const user = await dispatch(loginThunk(form));
+      const user = await dispatch(loginThunk(form)).unwrap();
 
       if (user?.role === "admin") {
         navigate(ROUTES.ADMIN, { replace: true });
         return;
       }
 
-      if (intent === "buy") {
-        navigate(ROUTES.CHECKOUT, { replace: true });
-        return;
+      if (intent === "buy" || intent === "add") {
+        toast.success("Logged in! Please select your size again.");
       }
 
+         // ✅ DEBUG LOG YAHAN ADD KAR
+      console.log("=== DEBUG: Login Success ===");
+      console.log("🚀 Navigating to:", from);
+      
+      // ✅ Yahan hum seedha 'from' (Product Detail page) pe bhej rahe hain
       navigate(from, { replace: true });
-    } catch {
-      // error already in the slice
+      
+    } catch (err) {
+      // error handled in slice
     } finally {
       setSubmitting(false);
     }

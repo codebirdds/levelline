@@ -228,8 +228,8 @@ class OrderService {
                     { transaction }
                 );
 
-                const originalUnitCents = toCents(variant.price);
-                const lineSubtotal = originalUnitCents * quantity;
+                const originalUnitCents = variant.price;
+                const lineSubtotal = (originalUnitCents - variant.discount_price) * quantity;
 
                 subtotalCents += lineSubtotal;
 
@@ -243,8 +243,8 @@ class OrderService {
                     color: variant.color,
                     images: variant.images || [],
                     quantity,
-                    unit_price: fromCents(originalUnitCents),
-                    subtotal: fromCents(originalUnitCents * quantity)
+                    unit_price: originalUnitCents,
+                    subtotal: originalUnitCents * quantity
                 });
             }
 
@@ -267,10 +267,10 @@ class OrderService {
                     user_id: userId,
                     address_id: address.id,
                     items,
-                    subtotal: fromCents(subtotalCents),
-                    shipping_fee: fromCents(shippingCents),
-                    tax_amount: fromCents(taxCents),
-                    total_amount: fromCents(totalCents),
+                    subtotal: subtotalCents,
+                    shipping_fee: shippingCents,
+                    tax_amount: taxCents,
+                    total_amount: totalCents,
                     currency: 'INR',
                     payment_method: paymentMethod,
                     order_status: 'pending',

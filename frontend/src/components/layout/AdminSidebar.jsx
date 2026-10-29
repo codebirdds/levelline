@@ -10,6 +10,7 @@ const LINKS = [
   
   // ✅ ADDED CONTACTS HERE
   { to: ROUTES.ADMIN_CONTACTS,   label: "Contacts",   icon: "M3 5h18v14H3V5Zm2 2v10h14V7l-7 5-7-5Zm0 0 7 5 7-5Z" },
+    { to: ROUTES.ADMIN_SITE_MEDIA, label: "Site Media", icon: "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" }, 
 ];
 
 export default function AdminSidebar({ isOpen, onClose }) {

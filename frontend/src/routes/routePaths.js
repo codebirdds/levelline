@@ -17,4 +17,6 @@ export const ROUTES = {
   ADMIN_VARIANTS:  "/admin/variants",
   ADMIN_ORDERS:    "/admin/orders",
   ADMIN_CONTACTS: "/admin/contacts",
+  ADMIN_SITE_MEDIA: "/admin/site-media", // ✅ Ye add kar
+
 };

@@ -12,6 +12,7 @@ import fabricReducer from "../features/fabric/fabricSlice";
 import trackOrderReducer from "../features/trackOrder/trackOrderSlice";
 import contactReducer from "../features/contact/contactSlice";
 import adminContactReducer from "../features/admin/contacts/adminContactSlice";
+import siteMediaReducer from "../features/admin/siteMedia/siteMediaSlice";
 
 const rootReducer = combineReducers({
   auth:          authReducer,
@@ -28,7 +29,7 @@ const rootReducer = combineReducers({
   trackOrder: trackOrderReducer,
   contact: contactReducer,
   adminContacts: adminContactReducer, // <-- ADD THIS
-
+  siteMedia: siteMediaReducer, // ✅ Ye add kar
 
 });
 

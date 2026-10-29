@@ -37,9 +37,11 @@ exports.createRazorpayOrder = async (orderId, userId) => {
             throw createError('This order has already been paid');
         }
 
-        const amount = Number(order.total_amount);
+        const amount = Math.round(Number(order.total_amount) * 100);
+        console.log("amount:::::::::::::::::::", amount)
 
-        if (!Number.isSafeInteger(amount) || amount <= 0) {
+
+        if (amount <= 0) {
             throw createError('Invalid order amount');
         }
 
@@ -49,6 +51,7 @@ exports.createRazorpayOrder = async (orderId, userId) => {
         if (currency !== 'INR') {
             throw createError('Only INR payments are supported');
         }
+
 
         // Create the order with Razorpay.
         // Do not create a new internal Order here.
@@ -63,14 +66,16 @@ exports.createRazorpayOrder = async (orderId, userId) => {
             }
         });
 
+
+
         // Persist the payment attempt.
         // These fields must exist in your Payment model.
         await Payment.create({
-            user_id:userId,
+            user_id: userId,
             order_id: order.id,
             amount: amount,
             currency,
-            gateway:'razorpay',
+            gateway: 'razorpay',
             payment_method: 'razorpay',
             payment_status: 'processing',
             gateway_order_id: razorpayOrder.id
@@ -101,47 +106,62 @@ exports.createRazorpayOrder = async (orderId, userId) => {
 
 // Verify Razorpay checkout signature and confirm captured payment.
 exports.verifyRazorpayPayment = async (data, userId) => {
-    const {
-        internal_order_id,
-        razorpay_order_id,
-        razorpay_payment_id,
-        razorpay_signature
-    } = data;
-
-    if (
-        !internal_order_id ||
-        !razorpay_order_id ||
-        !razorpay_payment_id ||
-        !razorpay_signature
-    ) {
-        throw createError('All payment verification fields are required');
-    }
-
-    // Verify the signature using the server-side secret.
-    const expectedSignature = crypto
-        .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
-        .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-        .digest();
-
-    // if (!/^[a-f0-9]{128}$/i.test(razorpay_signature)) {
-    //     throw createError('Invalid payment signature');
-    // }
-
-    const receivedSignature = Buffer.from(razorpay_signature, 'hex');
-
-    if (
-        receivedSignature.length !== expectedSignature.length ||
-        !crypto.timingSafeEqual(expectedSignature, receivedSignature)
-    ) {
-        throw createError('Payment signature verification failed');
-    }
-
-    // Fetch the payment from Razorpay rather than trusting the frontend.
-    const razorpayPayment = await razorpay.payments.fetch(razorpay_payment_id);
-
-    const transaction = await sequelize.transaction();
+    let transaction;
 
     try {
+        console.log("[VERIFY] Started");
+        const {
+            internal_order_id,
+            razorpay_order_id,
+            razorpay_payment_id,
+            razorpay_signature
+        } = data;
+
+        if (
+            !internal_order_id ||
+            !razorpay_order_id ||
+            !razorpay_payment_id ||
+            !razorpay_signature
+        ) {
+            throw createError("All payment verification fields are required");
+        }
+
+        console.log("[VERIFY] Verifying signature");
+
+        const expectedSignature = crypto
+            .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+            .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+            .digest();
+
+        if (!/^[a-f0-9]{64}$/i.test(razorpay_signature)) {
+            throw createError("Invalid payment signature");
+        }
+
+        const receivedSignature = Buffer.from(razorpay_signature, "hex");
+
+        if (
+            receivedSignature.length !== expectedSignature.length ||
+            !crypto.timingSafeEqual(expectedSignature, receivedSignature)
+        ) {
+            throw createError("Payment signature verification failed");
+        }
+
+        console.log("[VERIFY] Signature valid. Fetching Razorpay payment");
+
+        const razorpayPayment = await razorpay.payments.fetch(
+            razorpay_payment_id
+        );
+
+        console.log("[VERIFY] Razorpay payment fetched", {
+            status: razorpayPayment.status,
+            order_id: razorpayPayment.order_id,
+            currency: razorpayPayment.currency
+        });
+
+        transaction = await sequelize.transaction();
+
+        console.log("[VERIFY] Transaction started");
+
         const order = await Order.findOne({
             where: {
                 id: internal_order_id,
@@ -152,77 +172,101 @@ exports.verifyRazorpayPayment = async (data, userId) => {
         });
 
         if (!order) {
-            throw createError('Order not found', 404);
+            throw createError("Order not found", 404);
         }
 
         const payment = await Payment.findOne({
             where: {
                 order_id: order.id,
-                gateway_order_id :razorpay_order_id
+                gateway_order_id: razorpay_order_id
             },
             transaction,
             lock: transaction.LOCK.UPDATE
         });
 
         if (!payment) {
-            throw createError('Payment record not found', 404);
+            throw createError("Payment record not found", 404);
         }
 
-        // Idempotency: repeated verification must not process payment twice.
         if (
-            order.payment_status === 'paid' &&
-            payment.payment_status === 'paid' &&
-            payment.gateway_order_id === razorpay_order_id
+            order.payment_status === "paid" &&
+            payment.payment_status === "success"
         ) {
             await transaction.commit();
+            transaction = null;
 
             return {
                 verified: true,
-                message: 'Payment already verified'
+                message: "Payment already verified"
             };
         }
 
-        if (order.payment_status === 'paid') {
-            throw createError('Order has already been paid');
+        if (order.payment_status === "paid") {
+            throw createError("Order has already been paid");
         }
 
-        if (['cancelled', 'delivered', 'returned'].includes(order.order_status)) {
-            throw createError('This order can no longer be paid');
+        if (
+            ["cancelled", "delivered", "returned"].includes(
+                order.order_status
+            )
+        ) {
+            throw createError("This order can no longer be paid");
         }
 
-        const expectedAmount = Math.round(Number(order.total_amount) * 100);
+        const expectedAmount = Math.round(
+            Number(order.total_amount) * 100
+        );
+
+        console.log("[VERIFY] Checking payment details", {
+            razorpayOrderIdMatches:
+                razorpayPayment.order_id === razorpay_order_id,
+            paymentCaptured:
+                razorpayPayment.status === "captured",
+            // amountMatches:
+            //     Number(razorpayPayment.amount) === expectedAmount,
+            currencyMatches:
+                razorpayPayment.currency === order.currency,
+            gatewayOrderIdMatches:
+                payment.gateway_order_id === razorpay_order_id
+        });
 
         if (
             razorpayPayment.order_id !== razorpay_order_id ||
-            razorpayPayment.status !== 'captured' ||
+            razorpayPayment.status !== "captured" ||
             Number(razorpayPayment.amount) !== expectedAmount ||
             razorpayPayment.currency !== order.currency ||
-            payment.razorpay_order_id !== razorpay_order_id
+            payment.gateway_order_id !== razorpay_order_id
         ) {
             throw createError(
-                'Payment is not captured or its details do not match'
+                "Payment is not captured or its details do not match"
             );
         }
 
-        await payment.update({
-            gateway_order_id :razorpay_order_id,
-            payment_status: 'paid'
-        }, { transaction });
+        await payment.update(
+            { payment_status: "success" },
+            { transaction }
+        );
 
-        await order.update({
-            payment_status: 'paid'
-        }, { transaction });
+        await order.update(
+            { payment_status: "paid" },
+            { transaction }
+        );
 
         await transaction.commit();
+        transaction = null;
+
+        console.log("[VERIFY] Payment verified successfully");
 
         return {
             verified: true,
-            message: 'Payment verified successfully',
+            message: "Payment verified successfully",
             order_id: order.id,
             payment_id: razorpay_payment_id
         };
     } catch (error) {
-        if (!transaction.finished) {
+        console.error("[VERIFY] Failed:", error.message);
+
+        if (transaction && !transaction.finished) {
             await transaction.rollback();
         }
 
