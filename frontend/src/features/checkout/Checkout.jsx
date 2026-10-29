@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
+import {useRazorpay} from "react-razorpay"; // ✅ Added
 import { ROUTES } from "../../routes/routePaths";
 import { selectCartItems, selectCartLoading, selectCartFetched, fetchCartThunk, clearCart } from "../cart/cartSlice";
 import { fetchAddressesThunk } from "../address/addressThunks";
@@ -13,17 +14,26 @@ import OrderSummary from "./components/OrderSummary";
 import SimpleHeader from "../../components/layout/SimpleHeader";
 import { formatCurrency } from "../../utils/formatCurrency";
 
+// ✅ Import your mediators
+import { createRazorpayOrder, verifyRazorpayPayment } from "./mediators";
+
 export default function Checkout() {
   const dispatch = useDispatch();
+  const {Razorpay } = useRazorpay(); // ✅ Added
+  
   const items = useSelector(selectCartItems) || [];
   const loading = useSelector(selectCartLoading);
   const fetched = useSelector(selectCartFetched);
   const address = useSelector(selectSelectedAddress);
+  
   const [stage, setStage] = useState(2);
   const [confirmed, setConfirmed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [order, setOrder] = useState(null);
+  
+  // ✅ Added state for payment method (default COD)
+  const [paymentMethod, setPaymentMethod] = useState("cod");
 
   useEffect(() => {
     if (!fetched) dispatch(fetchCartThunk());
@@ -38,14 +48,71 @@ export default function Checkout() {
     if (!address?.id || !confirmed || submitting) return;
     setSubmitting(true);
     setError("");
+    
     try {
-      const response = await api.post("v1/order", { address_id: address.id, payment_method: "cod" });
+      // 1. Create internal order
+      const response = await api.post("v1/order", { 
+        address_id: address.id, 
+        payment_method: paymentMethod // "cod" ya "online"
+      });
       const created = response.data?.data;
-      setOrder(created);
-      dispatch(clearCart());
+
+      // 2. Agar COD hai -> Direct Success
+      if (paymentMethod === "cod") {
+        setOrder(created);
+        dispatch(clearCart());
+        setSubmitting(false);
+        return;
+      }
+
+      // 3. Agar Online hai -> Razorpay Popup
+      const rzpRes = await createRazorpayOrder(created.id);
+      const rzpData = rzpRes.data;
+      debugger
+      const options = {
+        key: rzpData.key,
+        amount: rzpData.amount,
+        currency: rzpData.currency,
+        name: "Levelline", // Apna brand name dal lena
+        description: `Order #${rzpData.order_number}`,
+        order_id: rzpData.razorpay_order_id,
+        handler: async function (rzpResponse) {
+          try {
+            const verifyRes = await verifyRazorpayPayment({
+              razorpay_payment_id: rzpResponse.razorpay_payment_id,
+              razorpay_order_id: rzpResponse.razorpay_order_id,
+              razorpay_signature: rzpResponse.razorpay_signature,
+              internal_order_id:rzpData.internal_order_id,
+            });
+
+            if (verifyRes.success) {
+              setOrder(created); // Success page dikhao
+              dispatch(clearCart());
+            } else {
+              setError("Payment verification failed. Please contact support.");
+            }
+          } catch (err) {
+            setError("Payment verification failed.");
+          } finally {
+            setSubmitting(false);
+          }
+        },
+        prefill: {
+          name: address.full_name,
+          contact: address.phone || "",
+        },
+        theme: { color: "#663f29" }, // Tumhara brand color
+      };
+
+      const rzp = new Razorpay(options);
+      rzp.on("payment.failed", function (response) {
+        setError(response.error.description || "Payment failed.");
+        setSubmitting(false);
+      });
+      rzp.open(); // Popup Opens Here
+
     } catch (err) {
       setError(err.response?.data?.message || "Could not place your order. Please try again.");
-    } finally {
       setSubmitting(false);
     }
   };
@@ -71,7 +138,15 @@ export default function Checkout() {
         <main className="container-x py-20 text-center">
           <h1 className="text-xl font-semibold text-[#414141]">Order placed</h1>
           <Link to={ROUTES.TRACK_ORDER} className="mt-5 inline-block bg-ink px-5 py-2.5 text-xs font-medium uppercase tracking-wide text-cream transition hover:bg-[#663f29]">Track your order</Link>
-          <p className="mt-3 text-xs text-[#6b6b6b]">Order {order.order_number} is confirmed. Pay {formatCurrency(order.total_amount)} in cash on delivery.</p>
+          
+          {/* ✅ Text update based on payment method */}
+          <p className="mt-3 text-xs text-[#6b6b6b]">
+            Order {order.order_number} is confirmed. 
+            {paymentMethod === "cod" 
+              ? ` Pay ${formatCurrency(order.total_amount)} in cash on delivery.` 
+              : ` Payment of ${formatCurrency(order.total_amount)} received successfully.`}
+          </p>
+          
           <Link to={ROUTES.READY_TO_WEAR} className="mt-5 inline-block text-xs text-[#663f29] underline">Continue shopping</Link>
         </main>
       </>
@@ -118,21 +193,46 @@ export default function Checkout() {
               <section className="border border-border bg-white p-4">
                 <h1 className="font-sans text-sm font-medium uppercase tracking-wide text-[#414141]">2. Payment method</h1>
                 {address && <p className="mt-2 text-xs text-[#6b6b6b]">Delivering to {address.full_name}, {address.address_line1}, {address.city}, {address.state} {address.postal_code}</p>}
-                <label className="mt-4 flex cursor-pointer items-start gap-3 border border-[#663f29] bg-[#F5F1E9] p-3">
-                  <input type="radio" checked readOnly className="mt-0.5 accent-[#663f29]" />
-                  <span>
-                    <span className="block text-xs font-medium text-[#414141]">Cash on Delivery</span>
-                    <span className="mt-0.5 block text-[10px] text-[#808080]">Pay the order total in cash when your order is delivered.</span>
-                  </span>
-                </label>
+                
+                {/* ✅ Myntra Style Payment Options */}
+                <div className="mt-4 space-y-3">
+                  <label className={`flex cursor-pointer items-start gap-3 border p-3 transition ${paymentMethod === "cod" ? "border-[#663f29] bg-[#F5F1E9]" : "border-gray-200 hover:border-gray-300"}`}>
+                    <input 
+                      type="radio" 
+                      name="payment" 
+                      value="cod"
+                      checked={paymentMethod === "cod"} 
+                      onChange={() => setPaymentMethod("cod")}
+                      className="mt-0.5 accent-[#663f29]" 
+                    />
+                    <span>
+                      <span className="block text-xs font-medium text-[#414141]">Cash on Delivery</span>
+                      <span className="mt-0.5 block text-[10px] text-[#808080]">Pay the order total in cash when your order is delivered.</span>
+                    </span>
+                  </label>
+
+                  <label className={`flex cursor-pointer items-start gap-3 border p-3 transition ${paymentMethod === "online" ? "border-[#663f29] bg-[#F5F1E9]" : "border-gray-200 hover:border-gray-300"}`}>
+                    <input 
+                      type="radio" 
+                      name="payment" 
+                      value="online"
+                      checked={paymentMethod === "razorpay"} 
+                      onChange={() => setPaymentMethod("razorpay")}
+                      className="mt-0.5 accent-[#663f29]" 
+                    />
+                    <span>
+                      <span className="block text-xs font-medium text-[#414141]">Online Payment (Razorpay)</span>
+                      <span className="mt-0.5 block text-[10px] text-[#808080]">Pay securely via UPI, Credit/Debit Card, or Netbanking.</span>
+                    </span>
+                  </label>
+                </div>
               </section>
             )}
             
             {stage === 4 && (
               <section className="border border-border bg-white p-4">
                 <h1 className="font-sans text-sm font-medium uppercase tracking-wide text-[#414141]">3. Confirm your bag</h1>
-                <p className="mt-1 text-xs text-[#808080]">Review the items below, then confirm to place your COD order.</p>
-                {/* ✅ Changed to 2 columns to use space */}
+                <p className="mt-1 text-xs text-[#808080]">Review the items below, then confirm to place your order.</p>
                 <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
                   {items.map((item, idx) => (
                     <BagItem key={`${item.id}-${item.size}-${idx}`} item={item} />
@@ -146,7 +246,6 @@ export default function Checkout() {
             </h2>
             
             {stage !== 4 && (
-              /* ✅ Changed to 2 columns to use space */
               <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
                 {items.map((item, idx) => (
                   <BagItem key={`${item.id}-${item.size}-${idx}`} item={item} />
@@ -189,7 +288,12 @@ export default function Checkout() {
                   disabled={!confirmed || submitting} 
                   className="h-10 flex-1 bg-ink font-sans text-xs font-medium uppercase tracking-wide text-cream transition hover:bg-[#663f29] disabled:cursor-not-allowed disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  <span>{submitting ? "Placing order…" : "Place COD order"}</span>
+                  {/* ✅ Button text change based on selection */}
+                  <span>{submitting ? "Processing…" : paymentMethod === "cod" ? "Place COD order" : `Pay ${formatCurrency(items.reduce((sum, item) => {
+                    const p = Number(item.variant?.price || item.product?.price || 0);
+                    const d = Number(item.variant?.discount_price || item.product?.discount_price || 0);
+                    return sum + (Math.max(p - d, 0) * Number(item.quantity || 1));
+                  }, 0))}`}</span>
                   {submitting && <span className="h-3 w-3 rounded-full border-2 border-cream/70 border-t-transparent animate-spin" />}
                 </button>
               )}

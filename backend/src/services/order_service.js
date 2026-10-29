@@ -30,8 +30,8 @@ const VALID_PAYMENT_STATUSES = [
     'refunded'
 ];
 
-const VALID_PAYMENT_METHODS = ['cashfree', 'cod'];
-const AVAILABLE_PAYMENT_METHODS = ['cod'];
+const VALID_PAYMENT_METHODS = ['razorpay', 'cod'];
+const AVAILABLE_PAYMENT_METHODS = ['cod','razorpay'];
 
 const toCents = (value) => {
     const number = Number(value);
@@ -283,6 +283,8 @@ class OrderService {
                 throw createHttpError('Order total must be greater than zero');
             }
 
+            console.log("payment:::::::::::",paymentMethod)
+
             const order = await Order.create(
                 {
                     order_number: makeOrderNumber(),
@@ -312,7 +314,7 @@ class OrderService {
                     transaction_id: null,
                     amount: order.total_amount,
                     currency: order.currency,
-                    payment_method: paymentMethod === 'cod' ? 'cash' : null,
+                    payment_method: paymentMethod,
                     payment_status: 'pending'
                 },
                 { transaction }
