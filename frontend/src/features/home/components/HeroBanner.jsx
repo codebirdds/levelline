@@ -1,12 +1,58 @@
-import { useEffect, useState } from "react";
-import api from "../../../api/axiosInstance"; // Path check kar lena
+import { useEffect, useState, useRef } from "react";
+import api from "../../../api/axiosInstance"; 
 import { HERO } from "../content";
+
+// ✅ iOS BULLETPROOF VIDEO COMPONENT
+const AutoPlayVideo = ({ src, poster, className }) => {
+  const videoRef = useRef(null);
+
+  // Force muted on mount (React sometimes forgets)
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = true;
+    }
+  }, []);
+
+  // Force play when the video is finally ready to be played
+  const handleCanPlay = () => {
+    if (videoRef.current) {
+      videoRef.current.play().catch((err) => {
+        console.log("iOS blocked autoplay on canplay:", err);
+      });
+    }
+  };
+
+  return (
+    <video
+      ref={videoRef}
+      className={`${className} pointer-events-none`}
+      poster={poster}
+      autoPlay
+      muted
+      loop
+      playsInline
+      webkit-playsinline="true"
+      preload="auto" 
+      controls={false}
+      onCanPlay={handleCanPlay} // ✅ Triggers play exactly when iOS is ready
+    >
+      <source src={src} type="video/mp4" />
+    </video>
+  );
+};
 
 export default function HeroBanner() {
   const [mediaData, setMediaData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
 
-  // ✅ API Call for home_hero
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   useEffect(() => {
     const fetchHeroMedia = async () => {
       try {
@@ -15,7 +61,7 @@ export default function HeroBanner() {
           setMediaData(res.data.data);
         }
       } catch (error) {
-        console.error("Failed to load dynamic hero media, using static fallback", error);
+        console.error("Failed to load dynamic hero media", error);
       } finally {
         setLoading(false);
       }
@@ -23,49 +69,28 @@ export default function HeroBanner() {
     fetchHeroMedia();
   }, []);
 
-  // ✅ Fallback Logic
   const isDynamic = !!mediaData && mediaData.status === "active";
   const mediaType = isDynamic ? mediaData.media_type : (HERO.video ? "video" : "image");
   
   const desktopSrc = isDynamic ? mediaData.desktop_url : (HERO.video || HERO.image);
   const mobileSrc = isDynamic ? mediaData.mobile_url : (HERO.video || HERO.image);
+  const activeSrc = isMobile ? (mobileSrc || desktopSrc) : desktopSrc;
   const poster = isDynamic ? "" : HERO.image;
 
-  // ✅ Helper to render Video or Image
   const renderMedia = (src, className) => {
     if (!src) return null;
-    
     if (mediaType === "video") {
-      return (
-        <video
-          key={src} // ✅ Key add karna zaroori hai source change ke liye
-          className={className}
-          src={src}
-          poster={poster}
-          autoPlay
-          muted
-          loop
-          playsInline
-        />
-      );
+      return <AutoPlayVideo src={src} poster={poster} className={className} />;
     }
-    return <img key={src} src={src} alt="Hero" className={className} />;
+    return <img src={src} alt="Hero" className={className} />;
   };
 
-  // Don't flash the screen while loading first time
   if (loading) return <section className="h-[100svh] min-h-[560px] w-full bg-ink" />;
 
   return (
     <section className="relative h-[100svh] min-h-[560px] w-full overflow-hidden bg-ink">
-      
-      {/* ✅ Desktop Media (Hidden on Mobile) */}
-      <div className="absolute inset-0 hidden md:block">
-        {renderMedia(desktopSrc, "size-full object-cover")}
-      </div>
-
-      {/* ✅ Mobile Media (Hidden on Desktop) */}
-      <div className="absolute inset-0 block md:hidden">
-        {renderMedia(mobileSrc, "size-full object-cover")}
+      <div className="absolute inset-0">
+        {renderMedia(activeSrc, "size-full object-cover")}
       </div>
 
       <div className="absolute inset-0 bg-black/55"></div>
