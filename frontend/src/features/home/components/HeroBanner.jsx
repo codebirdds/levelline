@@ -43,7 +43,7 @@ const AutoPlayVideo = ({ src, poster, className }) => {
 
 export default function HeroBanner() {
   const [mediaData, setMediaData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -53,29 +53,35 @@ export default function HeroBanner() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  useEffect(() => {
-    const fetchHeroMedia = async () => {
-      try {
-        const res = await api.get("v1/site-media/key/home_hero");
-        if (res.data?.success && res.data?.data) {
-          setMediaData(res.data.data);
-        }
-      } catch (error) {
-        console.error("Failed to load dynamic hero media", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchHeroMedia();
-  }, []);
+  // useEffect(() => {
+  //   const fetchHeroMedia = async () => {
+  //     try {
+  //       const res = await api.get("v1/site-media/key/home_hero");
+  //       if (res.data?.success && res.data?.data) {
+  //         setMediaData(res.data.data);
+  //       }
+  //     } catch (error) {
+  //       console.error("Failed to load dynamic hero media", error);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+  //   fetchHeroMedia();
+  // }, []);
 
-  const isDynamic = !!mediaData && mediaData.status === "active";
-  const mediaType = isDynamic ? mediaData.media_type : (HERO.video ? "video" : "image");
+  // const isDynamic = !!mediaData && mediaData.status === "active";
+  // const mediaType = isDynamic ? mediaData.media_type : (HERO.video ? "video" : "image");
   
-  const desktopSrc = isDynamic ? mediaData.desktop_url : (HERO.video || HERO.image);
-  const mobileSrc = isDynamic ? mediaData.mobile_url : (HERO.video || HERO.image);
-  const activeSrc = isMobile ? (mobileSrc || desktopSrc) : desktopSrc;
-  const poster = isDynamic ? "" : HERO.image;
+  // const desktopSrc = isDynamic ? mediaData.desktop_url : (HERO.video || HERO.image);
+  // const mobileSrc = isDynamic ? mediaData.mobile_url : (HERO.video || HERO.image);
+  // const activeSrc = isMobile ? (mobileSrc || desktopSrc) : desktopSrc;
+  // const poster = isDynamic ? "" : HERO.image;
+    //for testing
+    const mediaType ="video";
+    const desktopSrc = HERO.video;
+    const mobileSrc = HERO.video;
+    const activeSrc = desktopSrc;
+    const poster ="" ;
 
   const renderMedia = (src, className) => {
     if (!src) return null;

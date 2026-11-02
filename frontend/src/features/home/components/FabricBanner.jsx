@@ -1,6 +1,6 @@
 import PillButton from "../../../components/common/PillButton";
 import { Reveal } from "../../../components/animation";
-import fabric from "../Assets/fabric.png";
+import fabric from "../Assets/fabric.webp";
 
 export default function FabricBanner() {
   return (

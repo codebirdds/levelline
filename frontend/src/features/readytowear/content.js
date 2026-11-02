@@ -1,15 +1,15 @@
-import readyToWear from "./assets/readyToWear.png";
-import blackRacket from "./assets/blackRacket.png";
-import creamPant from "./assets/creamPant.png";
-import browCheckRacket from "./assets/browCheckRacket.png";
-import blueShirt from "./assets/blueShirt.png";
-import editorial1 from "./assets/editorial1.png";
-import editorial2 from "./assets/editorial2.png";
-import personalise from "./assets/personalise.png";
-import premiumFabric from "./assets/premiumFabric.png";
-import precisionCutting from "./assets/precisionCutting.png";
-import expertStitching from "./assets/expertStitching.png";
-import finalQualityCheck from "./assets/finalQualityCheck.png";
+// import blackRacket from "./assets/blackRacket.png";
+// import creamPant from "./assets/creamPant.png";
+// import browCheckRacket from "./assets/browCheckRacket.png";
+// import blueShirt from "./assets/blueShirt.png";
+import editorial1 from "../readytowear/assets/editorial1.webp";
+import editorial2 from "../readytowear/assets/editorial2.webp";
+import expertStitching from "../readytowear/assets/expertStitching.webp";
+import precisionCutting from "../readytowear/assets/precisionCutting.webp";
+import premiumFabric from "../readytowear/assets/premiumFabric.webp";
+import personalise from "../readytowear/assets/personalise.webp";
+import finalQualityCheck from "../readytowear/assets/finalQualityCheck.webp";
+import readyToWear from "../readytowear/assets/readyToWear.webp";
 const img = (n) => `/images/rtw/${n}`;
 
 // ───────────── Constants ─────────────
@@ -58,7 +58,7 @@ export const EDITORIALS = [editorial1, editorial2];
 // ───────────── Products ─────────────
 
 // All 4 images we have — cycled across dummy products
-const PRODUCT_IMAGES = [browCheckRacket, blueShirt, creamPant, blackRacket];
+const PRODUCT_IMAGES = [];
 
 // Hand-written seed so names/prices/categories actually make sense
 const PRODUCT_SEED = [

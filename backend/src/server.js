@@ -34,7 +34,6 @@ const corsOptions = {
       "http://localhost:5173",
       "http://127.0.0.1:3000",
       "http://127.0.0.1:5173",
-      "https://levelline.in/",
       "https://levelline.in",
     ];
 
@@ -88,6 +87,7 @@ app.use(notFound);
 app.use(errorHandler);
 
 // Test database connection
+// AFTER
 db.sequelize
   .authenticate()
   .then(() => {
@@ -95,9 +95,16 @@ db.sequelize
 
     const PORT = process.env.PORT || 3000;
 
-    app.listen(PORT, () => {
+    // Capture the server instance so we can tune it
+    const server = app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
+
+    // Keep connections alive LONGER than Render's LB idle timeout (~60s)
+    // so the LB closes idle connections cleanly before Safari reuses them.
+    server.keepAliveTimeout = 65_000; // 65s  — must be > LB idle timeout
+    server.headersTimeout   = 66_000; // 66s  — must be > keepAliveTimeout
+    server.requestTimeout   = 75_000; // 75s  — safety cap per request
   })
   .catch((err) => {
     console.error("DB connection error ❌", err);
