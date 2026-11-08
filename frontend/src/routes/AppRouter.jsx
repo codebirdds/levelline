@@ -26,7 +26,12 @@ import About from "../features/about/About";
 import ContactsPage from "../features/admin/contacts/ContactsPage";
 import ScrollToTop from "../components/common/ScrollToTop";
 import SiteMediaPage from "../features/admin/siteMedia/SiteMediaPage"; // ✅ Import
-
+import CustomizerLayout from "../features/customizer/customer/CustomizerLayout"; // ✅ Import
+import CustomizerShop from "../features/customizer/customer/CustomizerShop"; // ✅ Import
+import ProductCustomizer from "../features/customizer/customer/ProductCustomizer";
+import CartPage from "../features/customizer/customer/CartPage"; // ✅ Import
+import CustomizerProducts from "../features/customizer/admin/CustomizerProducts";
+import CustomizerEditor from "../features/customizer/admin/editor/CustomizerEditor"; // ✅ Import
 export default function AppRouter() {
   return (
     <BrowserRouter>
@@ -38,6 +43,7 @@ export default function AppRouter() {
           <Route path={ROUTES.FABRIC} element={<Fabric />} />
           <Route path={ROUTES.ABOUT} element={<About />} />
         </Route>
+
         <Route path={ROUTES.READY_TO_WEAR_DETAIL} element={<ProductDetail />} />
         <Route element={<PrivateRoute />}>
           <Route path={ROUTES.CHECKOUT} element={<Checkout />} />
@@ -66,6 +72,19 @@ export default function AppRouter() {
             <Route path={ROUTES.ADMIN_SITE_MEDIA} element={<SiteMediaPage />} /> // ✅ Add
           </Route>
         </Route>
+
+        // Customer: these three share the new light nav
+<Route element={<CustomizerLayout />}>
+  <Route path="/customize" element={<CustomizerShop />} />
+  <Route path="/customize/:productId" element={<ProductCustomizer />} />
+  <Route path="/cart" element={<CartPage />} />
+</Route>
+
+// Admin list: inside AdminLayout
+<Route path="/admin/customizer" element={<CustomizerProducts />} />
+
+// Admin editor: full screen, so put it OUTSIDE AdminLayout, inside your admin PrivateRoute
+<Route path="/admin/customizer/:productId" element={<CustomizerEditor />} />
 
         <Route path="*" element={<div className="p-8 text-center">404</div>} />
       </Routes>
