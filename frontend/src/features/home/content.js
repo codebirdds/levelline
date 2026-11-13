@@ -21,7 +21,7 @@ import CP2 from "./Assets/CP2.webp";
 import PC from "./Assets/PC.webp";
 import HB from "./Assets/HB.webp";
 import GPF from "./Assets/GPF.webp";
-import HeroVIdeo from "./Assets/HeroVideo.mp4";
+import HeroVIdeo from "./Assets/HeroVideo.webm";
 import defineFit from "./Assets/defineFit.mp4";
 export const NAV_LEFT = [
   { label: "Home", href: "/" },
