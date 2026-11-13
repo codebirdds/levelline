@@ -68,6 +68,16 @@ export default function GarmentNode({ node, canvas, interactive, onPointerDown }
 
   useEffect(() => () => clearTimeout(timer.current), []);
 
+  const crop = node.crop || { top: 0, right: 0, bottom: 0, left: 0 };
+  const clipPath = (crop.top || crop.right || crop.bottom || crop.left) 
+    ? `inset(${crop.top}% ${crop.right}% ${crop.bottom}% ${crop.left}%)` 
+    : undefined;
+
+  // Apply flip to the transform
+  const scaleX = node.flipX ? -1 : 1;
+  const scaleY = node.flipY ? -1 : 1;
+  const transform = `scaleX(${scaleX}) scaleY(${scaleY}) rotate(${node.rotation || 0}deg)`;
+
   const ease = "cubic-bezier(.22,1,.36,1)";
   return (
     <div
@@ -80,7 +90,8 @@ export default function GarmentNode({ node, canvas, interactive, onPointerDown }
         opacity: node.visible ? 1 : 0,
         pointerEvents: interactive && node.visible ? "auto" : "none",
         cursor: interactive ? (node.locked ? "not-allowed" : "move") : "default",
-        transform: node.rotation ? `rotate(${node.rotation}deg)` : undefined,
+         transform,
+        clipPath,
         transition: `left .45s ${ease}, top .45s ${ease}, width .45s ${ease}, height .45s ${ease}, transform .45s ${ease}, opacity .3s ease`,
         touchAction: interactive ? "none" : undefined,
       }}

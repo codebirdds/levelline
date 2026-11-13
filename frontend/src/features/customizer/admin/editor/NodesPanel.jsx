@@ -1,6 +1,7 @@
+// Replace your NodesPanel.jsx with this
 import Icon from "../../ui/Icon.jsx";
 import { btnGold, iconBtn, labelCls } from "../../ui/controls";
-import { moveLayer, updateNode } from "./editorUtils.js";
+import { moveLayer, updateNode, bringToFront, sendToBack } from "./editorUtils.js"; // 👈 Import new functions
 
 const TYPE_BADGE = { image: "IMG", position: "POS", both: "BOTH" };
 
@@ -30,6 +31,10 @@ export default function NodesPanel({ draft, selectedId, onSelect, edit, onAdd, o
               {badge && badge !== "none" && <span className="rounded-sm bg-gold px-1.5 py-0.5 font-sans text-xs font-semibold text-ink">{TYPE_BADGE[badge] ?? "POS"}</span>}
               {baseMode && (
                 <>
+                  {/* 👈 NEW: Bring to front / Send to back */}
+                  <button className={iconBtn} title="Bring to front" onClick={() => edit((d) => bringToFront(d, n.id))}><Icon name="chevrons-up" /></button>
+                  <button className={iconBtn} title="Send to back" onClick={() => edit((d) => sendToBack(d, n.id))}><Icon name="chevrons-down" /></button>
+                  
                   <button className={iconBtn} title="Bring forward" onClick={() => edit((d) => moveLayer(d, n.id, 1))}><Icon name="up" /></button>
                   <button className={iconBtn} title="Send backward" onClick={() => edit((d) => moveLayer(d, n.id, -1))}><Icon name="down" /></button>
                   <button className={`${iconBtn} hover:text-danger`} title="Delete node" onClick={() => onDelete(n)}><Icon name="trash" /></button>

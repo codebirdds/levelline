@@ -47,6 +47,7 @@ export default function ConfiguratorView({ product, template, onAddToCart, embed
 
   // preload every option image once so swaps never flash
   useEffect(() => {
+
     template.groups.forEach((g) => g.options.forEach((o) => Object.values(o.updates || {}).forEach((u) => {
       if (u?.image) { const i = new Image(); i.src = resolveImageSrc(u.image); }
     })));
@@ -60,9 +61,11 @@ export default function ConfiguratorView({ product, template, onAddToCart, embed
   }, [template]);
 
   const choose = (groupId, optionId) => {
+    
     const r = selectOption(template, selections, groupId, optionId);
     setBlocked(r.blocked?.message ?? "");
     setNotices(r.notices);
+    
     if (!r.blocked) setSelections(r.selections); // fabric is untouched by component choices
   };
   

@@ -14,7 +14,7 @@ export default function GarmentCanvas({
   canvas, nodes, guideImage, selectedId, editableIds,
   onSelect, onGeometryChange, onGeometryCommit, className = "", style,
 }) {
-  debugger
+  
   const wrap = useRef(null);
   const drag = useRef(null);
   const live = useRef({});

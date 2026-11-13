@@ -28,6 +28,9 @@ export function applyNodeUpdate(node, update) {
     for (const k of GEO_KEYS) if (isNum(g[k])) { next[k] = g[k]; touched.push(k); }
     if (typeof update.visible === "boolean") { next.visible = update.visible; touched.push("visible"); }
     if (isNum(update.zIndex)) { next.zIndex = update.zIndex; touched.push("zIndex"); }
+     if (update.crop) { next.crop = { ...(node.crop || {}), ...update.crop }; touched.push("crop"); }
+    if (typeof update.flipX === "boolean") { next.flipX = update.flipX; touched.push("flipX"); }
+    if (typeof update.flipY === "boolean") { next.flipY = update.flipY; touched.push("flipY"); }
   }
   return { node: touched.length ? next : node, touched };
 }

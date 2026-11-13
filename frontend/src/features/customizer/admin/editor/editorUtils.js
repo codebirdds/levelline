@@ -121,3 +121,36 @@ export function replaceFullGarment(d, { preset, fromTemplate, baseImage }) {
   const copy = JSON.parse(JSON.stringify(source));
   return { ...d, canvas: copy.canvas, baseImage: baseImage || copy.baseImage, nodes: copy.nodes, groups: copy.groups, rules: copy.rules, fabrics: copy.fabrics ?? [], defaultFabricId: copy.defaultFabricId ?? null, sections: copy.sections ?? [] };
 }
+
+
+/* Add these inside editorUtils.js */
+
+export const bringToFront = (d, id) => {
+  const maxZ = Math.max(0, ...d.nodes.map((n) => n.zIndex));
+  return { ...d, nodes: d.nodes.map((n) => (n.id === id ? { ...n, zIndex: maxZ + 1 } : n)) };
+};
+
+export const sendToBack = (d, id) => {
+  const minZ = Math.min(0, ...d.nodes.map((n) => n.zIndex));
+  return { ...d, nodes: d.nodes.map((n) => (n.id === id ? { ...n, zIndex: minZ - 1 } : n)) };
+};
+
+export const flipNode = (d, id, axis) => {
+  return {
+    ...d,
+    nodes: d.nodes.map((n) =>
+      n.id === id ? { ...n, [axis === "x" ? "flipX" : "flipY"]: !n[axis === "x" ? "flipX" : "flipY"] } : n
+    ),
+  };
+};
+
+export const cropNode = (d, id, side, value) => {
+  return {
+    ...d,
+    nodes: d.nodes.map((n) => {
+      if (n.id !== id) return n;
+      const crop = n.crop || { top: 0, right: 0, bottom: 0, left: 0 };
+      return { ...n, crop: { ...crop, [side]: value } };
+    }),
+  };
+};
