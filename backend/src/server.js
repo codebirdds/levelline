@@ -1,3 +1,4 @@
+
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
@@ -24,31 +25,6 @@ console.log("Database Port:", process.env.DB_PORT);
 console.log("Database Name:", process.env.DB_NAME);
 console.log("Database User: sujat");
 
-// CORS configuration
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-
-    const allowedOrigins = [
-      "http://localhost:3000",
-      "http://localhost:5173",
-      "http://127.0.0.1:3000",
-      "http://127.0.0.1:5173",
-      "https://levelline.in",
-      "https://www.levelline.in",
-      "https://www.levelline.in/"
-    ];
-
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
-  optionsSuccessStatus: 200,
-};
-
 const db = require("./models");
 
 const userRoutes = require("./routes/user_route.js");
@@ -67,19 +43,37 @@ const errorHandler = require("./middlewares/errorHandler");
 
 const app = express();
 
+// CORS: Allow all origins with credentials
 app.use(
   cors({
-    origin: "*",
+    origin: true,
+    credentials: true,
+    methods: [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "OPTIONS",
+    ],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+    ],
     optionsSuccessStatus: 200,
   })
 );
+
+// Middleware
 app.use(express.json());
 app.use(logger);
 
+// Health check
 app.get("/", (req, res) => {
-  res.send("Server is running 🚀");
+  res.status(200).send("Server is running 🚀");
 });
 
+// API Routes
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/category", categoryRoute);
 app.use("/api/v1/product", productRoute);
@@ -90,11 +84,11 @@ app.use("/api/v1/order", orderRoute);
 app.use("/api/v1/payment", paymentRoute);
 app.use("/api/v1/site-media", siteMediaRoute);
 
+// Error handling
 app.use(notFound);
 app.use(errorHandler);
 
-// Test database connection
-// AFTER
+// Database connection and server startup
 db.sequelize
   .authenticate()
   .then(() => {
@@ -102,16 +96,14 @@ db.sequelize
 
     const PORT = process.env.PORT || 3000;
 
-    // Capture the server instance so we can tune it
     const server = app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
 
-    // Keep connections alive LONGER than Render's LB idle timeout (~60s)
-    // so the LB closes idle connections cleanly before Safari reuses them.
-    server.keepAliveTimeout = 65_000; // 65s  — must be > LB idle timeout
-    server.headersTimeout   = 66_000; // 66s  — must be > keepAliveTimeout
-    server.requestTimeout   = 75_000; // 75s  — safety cap per request
+    // Server timeout configuration
+    server.keepAliveTimeout = 65_000;
+    server.headersTimeout = 66_000;
+    server.requestTimeout = 75_000;
   })
   .catch((err) => {
     console.error("DB connection error ❌", err);
