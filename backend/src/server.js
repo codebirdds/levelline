@@ -35,6 +35,8 @@ const corsOptions = {
       "http://127.0.0.1:3000",
       "http://127.0.0.1:5173",
       "https://levelline.in",
+      "https://www.levelline.in",
+      "https://www.levelline.in/"
     ];
 
     if (allowedOrigins.indexOf(origin) !== -1) {
