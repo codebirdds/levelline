@@ -23,6 +23,8 @@ function Layer({ src, tint, opacity }) {
             backgroundColor: tint.color,
             backgroundImage: tex ? `url("${tex}")` : "none",
             backgroundSize: `${tint.tile}cqw`,
+            backgroundSize: tint.tile ? `${tint.tile}cqw` : "100% 100%",
+backgroundRepeat: tint.tile ? "repeat" : "no-repeat",
             backgroundBlendMode: "multiply",
             mixBlendMode: tint.blend,
             WebkitMaskImage: `url("${mask}")`,

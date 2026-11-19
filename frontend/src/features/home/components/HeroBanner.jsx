@@ -97,10 +97,13 @@ export default function HeroBanner() {
     return <img src={src} alt="Hero" className={className} />;
   };
 
-  if (loading) return <section className="h-[100svh] min-h-[560px] w-full bg-ink" />;
+  if (loading)
+    return (
+      <section className="relative h-full w-full bg-ink" />
+    );
 
   return (
-    <section className="relative h-[100svh] min-h-[560px] w-full overflow-hidden bg-ink">
+    <section className="relative h-full w-full overflow-hidden bg-ink">
       <div className="absolute inset-0">
         {renderMedia(activeSrc, "size-full object-cover")}
       </div>

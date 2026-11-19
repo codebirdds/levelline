@@ -9,7 +9,6 @@ function init() {
   ready = true;
   const meta = read("meta");
   if (meta?.schema === SCHEMA_VERSION && read("products")) return;
-  // No migrations exist yet: unknown/old schema => reseed. Add migration steps here when SCHEMA_VERSION changes.
   seed();
 }
 function seed() {
@@ -45,7 +44,7 @@ export function createProduct(meta, presetKey = "blank") {
   let id = slug(meta.name);
   if (list.some((p) => p.id === id)) id = `${id}-${uid("p").slice(-4)}`;
   const now = new Date().toISOString();
-  const product = { id, name: meta.name.trim(), description: meta.description?.trim() ?? "", category: meta.category?.trim() || "Shirts", basePrice: Number(meta.basePrice) || 0, status: "draft", publishedVersionId: null, createdAt: now, updatedAt: now };
+  const product = { id, name: meta.name.trim(), description: meta.description?.trim() ?? "", category: meta.category?.trim() || "Shirts", basePrice: Number(meta.basePrice) || 0, status: "draft", publishedVersionId: null, hasFlatView: !!meta.hasFlatView, createdAt: now, updatedAt: now };
   const template = (PRESETS[presetKey] ?? PRESETS.blank).build(id);
   if (meta.canvas?.width > 0 && meta.canvas?.height > 0) template.canvas = { width: Number(meta.canvas.width), height: Number(meta.canvas.height) };
   const d = drafts();
@@ -71,7 +70,7 @@ export function deleteProduct(id) {
 export function duplicateProduct(id) {
   const src = getProduct(id), draft = getDraft(id);
   if (!src || !draft) throw new StorageError("Product not found.");
-  const copy = createProduct({ name: `${src.name} (Copy)`, description: src.description, category: src.category, basePrice: src.basePrice }, "blank");
+  const copy = createProduct({ name: `${src.name} (Copy)`, description: src.description, category: src.category, basePrice: src.basePrice, hasFlatView: src.hasFlatView }, "blank");
   const template = { ...clone(draft), productId: copy.id };
   write("drafts", { ...drafts(), [copy.id]: template });
   return copy;
@@ -85,7 +84,6 @@ export function saveDraft(productId, template) {
 
 export const validateDraft = (productId) => validateTemplate(getDraft(productId), { assetExists, assetMeta });
 
-/** Validates then snapshots the draft as an immutable version. Later draft edits never touch it. */
 export function publish(productId) {
   const draft = getDraft(productId);
   if (!draft) throw new StorageError("Nothing to publish.");

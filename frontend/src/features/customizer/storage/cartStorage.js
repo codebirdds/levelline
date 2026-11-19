@@ -4,7 +4,6 @@ import { resolveGarment, normalizeSelections, normalizeFabricId, getGroup } from
 export const getCart = () => read("cart", []);
 export const cartCount = () => getCart().reduce((n, i) => n + i.quantity, 0);
 
-/** Builds an immutable cart snapshot from a PUBLISHED version + selections (same resolver as the renderer). */
 export function buildCartItem(product, version, selections, fabricId) {
   const t = version.template;
   const fid = normalizeFabricId(t, fabricId);
@@ -24,8 +23,6 @@ export function buildCartItem(product, version, selections, fabricId) {
     signature: `${product.id}|${version.id}|${fid}|${stableStringify(sel)}`,
   };
 }
-
-/** Identical customization (same product, version and options) => quantity +1; anything else is a separate line. */
 export function addToCart(item) {
   const cart = getCart();
   const existing = cart.find((i) => i.signature === item.signature);

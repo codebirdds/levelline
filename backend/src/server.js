@@ -65,7 +65,12 @@ const errorHandler = require("./middlewares/errorHandler");
 
 const app = express();
 
-app.use(cors(corsOptions));
+app.use(
+  cors({
+    origin: "*",
+    optionsSuccessStatus: 200,
+  })
+);
 app.use(express.json());
 app.use(logger);
 

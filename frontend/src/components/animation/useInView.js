@@ -9,7 +9,7 @@ export const prefersReducedMotion = () =>
 export default function useInView({
   threshold = ANIM.threshold,
   rootMargin = ANIM.rootMargin,
-  once = true,
+  once = false,                      // 👈 default changed: re-triggers every entry
 } = {}) {
   const ref = useRef(null);
   const [inView, setInView] = useState(false);
@@ -25,8 +25,10 @@ export default function useInView({
       ([entry]) => {
         if (entry.isIntersecting) {
           setInView(true);
-          if (once) io.disconnect();
-        } else if (!once) setInView(false);
+          if (once) io.disconnect();   // only disconnect when caller asks for once
+        } else if (!once) {
+          setInView(false);            // 👈 reset so next entry re-animates
+        }
       },
       { threshold, rootMargin }
     );

@@ -1,22 +1,21 @@
-// Replace your NodesPanel.jsx with this
 import Icon from "../../ui/Icon.jsx";
 import { btnGold, iconBtn, labelCls } from "../../ui/controls";
-import { moveLayer, updateNode, bringToFront, sendToBack } from "./editorUtils.js"; // 👈 Import new functions
+import { moveLayer, updateNode, bringToFront, sendToBack } from "./editorUtils.js";
 
 const TYPE_BADGE = { image: "IMG", position: "POS", both: "BOTH" };
 
-export default function NodesPanel({ draft, selectedId, onSelect, edit, onAdd, onDelete, patchTypes }) {
-  const nodes = [...draft.nodes].sort((a, b) => b.zIndex - a.zIndex);
+export default function NodesPanel({ nodes, draft, selectedId, onSelect, edit, onAdd, onDelete, patchTypes }) {
+  const sortedNodes = [...nodes].sort((a, b) => b.zIndex - a.zIndex);
   const baseMode = !patchTypes;
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex items-center justify-between border-b border-ink-4 px-3 py-2.5">
-        <span className={`${labelCls} mb-0`}>Garment nodes · {nodes.length}</span>
+        <span className={`${labelCls} mb-0`}>Garment nodes � {sortedNodes.length}</span>
         {baseMode && <button className={btnGold} onClick={onAdd}><Icon name="plus" /> Add node</button>}
       </div>
       <ul className="min-h-0 flex-1 overflow-y-auto py-1">
-        {nodes.length === 0 && <li className="px-4 py-8 text-center font-sans text-sm text-subtle">No nodes yet. Add the first layer of this garment.</li>}
-        {nodes.map((n) => {
+        {sortedNodes.length === 0 && <li className="px-4 py-8 text-center font-sans text-sm text-subtle">No nodes yet. Add the first layer of this view.</li>}
+        {sortedNodes.map((n) => {
           const active = n.id === selectedId;
           const badge = patchTypes?.[n.id];
           return (
@@ -31,10 +30,8 @@ export default function NodesPanel({ draft, selectedId, onSelect, edit, onAdd, o
               {badge && badge !== "none" && <span className="rounded-sm bg-gold px-1.5 py-0.5 font-sans text-xs font-semibold text-ink">{TYPE_BADGE[badge] ?? "POS"}</span>}
               {baseMode && (
                 <>
-                  {/* 👈 NEW: Bring to front / Send to back */}
                   <button className={iconBtn} title="Bring to front" onClick={() => edit((d) => bringToFront(d, n.id))}><Icon name="chevrons-up" /></button>
                   <button className={iconBtn} title="Send to back" onClick={() => edit((d) => sendToBack(d, n.id))}><Icon name="chevrons-down" /></button>
-                  
                   <button className={iconBtn} title="Bring forward" onClick={() => edit((d) => moveLayer(d, n.id, 1))}><Icon name="up" /></button>
                   <button className={iconBtn} title="Send backward" onClick={() => edit((d) => moveLayer(d, n.id, -1))}><Icon name="down" /></button>
                   <button className={`${iconBtn} hover:text-danger`} title="Delete node" onClick={() => onDelete(n)}><Icon name="trash" /></button>

@@ -12,11 +12,11 @@ const SOCIALS = [
 
 const LinkList = ({ title, items }) => (
   <div>
-    <h4 className="font-sans text-base font-semibold uppercase text-cream">{title}</h4>
-    <ul className="mt-5 space-y-3">
+    <h4 className="font-sans text-sm font-semibold uppercase tracking-wider text-cream/90">{title}</h4>
+    <ul className="mt-4 space-y-3 lg:mt-5">
       {items.map((i) => (
         <li key={i}>
-          <a href="#" className="font-sans text-sm text-cream/80 transition hover:text-gold">{i}</a>
+          <a href="#" className="font-sans text-sm text-cream/70 transition hover:text-gold">{i}</a>
         </li>
       ))}
     </ul>
@@ -28,38 +28,59 @@ export default function Footer() {
 
   return (
     <>
-      <footer className="bg-ink-2 text-cream">
-        <div className="container-x grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-4 lg:py-16">
-          <div>
-            <img src={logo} alt="Levelline" className="h-20 w-auto" />
-            <div className="mt-6 flex gap-3">
+      <footer className="border-t border-cream/10 bg-ink-2 text-cream">
+        <div className="container-x flex flex-col py-10 lg:grid lg:grid-cols-4 lg:gap-8 lg:py-16">
+          
+          {/* 1. Logo & Desktop Socials */}
+          <div className="flex flex-col gap-8">
+            <div>
+              <img src={logo} alt="Levelline" className="h-12 w-auto lg:h-20" />
+            </div>
+            {/* Desktop Socials (hidden on mobile) */}
+            <div className="mt-auto hidden gap-3 lg:flex">
               {SOCIALS.map((s) => (
-                <a key={s.label} href="#" aria-label={s.label} className="flex size-11 items-center justify-center rounded-full border border-cream/40 transition hover:border-gold hover:text-gold">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{s.d}</svg>
+                <a key={s.label} href="#" aria-label={s.label} className="flex size-10 items-center justify-center rounded-full border border-cream/30 transition hover:border-gold hover:text-gold">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{s.d}</svg>
                 </a>
               ))}
             </div>
           </div>
 
-          <LinkList title="Collections" items={FOOTER.collections} />
-          <LinkList title="Services" items={FOOTER.services} />
+          {/* 2 & 3. Links (2 columns on mobile, separate columns on desktop) */}
+          <div className="mt-10 grid grid-cols-2 gap-8 lg:mt-0 lg:contents">
+            <LinkList title="Collections" items={FOOTER.collections} />
+            <LinkList title="Services" items={FOOTER.services} />
+          </div>
 
-          <div>
-            <h4 className="font-sans text-base font-semibold uppercase text-cream">Get a call</h4>
-            <p className="mt-3 font-sans text-sm leading-relaxed text-cream/70">
+          {/* 4. Get a call */}
+          <div className="mt-10 lg:mt-0">
+            <h4 className="font-sans text-sm font-semibold uppercase tracking-wider text-cream/90">Get a call</h4>
+            <p className="mt-4 font-sans text-sm leading-relaxed text-cream/70">
               Have a question or want to book a private fitting? Our stylists are here to help.
             </p>
             <button 
               onClick={() => setBookingOpen(true)}
-              className="mt-5 rounded-md bg-surface px-6 py-3 font-sans text-sm font-medium text-ink transition hover:bg-gold-soft"
+              className="mt-6 w-full rounded-md bg-surface px-6 py-3 font-sans text-sm font-medium text-ink transition hover:bg-gold-soft sm:w-auto"
             >
               Request a Call
             </button>
           </div>
+
+          {/* Mobile Socials (moved to the very bottom) */}
+          <div className="mt-12 border-t border-cream/10 pt-8 lg:hidden">
+            <div className="flex gap-3">
+              {SOCIALS.map((s) => (
+                <a key={s.label} href="#" aria-label={s.label} className="flex size-10 items-center justify-center rounded-full border border-cream/30 transition hover:border-gold hover:text-gold">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{s.d}</svg>
+                </a>
+              ))}
+            </div>
+          </div>
+
         </div>
       </footer>
 
-      {/* ✅ Render the modal at the root level */}
+      {/* Modal */}
       <BookAppointmentModal
         open={bookingOpen}
         onClose={() => setBookingOpen(false)}

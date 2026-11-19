@@ -19,9 +19,11 @@ export function defaultSelections(t) {
   return s;
 }
 
-/** Drops unknown ids, fills defaults. Always returns exactly one option per group. */
 export function normalizeSelections(t, sel = {}) {
   const out = defaultSelections(t);
+  for (const node of t.nodes) {
+    if (sel?.[node.id] !== undefined) out[node.id] = sel[node.id];
+  }
   for (const g of t.groups) {
     const id = sel?.[g.id];
     if (id && g.options.some((o) => o.id === id)) out[g.id] = id;
@@ -33,30 +35,20 @@ export const getFabric = (t, id) => (t.fabrics ?? []).find((f) => f.id === id) ?
 export const defaultFabricId = (t) => getFabric(t, t.defaultFabricId)?.id ?? t.fabrics?.[0]?.id ?? null;
 export const normalizeFabricId = (t, id) => getFabric(t, id)?.id ?? defaultFabricId(t);
 
-/** Fabric dimension: which colour/texture a garment REGION gets. Region rules live in fabric.regions (data). */
 function withTint(node, fabric) {
-  if (!fabric || !node.fabric) return node; // node is not made of the selected fabric
-  const r = fabric.regions?.[node.fabric];
-  const has = (k) => r && k in r;
+  if (!node.fabric || !fabric) return node;
   return {
     ...node,
     tint: {
-      color: has("color") ? r.color : fabric.color,
-      texture: has("texture") ? r.texture : fabric.texture ?? null,
+      color: fabric.color,
+      texture: fabric.texture ?? null,
       tile: fabric.tile ?? 0.9,
       blend: fabric.blend ?? "multiply",
-      mask: node.fabricMask ?? null, // optional region mask; default = the node image's own silhouette
+      mask: node.fabricMask ?? null,
     },
   };
 }
 
-/**
- * THE resolver. Deterministic and stateless:
- *   final state = base nodes + patches of the currently selected options.
- * Order: groups in template order (later group wins), each node in base order.
- * If two options write the same property of the same node the later group wins and a conflict is reported.
- * It never reads a previous customer state, so patches can't accumulate or be applied twice.
- */
 export function resolveGarment(t, selections, { skipGroupId, fabricId } = {}) {
   const sel = normalizeSelections(t, selections);
   const fabric = getFabric(t, normalizeFabricId(t, fabricId));
@@ -67,6 +59,7 @@ export function resolveGarment(t, selections, { skipGroupId, fabricId } = {}) {
   const conflicts = [];
   const missing = [];
 
+  // 1. Apply patches first
   for (const group of t.groups) {
     const option = group.options.find((o) => o.id === sel[group.id]);
     if (!option) continue;
@@ -87,7 +80,28 @@ export function resolveGarment(t, selections, { skipGroupId, fabricId } = {}) {
       state.set(nodeId, next);
     }
   }
-  return { nodes: order.map((id) => withTint(state.get(id), fabric)), selections: sel, fabric, priceDelta, conflicts, missing };
+
+  // 2. Apply variants LAST so they always win
+  const overriddenNodes = new Set();
+  for (const [nodeId, node] of state) {
+    if (!node.useVariants) continue;
+    const variantId = sel[nodeId];
+    if (!variantId || !node.imageVariants?.length) continue;
+    const variant = node.imageVariants.find((v) => v.id === variantId);
+    if (!variant) continue;
+    // Save the original image as maskImage so the new image only applies to the collar shape
+    state.set(nodeId, { ...node, maskImage: node.image, image: variant.image });
+    overriddenNodes.add(nodeId);
+  }
+
+  return {
+    nodes: order.map((id) => overriddenNodes.has(id) ? state.get(id) : withTint(state.get(id), fabric)),
+    selections: sel,
+    fabric,
+    priceDelta,
+    conflicts,
+    missing,
+  };
 }
 
 export function getRuleViolations(t, selections) {
@@ -120,18 +134,10 @@ function resetGroup(t, next, groupId, notices, because) {
   }
 }
 
-/**
- * Select an option while honouring compatibility rules.
- *  - excludes  -> the change is BLOCKED ({blocked:{message}}), selections unchanged.
- *  - requires  -> the required option is selected automatically (notice returned).
- *  - a previously selected option whose requirement disappears is reset to a valid option (notice returned).
- */
 export function selectOption(t, selections, groupId, optionId) {
   const start = normalizeSelections(t, selections);
   const group = getGroup(t, groupId);
-  if (!group?.options.some((o) => o.id === optionId)) {
-    return { selections: start, notices: [], blocked: { message: "Unknown option." } };
-  }
+  if (!group?.options.some((o) => o.id === optionId)) return { selections: start, notices: [], blocked: { message: "Unknown option." } };
   const next = { ...start, [groupId]: optionId };
   const notices = [];
   const blocked = (message) => ({ selections: start, notices: [], blocked: { message } });
@@ -141,9 +147,7 @@ export function selectOption(t, selections, groupId, optionId) {
     if (!v) break;
     const { rule } = v;
     if (v.kind === "excludes") {
-      if (involves(v, optionId)) {
-        return blocked(rule.message || `${optionName(t, optionId)} can't be combined with ${v.conflicting.map((id) => optionName(t, id)).join(" / ")}.`);
-      }
+      if (involves(v, optionId)) return blocked(rule.message || `${optionName(t, optionId)} can't be combined with ${v.conflicting.map((id) => optionName(t, id)).join(" / ")}.`);
       resetGroup(t, next, findOption(t, rule.optionId).group.id, notices, "because of a compatibility rule");
     } else if (rule.optionId === optionId) {
       let satisfied = false;
@@ -153,7 +157,7 @@ export function selectOption(t, selections, groupId, optionId) {
         const trial = { ...next, [hit.group.id]: targetId };
         if (getRuleViolations(t, trial).some((x) => x.kind === "excludes" && involves(x, targetId))) continue;
         next[hit.group.id] = targetId;
-        notices.push(`${optionName(t, optionId)} requires ${hit.option.name} â€” selected automatically.`);
+        notices.push(`${optionName(t, optionId)} requires ${hit.option.name} — selected automatically.`);
         satisfied = true;
         break;
       }
@@ -165,7 +169,6 @@ export function selectOption(t, selections, groupId, optionId) {
   return { selections: next, notices, blocked: null };
 }
 
-/** For UI: is this option selectable right now, and what will happen if it is? */
 export function getOptionState(t, selections, groupId, optionId) {
   const r = selectOption(t, selections, groupId, optionId);
   return { disabled: !!r.blocked, reason: r.blocked?.message ?? "", hint: r.notices[0] ?? "" };

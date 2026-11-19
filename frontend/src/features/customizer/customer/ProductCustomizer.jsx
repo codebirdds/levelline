@@ -9,7 +9,7 @@ import { addToCart, buildCartItem } from "../storage/cartStorage.js";
 export default function ProductCustomizer() {
   const { productId } = useParams();
   const product = getProduct(productId);
-  const version = product ? getPublished(productId) : null; // customers only ever see PUBLISHED versions
+  const version = product ? getPublished(productId) : null;
 
   if (!product || !version) {
     return (
@@ -27,8 +27,8 @@ export default function ProductCustomizer() {
         template={version.template}
         onAddToCart={({ selections, fabricId }) => {
           try {
-            addToCart(buildCartItem(product, version, selections, fabricId)); // fabric + components saved together
-            toast.success("Added to cart â€” your exact design is saved.");
+            addToCart(buildCartItem(product, version, selections, fabricId));
+            toast.success("Added to cart — your exact design is saved.");
           } catch (e) { toast.error(e.message); }
         }}
       />

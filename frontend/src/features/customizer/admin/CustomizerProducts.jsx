@@ -17,7 +17,7 @@ const run = (fn, ok) => { try { const r = fn(); if (ok) toast.success(ok); retur
 export default function CustomizerProducts() {
   const navigate = useNavigate();
   const products = useStored(listProducts);
-  const [form, setForm] = useState(null); // {product|null}
+  const [form, setForm] = useState(null);
   const [confirm, setConfirm] = useState(null);
 
   return (
@@ -25,7 +25,7 @@ export default function CustomizerProducts() {
       <div className="mb-5 flex flex-wrap items-center gap-3">
         <div className="mr-auto">
           <h1 className="text-lg font-medium">Garment customizer</h1>
-          <p className="text-sm text-subtle">{products.length} product{products.length === 1 ? "" : "s"} Â· data is stored in this browser (localStorage)</p>
+          <p className="text-sm text-subtle">{products.length} product{products.length === 1 ? "" : "s"} · data is stored in this browser (localStorage)</p>
         </div>
         <Link to="/customize" target="_blank" className={btnCls}>Open storefront</Link>
         <button className={btnDanger} onClick={() => setConfirm({ title: "Reset demo data?", label: "Reset", message: "This deletes ALL products, drafts, published versions and cart items in this browser and restores the sample products.", run: () => { run(resetDemoData, "Demo data restored"); } })}>Reset demo data</button>
@@ -38,7 +38,7 @@ export default function CustomizerProducts() {
         <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {products.map((p) => {
             const draft = getDraft(p.id);
-            const nodes = draft ? resolveGarment(draft, {}).nodes : [];
+            const nodes = draft ? resolveGarment(draft, {}).nodes.filter(n => (n.view || "front") === "front") : [];
             const pending = p.publishedVersionId && isDraftDirty(p.id);
             return (
               <li key={p.id} className="flex gap-4 rounded-sm border border-ink-4 bg-ink-2 p-3">
@@ -47,7 +47,7 @@ export default function CustomizerProducts() {
                 </div>
                 <div className="flex min-w-0 flex-1 flex-col">
                   <p className="truncate text-sm font-semibold">{p.name}</p>
-                  <p className="text-xs text-subtle">{p.category} Â· {formatCurrency(p.basePrice)}</p>
+                  <p className="text-xs text-subtle">{p.category} · {formatCurrency(p.basePrice)}</p>
                   <p className="mt-1 flex flex-wrap gap-1.5 text-xs">
                     <span className={`rounded-sm px-1.5 py-0.5 font-semibold ${p.status === "published" ? "bg-gold text-ink" : "bg-ink-4 text-cream"}`}>{p.status === "published" ? `Published v${p.publishedVersionId.split("_").pop()}` : "Draft"}</span>
                     {pending && <span className="rounded-sm bg-ink-4 px-1.5 py-0.5 text-gold">unpublished changes</span>}
@@ -66,7 +66,7 @@ export default function CustomizerProducts() {
       )}
 
       <ProductMetaModal open={!!form} product={form?.product ?? null} onClose={() => setForm(null)} onSubmit={(v) => {
-        if (form.product) run(() => updateProduct(form.product.id, { name: v.name.trim(), description: v.description, category: v.category, basePrice: Number(v.basePrice) }), "Product updated");
+        if (form.product) run(() => updateProduct(form.product.id, { name: v.name.trim(), description: v.description, category: v.category, basePrice: Number(v.basePrice), hasFlatView: v.hasFlatView }), "Product updated");
         else { const p = run(() => createProduct(v, v.preset), "Product created"); if (p) navigate(`/admin/customizer/${p.id}`); }
         setForm(null);
       }} />

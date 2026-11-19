@@ -20,7 +20,7 @@ function FabricSwatch({ fabric, active, onPick }) {
   return (
     <button type="button" onClick={onPick} aria-pressed={active} className="group text-left">
       <span className={`relative block aspect-square overflow-hidden rounded-sm border transition ${active ? "border-ink ring-1 ring-ink" : "border-border group-hover:border-[#808080]"}`}
-        style={{ backgroundColor: fabric.color, backgroundImage: tex ? `url("${tex}")` : "none", backgroundSize: "14px", backgroundBlendMode: "multiply" }}>
+        style={{ backgroundColor: fabric.color, backgroundImage: tex ? `url("${tex}")` : "none", backgroundSize: tex ? "cover" : "none", backgroundBlendMode: "multiply" }}>
         {active && <span className="absolute right-1.5 top-1.5 flex size-4 items-center justify-center rounded-full bg-ink text-cream"><Check /></span>}
       </span>
       <span className="mt-1.5 block font-sans text-sm leading-tight text-[#6b6b6b]">{fabric.name}</span>
@@ -29,31 +29,31 @@ function FabricSwatch({ fabric, active, onPick }) {
   );
 }
 
-/**
- * Customer-facing configurator (storefront AND admin preview — same component, same engine).
- * Two independent dimensions: fabric (tint of garment regions) + component options (image/geometry patches).
- * Everything shown is generated from the template: sections, groups, options, fabrics.
- * onAddToCart({ selections, fabricId, resolved, price }) — omit it for a preview-only view.
- */
 export default function ConfiguratorView({ product, template, onAddToCart, embedded = false }) {
   const sections = useMemo(() => getSections(template), [template]);
   const [selections, setSelections] = useState(() => defaultSelections(template));
   const [fabricId, setFabricId] = useState(() => defaultFabricId(template));
   const [openId, setOpenId] = useState(() => sections[0]?.id ?? null);
+  const [nestedOpen, setNestedOpen] = useState({});
   const [notices, setNotices] = useState([]);
   const [blocked, setBlocked] = useState("");
-  
   const [zoom, setZoom] = useState(1.6);
+  
+  // ?? 3 or 4 Views
+  const views = ["product", "front", "back", ...(product.hasFlatView ? ["paint"] : [])];
+  const [viewIndex, setViewIndex] = useState(0);
 
-  // preload every option image once so swaps never flash
   useEffect(() => {
-
     template.groups.forEach((g) => g.options.forEach((o) => Object.values(o.updates || {}).forEach((u) => {
       if (u?.image) { const i = new Image(); i.src = resolveImageSrc(u.image); }
     })));
   }, [template]);
 
   const resolved = useMemo(() => resolveGarment(template, selections, { fabricId }), [template, selections, fabricId]);
+  
+  const activeView = views[viewIndex] || "product";
+  const displayNodes = resolved.nodes.filter(n => (n.view || "front") === activeView);
+
   const price = product.basePrice + resolved.priceDelta;
   const focus = useMemo(() => {
     const base = defaultSelections(template);
@@ -61,12 +61,10 @@ export default function ConfiguratorView({ product, template, onAddToCart, embed
   }, [template]);
 
   const choose = (groupId, optionId) => {
-    
     const r = selectOption(template, selections, groupId, optionId);
     setBlocked(r.blocked?.message ?? "");
     setNotices(r.notices);
-    
-    if (!r.blocked) setSelections(r.selections); // fabric is untouched by component choices
+    if (!r.blocked) setSelections(r.selections);
   };
   
   const reset = () => { 
@@ -75,6 +73,8 @@ export default function ConfiguratorView({ product, template, onAddToCart, embed
     setNotices([]); 
     setBlocked(""); 
     setZoom(1);
+    setNestedOpen({});
+    setViewIndex(0);
   };
 
   const selectedName = (g) => g.options.find((o) => o.id === resolved.selections[g.id])?.name ?? "";
@@ -82,6 +82,10 @@ export default function ConfiguratorView({ product, template, onAddToCart, embed
 
   const renderGroup = (g, showLabel) => {
     const f = focus[g.id];
+    const relatedNodeIds = new Set();
+    g.options.forEach(o => { if (o.updates) Object.keys(o.updates).forEach(id => relatedNodeIds.add(id)); });
+    const variantNodes = template.nodes.filter(n => n.useVariants && relatedNodeIds.has(n.id) && (n.view || "front") === activeView);
+
     return (
       <div key={g.id} className={showLabel ? "mt-5 first:mt-0" : ""}>
         {showLabel && <p className={`mb-2 ${TYPE.label}`}>{g.name}</p>}
@@ -104,6 +108,42 @@ export default function ConfiguratorView({ product, template, onAddToCart, embed
             );
           })}
         </div>
+
+        {variantNodes.map(n => {
+          const isOpen = !!nestedOpen[n.id];
+          const activeVarId = selections[n.id];
+          const activeVar = n.imageVariants?.find(v => v.id === activeVarId);
+
+          return (
+            <div key={n.id} className="mt-4 border-t border-border pt-4">
+              <button type="button" onClick={() => setNestedOpen(prev => ({ ...prev, [n.id]: !prev[n.id] }))} className="flex w-full items-center justify-between py-1 text-left">
+                <span className="font-sans text-sm font-semibold text-ink">{n.variantTitle || `${n.name} Fabric`}</span>
+                <span className="flex items-center gap-2 font-sans text-sm text-[#808080]">
+                  {activeVar ? activeVar.name : "Default"}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={`shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}><path d="M5 9l7 7 7-7" /></svg>
+                </span>
+              </button>
+              <div className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out ${isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
+                <div className="overflow-hidden">
+                  <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-4 pb-2">
+                    <button onClick={() => setSelections(p => ({ ...p, [n.id]: null }))} className={`relative rounded-sm border bg-white p-1.5 text-left transition ${!activeVarId ? "border-ink ring-1 ring-ink" : "border-border hover:border-[#808080]"}`}>
+                      <div className="flex aspect-square w-full items-center justify-center bg-gray-50 text-xs text-gray-400">Original</div>
+                      <span className="mt-1.5 block font-sans text-sm leading-tight text-[#6b6b6b]">Default</span>
+                      {!activeVarId && <span className="absolute right-1.5 top-1.5 flex size-4 items-center justify-center rounded-full bg-ink text-cream"><Check /></span>}
+                    </button>
+                    {n.imageVariants?.map(v => (
+                      <button key={v.id} onClick={() => setSelections(p => ({ ...p, [n.id]: v.id }))} className={`relative rounded-sm border bg-white p-1.5 text-left transition ${activeVarId === v.id ? "border-ink ring-1 ring-ink" : "border-border hover:border-[#808080]"}`}>
+                        <img src={resolveImageSrc(v.image)} className="aspect-square w-full object-contain" />
+                        {activeVarId === v.id && <span className="absolute right-1.5 top-1.5 flex size-4 items-center justify-center rounded-full bg-ink text-cream"><Check /></span>}
+                        <span className="mt-1.5 block font-sans text-sm leading-tight text-[#6b6b6b]">{v.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
     );
   };
@@ -114,58 +154,58 @@ export default function ConfiguratorView({ product, template, onAddToCart, embed
         id: s.id, title: s.title, value: resolved.fabric?.name ?? "",
         content: (
           <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
-            {template.fabrics.map((f) => <FabricSwatch key={f.id} fabric={f} active={resolved.fabric?.id === f.id} onPick={() => setFabricId(f.id)} />)}
+            {template.fabrics?.map((f) => <FabricSwatch key={f.id} fabric={f} active={resolved.fabric?.id === f.id} onPick={() => setFabricId(f.id)} />)}
           </div>
         ),
       };
     }
     const groups = (s.groupIds ?? []).map((id) => template.groups.find((g) => g.id === id)).filter(Boolean);
-    return { id: s.id, title: s.title, value: groups.map(selectedName).join(" · "), content: groups.map((g) => renderGroup(g, groups.length > 1)) };
+    return { id: s.id, title: s.title, value: groups.map(selectedName).join(" � "), content: groups.map((g) => renderGroup(g, groups.length > 1)) };
   });
 
   return (
     <div className={`grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] ${embedded ? "" : "min-h-[calc(100vh-var(--header-h))]"}`}>
       
-      {/* LEFT — garment preview */}
+      {/* LEFT � VIEWER */}
       <div className="relative overflow-hidden bg-[#f1f1ef] px-4 py-6 sm:px-10 lg:py-10">
         
-        {/* 👈 NEW: Floating Zoom Controls moved to TOP RIGHT */}
-        <div className="absolute right-4 top-4 z-10 flex items-center gap-1 rounded-full border border-border bg-white/90 px-3 py-1.5 shadow-md backdrop-blur-sm lg:right-8 lg:top-8">
-          <button 
-            className="p-1.5 text-[#6b6b6b] transition hover:scale-110 hover:text-ink active:scale-95" 
-            onClick={() => setZoom(z => Math.max(0.5, +(z - 0.2).toFixed(1)))} 
-            aria-label="Zoom out"
-          >
-            <Icon name="minus" />
-          </button>
-          <button 
-            className="min-w-12 text-center font-sans text-xs font-semibold text-[#6b6b6b] transition hover:text-ink" 
-            onClick={() => setZoom(1)}
-            title="Reset zoom"
-          >
-            {Math.round(zoom * 100)}%
-          </button>
-          <button 
-            className="p-1.5 text-[#6b6b6b] transition hover:scale-110 hover:text-ink active:scale-95" 
-            onClick={() => setZoom(z => Math.min(2.5, +(z + 0.2).toFixed(1)))} 
-            aria-label="Zoom in"
-          >
-            <Icon name="plus" />
-          </button>
+        {/* Top Controls: Zoom */}
+        <div className="absolute right-4 top-4 z-20 flex items-center gap-1 rounded-full border border-border bg-white/90 px-3 py-1.5 shadow-md backdrop-blur-sm lg:right-8 lg:top-8">
+          <button className="p-1.5 text-[#6b6b6b] transition hover:scale-110 hover:text-ink active:scale-95" onClick={() => setZoom(z => Math.max(0.5, +(z - 0.2).toFixed(1)))}><Icon name="minus" /></button>
+          <button className="min-w-12 text-center font-sans text-xs font-semibold text-[#6b6b6b] transition hover:text-ink" onClick={() => setZoom(1)}>{Math.round(zoom * 100)}%</button>
+          <button className="p-1.5 text-[#6b6b6b] transition hover:scale-110 hover:text-ink active:scale-95" onClick={() => setZoom(z => Math.min(2.5, +(z + 0.2).toFixed(1)))}><Icon name="plus" /></button>
         </div>
 
-        {/* Sticky Canvas Container */}
+        {/* ?? Left / Right Arrows for Views */}
+        {views.length > 1 && (
+          <>
+            <button 
+              onClick={() => setViewIndex(v => Math.max(0, v - 1))} 
+              className={`absolute left-4 top-1/2 z-20 flex size-12 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-white shadow-sm transition hover:scale-105 hover:border-ink lg:left-8 ${viewIndex === 0 ? 'pointer-events-none opacity-0' : 'opacity-100'}`}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6b6b6b" strokeWidth="1.5"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <button 
+              onClick={() => setViewIndex(v => Math.min(views.length - 1, v + 1))} 
+              className={`absolute right-4 top-1/2 z-20 flex size-12 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-white shadow-sm transition hover:scale-105 hover:border-ink lg:right-8 ${viewIndex === views.length - 1 ? 'pointer-events-none opacity-0' : 'opacity-100'}`}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6b6b6b" strokeWidth="1.5"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+          </>
+        )}
+
+        {/* Canvas Area */}
         <div className="flex h-[calc(100vh-var(--header-h)-120px)] min-h-[400px] items-center justify-center lg:sticky lg:top-[calc(var(--header-h)+2rem)]">
           <GarmentCanvas 
             canvas={template.canvas} 
-            nodes={resolved.nodes} 
-            className="w-full transition-transform duration-300 ease-in-out" 
+            nodes={displayNodes} 
+            className="w-full transition-all duration-500 ease-in-out" 
             style={{ maxWidth: `min(100%, calc(74vh * ${ratio}))`, transform: `scale(${zoom})` }} 
           />
         </div>
       </div>
 
-      {/* RIGHT — customization panel */}
+      {/* RIGHT � CUSTOMIZATION PANEL */}
       <div className={`bg-white px-5 pt-8 sm:px-10 lg:px-14 lg:pt-12 ${embedded ? "pb-8" : "pb-32 lg:pb-12"}`}>
         <SectionHeading align="left" title={product.name} subtitle={product.description} />
         <div className="mt-8">
@@ -180,7 +220,6 @@ export default function ConfiguratorView({ product, template, onAddToCart, embed
 
         <button type="button" onClick={reset} className="mt-5 font-sans text-xs uppercase tracking-wide text-[#808080] underline underline-offset-4 hover:text-ink">Reset all choices</button>
 
-        {/* purchase area */}
         <div className={`${embedded ? "mt-6" : "fixed inset-x-0 bottom-0 z-30 lg:static lg:mt-8"} border-t border-border bg-white px-5 py-4 sm:px-10 lg:px-0`}>
           <div className="flex items-center justify-between gap-4">
             <div>
@@ -188,8 +227,7 @@ export default function ConfiguratorView({ product, template, onAddToCart, embed
               <p className={TYPE.bold} aria-live="polite">{formatCurrency(price)}</p>
             </div>
             {onAddToCart ? (
-              <button type="button" onClick={() => onAddToCart({ selections: resolved.selections, fabricId: resolved.fabric?.id ?? null, resolved, price })}
-                className="max-w-xs flex-1 rounded-sm bg-ink py-4 font-sans text-sm font-semibold uppercase tracking-wide text-cream transition hover:bg-ink-3">
+              <button type="button" onClick={() => onAddToCart({ selections: resolved.selections, fabricId: resolved.fabric?.id ?? null, resolved, price })} className="max-w-xs flex-1 rounded-sm bg-ink py-4 font-sans text-sm font-semibold uppercase tracking-wide text-cream transition hover:bg-ink-3">
                 Add to cart
               </button>
             ) : <span className={TYPE.label}>Preview only</span>}

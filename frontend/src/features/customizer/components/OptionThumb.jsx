@@ -2,11 +2,6 @@ import { useMemo } from "react";
 import GarmentCanvas from "./GarmentCanvas.jsx";
 import { resolveGarment } from "../engine/configurationResolver.js";
 
-/**
- * Thumbnail of an option = the REAL garment rendered by the shared engine with that option applied
- * (current fabric + other selections), cropped to the area the option's group changes.
- * No separate thumbnail assets to keep in sync.
- */
 export default function OptionThumb({ template, selections, groupId, optionId, fabricId, focus }) {
   const nodes = useMemo(
     () => resolveGarment(template, { ...selections, [groupId]: optionId }, { fabricId }).nodes,
