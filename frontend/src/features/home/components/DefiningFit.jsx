@@ -1,14 +1,57 @@
-import { useEffect, useState } from "react";
-import api from "../../../api/axiosInstance"; // Apna path check kar lena
+import { useEffect, useState, useRef } from "react";
+import api from "../../../api/axiosInstance"; 
 import ArrowLink from "../../../components/ui/ArrowLink";
 import { Reveal } from "../../../components/animation";
 import { FIT } from "../content";
 
+// ✅ iOS BULLETPROOF VIDEO COMPONENT
+const AutoPlayVideo = ({ src, className }) => {
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = true;
+    }
+  }, []);
+
+  const handleCanPlay = () => {
+    if (videoRef.current) {
+      videoRef.current.play().catch((err) => {
+        console.log("iOS blocked autoplay on canplay:", err);
+      });
+    }
+  };
+
+  return (
+    <video
+      ref={videoRef}
+      className={`${className} pointer-events-none`}
+      autoPlay
+      muted
+      loop
+      playsInline
+      webkit-playsinline="true"
+      preload="auto"
+      controls={false}
+      onCanPlay={handleCanPlay} // ✅ Triggers play exactly when iOS is ready
+    >
+      <source src={src} type="video/mp4" />
+    </video>
+  );
+};
+
 export default function DefiningFit() {
   const [mediaData, setMediaData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
 
-  // ✅ API Call for home_define_fit
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   useEffect(() => {
     const fetchFitMedia = async () => {
       try {
@@ -17,7 +60,7 @@ export default function DefiningFit() {
           setMediaData(res.data.data);
         }
       } catch (error) {
-        console.error("Failed to load dynamic fit media, using static fallback", error);
+        console.error("Failed to load dynamic fit media", error);
       } finally {
         setLoading(false);
       }
@@ -25,29 +68,17 @@ export default function DefiningFit() {
     fetchFitMedia();
   }, []);
 
-  // ✅ Fallback Logic (Agar backend se data nahi aaya)
   const isDynamic = !!mediaData && mediaData.status === "active";
-  const mediaType = isDynamic ? mediaData.media_type : "video"; // Fallback is video
+  const mediaType = isDynamic ? mediaData.media_type : "video"; 
   
   const desktopSrc = isDynamic ? mediaData.desktop_url : FIT.video;
   const mobileSrc = isDynamic ? mediaData.mobile_url : FIT.video;
+  const activeSrc = isMobile ? (mobileSrc || desktopSrc) : desktopSrc;
 
-  // Helper to render Video or Image
   const renderMedia = (src, className) => {
     if (!src) return null;
-    
     if (mediaType === "video") {
-      return (
-        <video
-          src={src}
-          className={className}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-        />
-      );
+      return <AutoPlayVideo src={src} className={className} />;
     }
     return <img src={src} alt="Defining Fit" className={className} />;
   };
@@ -56,7 +87,6 @@ export default function DefiningFit() {
     <section className="container-x py-10 lg:py-14">
       <div className="grid items-center gap-8 lg:grid-cols-[1.45fr_1fr] lg:gap-14">
         
-        {/* Media Section — fade + slide in from the right */}
         <Reveal variant="left" duration={1000}>
           <div className="relative aspect-[1173/616] overflow-hidden rounded-sm bg-[#F5F1E9]">
             {loading ? (
@@ -64,22 +94,13 @@ export default function DefiningFit() {
                  <div className="h-6 w-6 rounded-full border-2 border-brand border-t-transparent animate-spin" />
                </div>
             ) : (
-              <>
-                {/* ✅ Desktop Media (Hidden on Mobile) */}
-                <div className="absolute inset-0 hidden md:block">
-                  {renderMedia(desktopSrc, "size-full object-cover")}
-                </div>
-
-                {/* ✅ Mobile Media (Hidden on Desktop) */}
-                <div className="absolute inset-0 block md:hidden">
-                  {renderMedia(mobileSrc, "size-full object-cover")}
-                </div>
-              </>
+              <div className="absolute inset-0">
+                {renderMedia(activeSrc, "size-full object-cover")}
+              </div>
             )}
           </div>
         </Reveal>
 
-        {/* Text Section — fade + slide in from the left, slightly delayed */}
         <Reveal variant="right" delay={150}>
           <h2 className="font-sans text-lg font-medium text-[#6b6b6b] lg:text-md">
             {FIT.title}

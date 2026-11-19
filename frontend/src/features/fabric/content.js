@@ -1,4 +1,4 @@
-import premiumFabric from "../readytowear/assets/premiumFabric.png";
+import premiumFabric from "../readytowear/assets/premiumFabric.webp";
 import blueShirt from "../readytowear/assets/blueShirt.png";
 import blackRacket from "../readytowear/assets/blackRacket.png";
 import browCheckRacket from "../readytowear/assets/browCheckRacket.png";

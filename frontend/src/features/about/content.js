@@ -2,15 +2,15 @@
 // ABOUT PAGE — content
 // Reuses images already available in readytowear/assets.
 // ─────────────────────────────────────────────────────────────
-import aboutHero from "./Assets/about.png";
-import editorial1 from "../readytowear/assets/editorial1.png";
-import editorial2 from "../readytowear/assets/editorial2.png";
-import expertStitching from "../readytowear/assets/expertStitching.png";
-import precisionCutting from "../readytowear/assets/precisionCutting.png";
-import premiumFabric from "../readytowear/assets/premiumFabric.png";
-import personalise from "../readytowear/assets/personalise.png";
-import finalQualityCheck from "../readytowear/assets/finalQualityCheck.png";
-import readyToWear from "../readytowear/assets/readyToWear.png";
+import aboutHero from "./Assets/about.webp";
+import editorial1 from "../readytowear/assets/editorial1.webp";
+import editorial2 from "../readytowear/assets/editorial2.webp";
+import expertStitching from "../readytowear/assets/expertStitching.webp";
+import precisionCutting from "../readytowear/assets/precisionCutting.webp";
+import premiumFabric from "../readytowear/assets/premiumFabric.webp";
+import personalise from "../readytowear/assets/personalise.webp";
+import finalQualityCheck from "../readytowear/assets/finalQualityCheck.webp";
+import readyToWear from "../readytowear/assets/readyToWear.webp";
 
 // ── Store / atelier photos (StoreStrip) ──
 export const ABOUT_HERO = {

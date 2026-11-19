@@ -7,7 +7,7 @@ import { TESTIMONIALS } from "./content";
 import {SERVICES} from "../about/content";
 export default function Home() {
   return (
-    <main className="bg-[#f8f8f8]">
+    <main className="bg-[#f8f8f8] overflow-clip">
       <HeroBanner />
       <ChoosePath />
       <BespokeIntro />

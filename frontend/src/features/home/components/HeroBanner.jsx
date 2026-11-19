@@ -1,71 +1,108 @@
-import { useEffect, useState } from "react";
-import api from "../../../api/axiosInstance"; // Path check kar lena
+import { useEffect, useState, useRef } from "react";
+import api from "../../../api/axiosInstance"; 
 import { HERO } from "../content";
+
+// ✅ iOS BULLETPROOF VIDEO COMPONENT
+const AutoPlayVideo = ({ src, poster, className }) => {
+  const videoRef = useRef(null);
+
+  // Fallback: try to play after metadata loads (belt-and-suspenders)
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const attemptPlay = () => {
+      video.play().catch((err) => {
+        // This is expected if Low Power Mode is on or other strict conditions apply.
+        console.log("Autoplay prevented by browser policy:", err.name);
+      });
+    };
+
+    // If the video is already ready, play now.
+    if (video.readyState >= 1) {
+      attemptPlay();
+    } else {
+      video.addEventListener("loadedmetadata", attemptPlay, { once: true });
+    }
+
+    return () => video.removeEventListener("loadedmetadata", attemptPlay);
+  }, [src]);
+
+  return (
+    <video
+      ref={videoRef}
+      className={`${className} pointer-events-none`}
+      poster={poster}
+      // 1. Use the `src` attribute directly, not a <source> child.
+      src={src}
+      // 2. Core autoplay attributes
+      autoPlay
+      muted
+      loop
+      playsInline
+      // 3. Let Safari manage loading – it honors "metadata"
+      preload="metadata"
+      controls={false}
+    />
+  );
+};
 
 export default function HeroBanner() {
   const [mediaData, setMediaData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-  // ✅ API Call for home_hero
   useEffect(() => {
-    const fetchHeroMedia = async () => {
-      try {
-        const res = await api.get("v1/site-media/key/home_hero");
-        if (res.data?.success && res.data?.data) {
-          setMediaData(res.data.data);
-        }
-      } catch (error) {
-        console.error("Failed to load dynamic hero media, using static fallback", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchHeroMedia();
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // ✅ Fallback Logic
-  const isDynamic = !!mediaData && mediaData.status === "active";
-  const mediaType = isDynamic ? mediaData.media_type : (HERO.video ? "video" : "image");
-  
-  const desktopSrc = isDynamic ? mediaData.desktop_url : (HERO.video || HERO.image);
-  const mobileSrc = isDynamic ? mediaData.mobile_url : (HERO.video || HERO.image);
-  const poster = isDynamic ? "" : HERO.image;
+  // useEffect(() => {
+  //   const fetchHeroMedia = async () => {
+  //     try {
+  //       const res = await api.get("v1/site-media/key/home_hero");
+  //       if (res.data?.success && res.data?.data) {
+  //         setMediaData(res.data.data);
+  //       }
+  //     } catch (error) {
+  //       console.error("Failed to load dynamic hero media", error);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+  //   fetchHeroMedia();
+  // }, []);
 
-  // ✅ Helper to render Video or Image
+  // const isDynamic = !!mediaData && mediaData.status === "active";
+  // const mediaType = isDynamic ? mediaData.media_type : (HERO.video ? "video" : "image");
+  
+  // const desktopSrc = isDynamic ? mediaData.desktop_url : (HERO.video || HERO.image);
+  // const mobileSrc = isDynamic ? mediaData.mobile_url : (HERO.video || HERO.image);
+  // const activeSrc = isMobile ? (mobileSrc || desktopSrc) : desktopSrc;
+  // const poster = isDynamic ? "" : HERO.image;
+    //for testing
+    const mediaType ="video";
+    const desktopSrc = HERO.video;
+    const mobileSrc = HERO.video;
+    const activeSrc = desktopSrc;
+    const poster ="" ;
+
   const renderMedia = (src, className) => {
     if (!src) return null;
-    
     if (mediaType === "video") {
-      return (
-        <video
-          key={src} // ✅ Key add karna zaroori hai source change ke liye
-          className={className}
-          src={src}
-          poster={poster}
-          autoPlay
-          muted
-          loop
-          playsInline
-        />
-      );
+      return <AutoPlayVideo src={src} poster={poster} className={className} />;
     }
-    return <img key={src} src={src} alt="Hero" className={className} />;
+    return <img src={src} alt="Hero" className={className} />;
   };
 
-  // Don't flash the screen while loading first time
   if (loading) return <section className="h-[100svh] min-h-[560px] w-full bg-ink" />;
 
   return (
     <section className="relative h-[100svh] min-h-[560px] w-full overflow-hidden bg-ink">
-      
-      {/* ✅ Desktop Media (Hidden on Mobile) */}
-      <div className="absolute inset-0 hidden md:block">
-        {renderMedia(desktopSrc, "size-full object-cover")}
-      </div>
-
-      {/* ✅ Mobile Media (Hidden on Desktop) */}
-      <div className="absolute inset-0 block md:hidden">
-        {renderMedia(mobileSrc, "size-full object-cover")}
+      <div className="absolute inset-0">
+        {renderMedia(activeSrc, "size-full object-cover")}
       </div>
 
       <div className="absolute inset-0 bg-black/55"></div>
