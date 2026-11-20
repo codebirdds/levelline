@@ -2,7 +2,7 @@
 import { normalizeCrop, getCropBBox, isFullRect } from "./cropUtils.js";
 import { resolveImageSrc } from "../storage/assetStorage.js";
 
-// 🔧 Robust loader: data URL ke liye crossOrigin mat lagao
+//  Robust loader: data URL ke liye crossOrigin mat lagao
 const loadImage = (src) =>
   new Promise((res, rej) => {
     const img = new Image();
@@ -11,14 +11,14 @@ const loadImage = (src) =>
       img.crossOrigin = "anonymous";
     }
     img.onload = () => res(img);
-    img.onerror = () => rej(new Error("Image load failed — check the source URL or CORS"));
+    img.onerror = () => rej(new Error("Image load failed  check the source URL or CORS"));
     img.src = src;
   });
 
 /** Returns a canvas of the node's VISUAL cropped image at source resolution. */
 export async function flattenCrop(src, crop) {
   const resolved = resolveImageSrc(src);
-  if (!resolved) throw new Error("Image not found — re-upload the asset");
+  if (!resolved) throw new Error("Image not found  re-upload the asset");
 
   const img = await loadImage(resolved);
 
@@ -69,8 +69,8 @@ export async function flattenCrop(src, crop) {
 
 /**
  * Extend the canvas by L/R/T/B pixels using given fill mode:
- *   "mirror" — flip edge pixels outward (natural fabric continuation)
- *   "edge"   — stretch the edge row/column (uniform)
+ *   "mirror"  flip edge pixels outward (natural fabric continuation)
+ *   "edge"    stretch the edge row/column (uniform)
  */
 export function extendCanvas(src, { left = 0, right = 0, top = 0, bottom = 0, mode = "mirror" }) {
   const w = src.width;

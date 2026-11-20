@@ -5,7 +5,7 @@ import { btnCls, btnDanger, inputCls, labelCls } from "../../ui/controls";
 import { PRESETS } from "../../storage/seedData.js";
 import { getDraft, listProducts } from "../../storage/productStorage.js";
 
-/** FULL GARMENT REPLACEMENT — swaps the whole node layout, groups and rules. Explicit, confirmed, never automatic. */
+/** FULL GARMENT REPLACEMENT  swaps the whole node layout, groups and rules. Explicit, confirmed, never automatic. */
 export default function ReplaceGarmentModal({ open, productId, onClose, onApply }) {
   const [source, setSource] = useState("preset:shirt");
   const [base, setBase] = useState("");
@@ -28,8 +28,8 @@ export default function ReplaceGarmentModal({ open, productId, onClose, onApply 
         </p>
         <label className="block"><span className={labelCls}>Load node layout from</span>
           <select className={inputCls} value={source} onChange={(e) => setSource(e.target.value)}>
-            {Object.entries(PRESETS).map(([k, p]) => <option key={k} value={`preset:${k}`}>Preset — {p.label}</option>)}
-            {others.map((p) => <option key={p.id} value={`from:${p.id}`}>Copy layout of — {p.name}</option>)}
+            {Object.entries(PRESETS).map(([k, p]) => <option key={k} value={`preset:${k}`}>Preset  {p.label}</option>)}
+            {others.map((p) => <option key={p.id} value={`from:${p.id}`}>Copy layout of  {p.name}</option>)}
           </select></label>
         <ImageField label="New complete garment preview image (optional)" value={base} onChange={(ref) => setBase(ref)} />
       </div>

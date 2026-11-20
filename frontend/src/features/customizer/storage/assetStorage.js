@@ -22,7 +22,7 @@ export function assetExists(ref) {
   if (!ref) return false;
   if (isSeedRef(ref)) return seedExists(ref);
   if (ref.startsWith("asset:")) return !!resolveImageSrc(ref);
-  return true; // external URL — can't verify offline
+  return true; // external URL  can't verify offline
 }
 
 export function assetMeta(ref) {
@@ -63,7 +63,7 @@ export async function saveImageFile(file) {
     if (!dataUrl.startsWith("data:image/webp")) dataUrl = canvas.toDataURL("image/png");
   }
   if (dataUrl.length > MAX_ASSET_BYTES * 1.37) {
-    throw new StorageError(`Image is too large (${Math.round((dataUrl.length / 1.37) / 1024)} KB after compression). The limit is ${Math.round(MAX_ASSET_BYTES / 1024)} KB — please use a smaller image.`);
+    throw new StorageError(`Image is too large (${Math.round((dataUrl.length / 1.37) / 1024)} KB after compression). The limit is ${Math.round(MAX_ASSET_BYTES / 1024)} KB  please use a smaller image.`);
   }
   const id = uid("img");
   write(`asset:${id}`, dataUrl, { raw: true });

@@ -67,7 +67,7 @@ export function validateTemplate(t, { assetExists = () => true, assetMeta = () =
       if (!o.name?.trim()) err("option-name", `Option "${o.id}" needs a name.`, extra);
 
       for (const [nodeId, u] of Object.entries(o.updates ?? {})) {
-        const w = `${where} → node "${nodeId}"`;
+        const w = `${where}  node "${nodeId}"`;
         const ex = { optionId: o.id, nodeId };
         if (!nodeIds.has(nodeId)) { err("update-node", `${w}: node does not exist.`, ex); continue; }
         if (!UPDATE_TYPES.includes(u?.type)) { err("update-type", `${w}: unknown update type "${u?.type}".`, ex); continue; }

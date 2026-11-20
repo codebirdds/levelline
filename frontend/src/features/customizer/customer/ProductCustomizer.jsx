@@ -28,7 +28,7 @@ export default function ProductCustomizer() {
         onAddToCart={({ selections, fabricId }) => {
           try {
             addToCart(buildCartItem(product, version, selections, fabricId));
-            toast.success("Added to cart — your exact design is saved.");
+            toast.success("Added to cart  your exact design is saved.");
           } catch (e) { toast.error(e.message); }
         }}
       />

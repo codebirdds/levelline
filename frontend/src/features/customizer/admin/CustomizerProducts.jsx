@@ -25,7 +25,7 @@ export default function CustomizerProducts() {
       <div className="mb-5 flex flex-wrap items-center gap-3">
         <div className="mr-auto">
           <h1 className="text-lg font-medium">Garment customizer</h1>
-          <p className="text-sm text-subtle">{products.length} product{products.length === 1 ? "" : "s"} · data is stored in this browser (localStorage)</p>
+          <p className="text-sm text-subtle">{products.length} product{products.length === 1 ? "" : "s"}  data is stored in this browser (localStorage)</p>
         </div>
         <Link to="/customize" target="_blank" className={btnCls}>Open storefront</Link>
         <button className={btnDanger} onClick={() => setConfirm({ title: "Reset demo data?", label: "Reset", message: "This deletes ALL products, drafts, published versions and cart items in this browser and restores the sample products.", run: () => { run(resetDemoData, "Demo data restored"); } })}>Reset demo data</button>
@@ -47,7 +47,7 @@ export default function CustomizerProducts() {
                 </div>
                 <div className="flex min-w-0 flex-1 flex-col">
                   <p className="truncate text-sm font-semibold">{p.name}</p>
-                  <p className="text-xs text-subtle">{p.category} · {formatCurrency(p.basePrice)}</p>
+                  <p className="text-xs text-subtle">{p.category}  {formatCurrency(p.basePrice)}</p>
                   <p className="mt-1 flex flex-wrap gap-1.5 text-xs">
                     <span className={`rounded-sm px-1.5 py-0.5 font-semibold ${p.status === "published" ? "bg-gold text-ink" : "bg-ink-4 text-cream"}`}>{p.status === "published" ? `Published v${p.publishedVersionId.split("_").pop()}` : "Draft"}</span>
                     {pending && <span className="rounded-sm bg-ink-4 px-1.5 py-0.5 text-gold">unpublished changes</span>}

@@ -40,7 +40,7 @@ export default function OptionsPanel({ draft, target, onTarget, edit, askDelete 
                   <li key={o.id} className={`flex items-center gap-0.5 rounded-sm border-l-2 pr-1 ${active ? "border-gold bg-ink-4/60" : "border-transparent hover:bg-ink-4/30"}`}>
                     <button className={`${iconBtn} ${g.defaultOptionId === o.id ? "text-gold" : ""}`} title={g.defaultOptionId === o.id ? "Default option" : "Make default"} onClick={() => edit((d) => setDefaultOption(d, g.id, o.id))}><Icon name="star" fill={g.defaultOptionId === o.id ? "currentColor" : "none"} /></button>
                     <button onClick={() => onTarget({ groupId: g.id, optionId: o.id })} className="min-w-0 flex-1 truncate px-1 py-1.5 text-left font-sans text-sm text-cream">
-                      {o.name} {changes > 0 && <span className="ml-1 font-sans text-xs text-subtle">· {changes} node{changes > 1 ? "s" : ""}</span>}
+                      {o.name} {changes > 0 && <span className="ml-1 font-sans text-xs text-subtle"> {changes} node{changes > 1 ? "s" : ""}</span>}
                     </button>
                     <button className={iconBtn} title="Move up" onClick={() => edit((d) => moveOption(d, g.id, o.id, -1))}><Icon name="up" /></button>
                     <button className={iconBtn} title="Move down" onClick={() => edit((d) => moveOption(d, g.id, o.id, 1))}><Icon name="down" /></button>
@@ -58,13 +58,13 @@ export default function OptionsPanel({ draft, target, onTarget, edit, askDelete 
               setNewOption((s) => ({ ...s, [g.id]: "" }));
               onTarget({ groupId: g.id, optionId });
             }}>
-              <input className={inputCls} placeholder="Add option…" value={newOption[g.id] || ""} onChange={(e) => setNewOption((s) => ({ ...s, [g.id]: e.target.value }))} />
+              <input className={inputCls} placeholder="Add option" value={newOption[g.id] || ""} onChange={(e) => setNewOption((s) => ({ ...s, [g.id]: e.target.value }))} />
               <button className={btnCls} type="submit"><Icon name="plus" /></button>
             </form>
           </section>
         ))}
       </div>
-      <p className={`${labelCls} mb-0 border-t border-ink-4 px-3 py-2 normal-case`}>★ = default option · click an option to edit its patch</p>
+      <p className={`${labelCls} mb-0 border-t border-ink-4 px-3 py-2 normal-case`}> = default option  click an option to edit its patch</p>
     </div>
   );
 }

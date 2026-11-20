@@ -1,9 +1,8 @@
-// src/features/customizer/components/NodeImage.jsx
 import { useId } from "react";
 import { normalizeCrop, getCropBBox, isFullRect } from "../engine/cropUtils.js";
 import { resolveImageSrc } from "../storage/assetStorage.js";
 
-export default function NodeImage({ src, crop, tint, className = "", style }) {
+export default function NodeImage({ src, maskImage, crop, tint, className = "", style }) {
   const rawId = useId().replace(/[:]/g, "");
   const maskId = `mk-${rawId}`;
   const filterId = `fl-${rawId}`;
@@ -13,13 +12,13 @@ export default function NodeImage({ src, crop, tint, className = "", style }) {
   const resolved = resolveImageSrc(src);
   if (!resolved) return null;
 
+  const resolvedMask = resolveImageSrc(maskImage || src);
   const tex = tint?.texture ? resolveImageSrc(tint.texture) : "";
 
   const c = normalizeCrop(crop);
   const isFull = isFullRect(c);
   const bbox = getCropBBox(c);
 
-  // Image positioning inside the 0-100 viewBox
   const imgX = (-bbox.x * 100) / bbox.w;
   const imgY = (-bbox.y * 100) / bbox.h;
   const imgW = 10000 / bbox.w;
@@ -42,8 +41,7 @@ export default function NodeImage({ src, crop, tint, className = "", style }) {
     <rect x="0" y="0" width="100" height="100" fill="white" />
   );
 
-  // Optimization: If no tint AND full crop, use a simple <img>
-  if (isFull && !tint) {
+  if (isFull && !tint && !maskImage) {
     return (
       <img
         src={resolved}
@@ -65,25 +63,22 @@ export default function NodeImage({ src, crop, tint, className = "", style }) {
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
       >
         <defs>
-          {/* Crop Mask (Rect or Polygon) */}
           {!isFull && (
             <mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100">
               <g filter={c.feather > 0 ? `url(#${filterId})` : undefined}>{shapeSvg}</g>
             </mask>
           )}
           
-          {/* Feather Filter */}
           {c.feather > 0 && (
             <filter id={filterId} x="-50%" y="-50%" width="200%" height="200%">
               <feGaussianBlur stdDeviation={c.feather / 10} />
             </filter>
           )}
 
-          {/* 🔥 THE FIX: Alpha Mask (Uses the PNG's own transparency) */}
-          {tint && (
+          {(tint || maskImage) && (
             <mask id={alphaMaskId} mask-type="alpha">
               <image 
-                href={resolved} 
+                href={resolvedMask} 
                 x={imgX} 
                 y={imgY} 
                 width={imgW} 
@@ -93,7 +88,6 @@ export default function NodeImage({ src, crop, tint, className = "", style }) {
             </mask>
           )}
 
-          {/* Texture Pattern (if image is uploaded) */}
           {tex && (
             <pattern id={patternId} patternUnits="userSpaceOnUse" width="100" height="100">
               <image href={tex} x="0" y="0" width="100" height="100" preserveAspectRatio="xMidYMid slice" />
@@ -101,7 +95,6 @@ export default function NodeImage({ src, crop, tint, className = "", style }) {
           )}
         </defs>
         
-        {/* 1. Base Image */}
         <image
           href={resolved}
           x={imgX}
@@ -109,10 +102,13 @@ export default function NodeImage({ src, crop, tint, className = "", style }) {
           width={imgW}
           height={imgH}
           preserveAspectRatio="none"
-          mask={!isFull ? `url(#${maskId})` : undefined}
+          mask={
+            maskImage
+              ? `url(#${alphaMaskId})`
+              : (!isFull ? `url(#${maskId})` : undefined)
+          }
         />
 
-        {/* 2. Tint / Fabric Layer */}
         {tint && (
           <g mask={!isFull ? `url(#${maskId})` : undefined}>
             <rect
@@ -122,7 +118,6 @@ export default function NodeImage({ src, crop, tint, className = "", style }) {
               height="100"
               fill={tex ? `url(#${patternId})` : (tint.color || "transparent")}
               style={{ mixBlendMode: tint.blend || "multiply" }}
-              // 🔥 Apply Alpha Mask so it only covers the shirt, not the white box
               mask={`url(#${alphaMaskId})`}
             />
           </g>

@@ -4,7 +4,7 @@ import { touchesImage, touchesLayout, UPDATE_TYPES } from "../../engine/patchMer
 import { setUpdateType, updateOption } from "./editorUtils.js";
 
 const HELP = {
-  none: "No changes — this node stays exactly as in the base garment. Drag/resize it on the canvas, or pick a type, to start a patch.",
+  none: "No changes  this node stays exactly as in the base garment. Drag/resize it on the canvas, or pick a type, to start a patch.",
   image: "Replaces the image only. Geometry is preserved from the baseline.",
   position: "Changes geometry/visibility/layer only. The image is preserved. Only differences are saved.",
   both: "Replaces the image AND changes geometry. Only differences are saved.",
@@ -25,7 +25,7 @@ export default function PatchPanel({ draft, target, baseline, resolved, selected
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="space-y-3 border-b border-ink-4 p-3">
-        <p className={`${labelCls} mb-0`}>Patch · {group.name}</p>
+        <p className={`${labelCls} mb-0`}>Patch  {group.name}</p>
         <div className="grid grid-cols-[1fr_6.5rem] gap-2">
           <label><span className={labelCls}>Option name</span>
             <input className={inputCls} value={option.name} onChange={(e) => edit((d) => updateOption(d, group.id, option.id, { name: e.target.value }))} /></label>
@@ -69,7 +69,7 @@ export default function PatchPanel({ draft, target, baseline, resolved, selected
                   <NumField label="Y" value={eff.y} onChange={(v) => applyLayout(node.id, { y: v })} />
                   <NumField label="Width" min={1} value={eff.width} onChange={(v) => applyLayout(node.id, { width: v })} />
                   <NumField label="Height" min={1} value={eff.height} onChange={(v) => applyLayout(node.id, { height: v })} />
-                  <NumField label="Rotation °" value={eff.rotation || 0} onChange={(v) => applyLayout(node.id, { rotation: v })} />
+                  <NumField label="Rotation " value={eff.rotation || 0} onChange={(v) => applyLayout(node.id, { rotation: v })} />
                   <NumField label="Layer (z)" value={eff.zIndex} onChange={(v) => applyLayout(node.id, { zIndex: Math.round(v) })} />
                 </div>
                 <label className="flex items-center gap-2 font-sans text-sm text-cream"><input type="checkbox" className="accent-gold" checked={eff.visible} onChange={(e) => applyLayout(node.id, { visible: e.target.checked })} /> Visible</label>
@@ -78,11 +78,11 @@ export default function PatchPanel({ draft, target, baseline, resolved, selected
             {type !== "none" && (
               <div>
                 <span className={labelCls}>Saved patch (differences only)</span>
-                <pre className="max-h-40 overflow-auto rounded-sm bg-ink p-2 font-mono text-xs text-cream/80">{JSON.stringify(upd, null, 1).replace(/"(asset:[^"]{6})[^"]*"/g, '"$1…"')}</pre>
+                <pre className="max-h-40 overflow-auto rounded-sm bg-ink p-2 font-mono text-xs text-cream/80">{JSON.stringify(upd, null, 1).replace(/"(asset:[^"]{6})[^"]*"/g, '"$1"')}</pre>
                 <button className={`${btnCls} mt-2`} onClick={() => setType(node.id, "none")}>Reset node to baseline</button>
               </div>
             )}
-            {base && type !== "none" && <p className="font-sans text-xs text-subtle">Baseline: x {Math.round(base.x)}, y {Math.round(base.y)}, {Math.round(base.width)}×{Math.round(base.height)}</p>}
+            {base && type !== "none" && <p className="font-sans text-xs text-subtle">Baseline: x {Math.round(base.x)}, y {Math.round(base.y)}, {Math.round(base.width)}{Math.round(base.height)}</p>}
           </>
         )}
       </div>

@@ -71,10 +71,10 @@ export default function PropertiesPanel({ node, edit, applyLayout, onDelete, onE
               />
             </label>
 
-            <p className={`${labelCls} mt-3`}>Image Variants · {(node.imageVariants || []).length}</p>
+            <p className={`${labelCls} mt-3`}>Image Variants  {(node.imageVariants || []).length}</p>
 
             {(node.imageVariants || []).length === 0 && (
-              <p className="font-sans text-xs italic text-subtle">No variants yet — add the first one below.</p>
+              <p className="font-sans text-xs italic text-subtle">No variants yet  add the first one below.</p>
             )}
 
             {(node.imageVariants || []).map((v) => (
@@ -121,7 +121,7 @@ export default function PropertiesPanel({ node, edit, applyLayout, onDelete, onE
         <NumField label="Y" value={node.y} onChange={(v) => applyLayout(node.id, { y: v })} />
         <NumField label="Width" min={1} value={node.width} onChange={(v) => applyLayout(node.id, { width: v })} />
         <NumField label="Height" min={1} value={node.height} onChange={(v) => applyLayout(node.id, { height: v })} />
-        <NumField label="Rotation °" value={node.rotation || 0} onChange={(v) => applyLayout(node.id, { rotation: v })} />
+        <NumField label="Rotation " value={node.rotation || 0} onChange={(v) => applyLayout(node.id, { rotation: v })} />
         <NumField label="Layer (z)" value={node.zIndex} onChange={(v) => applyLayout(node.id, { zIndex: Math.round(v) })} />
       </div>
 
@@ -140,7 +140,7 @@ export default function PropertiesPanel({ node, edit, applyLayout, onDelete, onE
 
       <div className="border-t border-ink-4 pt-4 space-y-2">
         <div className="flex items-center justify-between">
-          <span className={`${labelCls} mb-0`}>Crop · {cropType}</span>
+          <span className={`${labelCls} mb-0`}>Crop  {cropType}</span>
           <button className={btnCls} onClick={() => onEnterCropMode?.(node.id)}>Edit on canvas</button>
         </div>
         {cropType === "rect" && (
@@ -151,9 +151,9 @@ export default function PropertiesPanel({ node, edit, applyLayout, onDelete, onE
             <NumField label="Height %" min={1} max={100} value={crop.h} onChange={(v) => edit((d) => setCropShape(d, node.id, { ...crop, h: v }))} />
           </div>
         )}
-        {cropType === "polygon" && <p className="font-sans text-xs text-subtle">Lasso crop · {crop.points.length} points.</p>}
+        {cropType === "polygon" && <p className="font-sans text-xs text-subtle">Lasso crop  {crop.points.length} points.</p>}
         <div>
-          <span className="mb-1 block font-sans text-xs text-subtle">Feather · {crop.feather || 0}</span>
+          <span className="mb-1 block font-sans text-xs text-subtle">Feather  {crop.feather || 0}</span>
           <input type="range" min="0" max="20" step="1" value={crop.feather || 0} onChange={(e) => edit((d) => setCropShape(d, node.id, { ...crop, feather: Number(e.target.value) }))} className="w-full accent-gold" />
         </div>
         <button className={btnCls} onClick={() => edit((d) => resetCrop(d, node.id))}>Reset crop</button>
@@ -167,7 +167,7 @@ export default function PropertiesPanel({ node, edit, applyLayout, onDelete, onE
 
       <div className="border-t border-ink-4 pt-4 space-y-2">
         <span className={labelCls}>Erase / replace region</span>
-        <button className={`${btnCls} w-full`} onClick={() => onEraseNode?.(node)}>Open eraser…</button>
+        <button className={`${btnCls} w-full`} onClick={() => onEraseNode?.(node)}>Open eraser</button>
       </div>
 
       <button className={btnDanger} onClick={() => onDelete(node)}>Delete node</button>

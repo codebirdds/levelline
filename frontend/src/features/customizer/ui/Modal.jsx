@@ -15,7 +15,7 @@ export function Modal({ open, title, onClose, children, footer, size = "max-w-lg
       <div className={`relative flex max-h-[90vh] w-full ${size} flex-col overflow-hidden rounded-lg border border-ink-4 bg-ink-2 text-cream shadow-lg`}>
         <div className="flex items-center justify-between border-b border-ink-4 px-5 py-3.5">
           <h3 className="font-sans text-lg font-medium text-cream">{title}</h3>
-          <button onClick={onClose} aria-label="Close" className="text-subtle hover:text-cream">✕</button>
+          <button onClick={onClose} aria-label="Close" className="text-subtle hover:text-cream"></button>
         </div>
         <div className="overflow-y-auto p-5">{children}</div>
         {footer && <div className="flex justify-end gap-2 border-t border-ink-4 px-5 py-3.5">{footer}</div>}

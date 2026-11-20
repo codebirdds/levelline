@@ -58,7 +58,7 @@ export function ImageField({ label = "Image", value, onChange, children }) {
           {src ? <img src={src} alt="" className="max-h-full max-w-full object-contain" /> : <span className="font-sans text-xs text-subtle">none</span>}
         </div>
         <div className="flex flex-wrap gap-2">
-          <button type="button" className={btnCls} disabled={busy} onClick={() => input.current?.click()}>{busy ? "Uploading…" : value ? "Replace image" : "Upload image"}</button>
+          <button type="button" className={btnCls} disabled={busy} onClick={() => input.current?.click()}>{busy ? "Uploading" : value ? "Replace image" : "Upload image"}</button>
           {children}
         </div>
         <input ref={input} type="file" accept="image/*" className="hidden" onChange={pick} />

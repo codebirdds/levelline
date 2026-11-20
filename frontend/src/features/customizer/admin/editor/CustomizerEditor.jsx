@@ -220,7 +220,7 @@ export default function CustomizerEditor() {
         </div>
         <button className={`${btnCls} ${guide ? "border-gold text-gold" : ""}`} onClick={() => setGuide((g) => !g)}>Guide</button>
         <button className={`${btnCls} ${validation.errors.length ? "border-danger/60 text-danger" : ""}`} onClick={() => setModal("validate")}>
-          Validate · {validation.errors.length}? {validation.warnings.length}?
+          Validate  {validation.errors.length}? {validation.warnings.length}?
         </button>
         <button className={btnCls} onClick={() => setModal("preview")}>Preview draft</button>
         <button className={btnCls} onClick={save} disabled={!dirty}>Save draft</button>
@@ -247,15 +247,15 @@ export default function CustomizerEditor() {
             <span className="rounded-sm bg-gold px-2 py-1 font-semibold text-ink uppercase">{activeView} VIEW</span>
             {target ? (
               <>
-                <span className="text-subtle">PATCH · {targetGroup?.name} ? {targetOption?.name}</span>
+                <span className="text-subtle">PATCH  {targetGroup?.name} ? {targetOption?.name}</span>
               </>
             ) : (
-              <span className="rounded-sm bg-ink-4 px-2 py-1 font-semibold">BASE LAYOUT · editing {activeView} nodes directly</span>
+              <span className="rounded-sm bg-ink-4 px-2 py-1 font-semibold">BASE LAYOUT  editing {activeView} nodes directly</span>
             )}
-            <span className="ml-auto hidden text-subtle xl:block">Drag to move · handles to resize · arrows nudge (Shift ×10)</span>
+            <span className="ml-auto hidden text-subtle xl:block">Drag to move  handles to resize  arrows nudge (Shift 10)</span>
           </div>
           <div ref={areaRef} className="flex min-h-0 flex-1 overflow-auto p-6">
-            {nodes.length === 0 && <p className="m-auto font-sans text-sm text-subtle">This view has no nodes yet — add one from the Nodes tab.</p>}
+            {nodes.length === 0 && <p className="m-auto font-sans text-sm text-subtle">This view has no nodes yet  add one from the Nodes tab.</p>}
             {nodes.length > 0 && (
               <GarmentCanvas
                 canvas={draft.canvas}

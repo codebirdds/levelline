@@ -1,5 +1,5 @@
 // src/components/EraseTool.jsx
-// Brush se mask banao → auto-fill se "pta hi na chale" wala fill.
+// Brush se mask banao  auto-fill se "pta hi na chale" wala fill.
 import { useRef, useState } from "react";
 import { Modal } from "../ui/Modal.jsx";
 import { btnCls, btnGold, labelCls } from "../ui/controls";
@@ -70,7 +70,7 @@ export default function EraseTool({ open, node, onClose, onApply }) {
         <>
           <button className={btnCls} onClick={onClose}>Cancel</button>
           <button className={btnGold} onClick={apply} disabled={busy}>
-            {busy ? "Filling…" : "Auto-fill"}
+            {busy ? "Filling" : "Auto-fill"}
           </button>
         </>
       }

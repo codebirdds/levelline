@@ -14,7 +14,7 @@ export default function CustomizerShop() {
   const products = category ? all.filter((p) => p.category.toLowerCase() === category.toLowerCase()) : all;
   return (
     <main className="min-h-screen bg-page px-5 pb-20 pt-10 sm:px-10 lg:px-[5%]">
-      <SectionHeading align="left" title="Design your garment" subtitle="Choose a piece, then tailor every detail — collar, cuffs, pockets and more — and watch it update live." />
+      <SectionHeading align="left" title="Design your garment" subtitle="Choose a piece, then tailor every detail  collar, cuffs, pockets and more  and watch it update live." />
       {products.length === 0 ? (
         <p className={`mt-16 text-center ${TYPE.p}`}>{category ? `No ${category} are available to customise yet.` : "No customizable garments are published yet. Please check back soon."}</p>
       ) : (

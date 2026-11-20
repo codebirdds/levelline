@@ -249,7 +249,7 @@ export default function CropSelector({ crop, onCommit, onCancel }) {
             />
           ))}
           <div className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 rounded-sm bg-ink/90 px-2 py-1 text-xs text-cream">
-            Click points on the shirt outline → Apply
+            Click points on the shirt outline  Apply
           </div>
         </>
       )}

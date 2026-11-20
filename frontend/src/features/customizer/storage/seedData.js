@@ -16,14 +16,44 @@ const SHIRT_FABRICS = [
   { id: "navy-twill", name: "Navy Twill", color: "#3b4a6b", texture: "seed:tex-twill", tile: 0.8, priceDelta: 250 },
 ];
 
+export function shirtTemplate(productId, fabricId = "sky-twill") {
+  const u = (k) => `/customizer/${k}`;
+  return {
+    productId,
+    canvas: { width: 1000, height: 1400 },
+    baseImage: "",
+    defaultFabricId: fabricId,
+    fabrics: SHIRT_FABRICS.map((f) => ({ ...f })),
+    sections: [
+      { id: "fabric", title: "Fabric", kind: "fabric" },
+      { id: "collar", title: "Collar Style", groupIds: ["collar-style"] },
+    ],
+    nodes: [
+      node("model-base", "Male Model", u("model-base.png"), 150, 100, 700, 1200, 0, true, null, "front"),
+      node("left-sleeve", "Left Sleeve", u("sleeve-left.png"), 110, 300, 180, 600, 1, true, "main", "front"),
+      node("right-sleeve", "Right Sleeve", u("sleeve-right.png"), 710, 300, 180, 600, 1, true, "main", "front"),
+      node("body", "Main Body", u("body-front.png"), 250, 280, 500, 650, 2, true, "main", "front"),
+      node("collar", "Collar", u("collar-point.png"), 380, 240, 240, 120, 7, true, "main", "front"),
+      node("back-model", "Back Model", seedRef("model-back", "ffffff"), 150, 100, 700, 1200, 0, true, null, "back"),
+      node("back-shirt", "Back Shirt", seedRef("body-back", "ffffff"), 250, 280, 500, 650, 1, true, "main", "back"),
+    ],
+    groups: [
+      group("collar-style", "Collar Style", "classic-collar", [
+        opt("collar-style", "classic-collar", "Point Collar", 0, {}),
+        opt("collar-style", "spread-collar", "Spread Collar", 0, { collar: { type: "image", image: u("collar-spread.png") } }),
+      ]),
+    ],
+    rules: [],
+  };
+}
+
+// ?? Exact JSON data for real-front-shirt
 export function realFrontShirtTemplate(productId, fabricId = "white-poplin") {
   const u = (k) => `/customizer/${k}`; 
-  
-  // Aapka diya hua exact geometry
   const collarGeo = { x: 60, y: -23, width: 872, height: 1212 };
 
   return {
-    productId, canvas: { ...DEFAULT_CANVAS }, baseImage: "",
+    productId, canvas: { width: 1000, height: 1400 }, baseImage: "",
     fabrics: SHIRT_FABRICS.map((f) => ({ ...f })), defaultFabricId: fabricId,
     sections: [
       { id: "fabric", title: "Fabric Color", kind: "fabric" },
@@ -31,17 +61,10 @@ export function realFrontShirtTemplate(productId, fabricId = "white-poplin") {
       { id: "pocket", title: "Pocket Style", groupIds: ["pocket-style"] },
     ],
     nodes: [
-      // 1. MODEL (Aapke diye hue coordinates)
-      node("model-base", "Male Model", u("model-base.png"), 74, 50, 849, 1253, 0, true, null, "front"),
-      
-      // 2. SHIRT BODY (Aapke diye hue coordinates)
-      node("body-front", "Shirt Body", u("body-front.png"), 59, -26, 872, 1218, 1, true, "main", "front"),
-      
-      // 3. COLLAR (Aapke diye hue coordinates)
-      node("collar-front", "Collar", u("collar-point.png"), collarGeo.x, collarGeo.y, collarGeo.width, collarGeo.height, 2, true, "main", "front"),
-      
-      // 4. POCKET (Scale ke hisaab se adjust kiya hai)
-      node("pocket-front", "Pocket", u("pocket-point.png"), 340, 520, 160, 190, 3, false, "main", "front"),
+      node("model-base", "Male Model", u("model-base.png"), 74, 50, 849, 1253, 0, true, null, "front", { locked: true }),
+      node("body-front", "Shirt Body", u("body-front.png"), 59, -26, 872, 1218, 1, true, "main", "front", { locked: true }),
+      node("collar-front", "Collar", u("collar-point.png"), 382, 228, 222, 117, 2, true, "main", "front"),
+      node("pocket-front", "Pocket", u("pocket-point.png"), 340, 520, 160, 190, 3, false, "main", "front", { locked: true }),
     ],
     groups: [
       group("collar-style", "Collar Style", "collar-point", [
@@ -58,57 +81,6 @@ export function realFrontShirtTemplate(productId, fabricId = "white-poplin") {
         opt("pocket-style", "pocket-point", "Point Pocket", 100, { "pocket-front": { type: "both", image: u("pocket-point.png"), visible: true } }),
         opt("pocket-style", "pocket-rounded", "Rounded Pocket", 150, { "pocket-front": { type: "both", image: u("pocket-rounded.png"), visible: true } }),
         opt("pocket-style", "pocket-square", "Square Pocket", 100, { "pocket-front": { type: "both", image: u("pocket-square.png"), visible: true } }),
-      ]),
-    ],
-    rules: [],
-  };
-}
-
-export function imageTestShirtTemplate(productId) {
-  const u = (k) => `/customizer/${k}`;
-  return {
-    productId, canvas: { ...DEFAULT_CANVAS }, baseImage: "",
-    fabrics: SHIRT_FABRICS.map((f) => ({ ...f })), defaultFabricId: "white-poplin",
-    sections: [
-      { id: "fabric", title: "Fabric", kind: "fabric" },
-      { id: "collar", title: "Collar Style", groupIds: ["collar-style"] },
-    ],
-    nodes: [
-      node("body", "Shirt", u("body-front.png"), 200, 200, 600, 1000, 1, true, "main", "front"),
-      node("collar", "Collar", u("collar-point.png"), 320, 190, 360, 180, 2, true, "main", "front"),
-    ],
-    groups: [
-      group("collar-style", "Collar Style", "point-collar", [
-        opt("collar-style", "point-collar", "Point Collar", 0),
-      ]),
-    ],
-    rules: [],
-  };
-}
-
-export function shirtTemplate(productId, fabricId = "white-poplin") {
-  const u = (k) => `/customizer/${k}`;
-  const r = (k) => seedRef(k, "ffffff");
-  return {
-    productId, canvas: { ...DEFAULT_CANVAS }, baseImage: "",
-    fabrics: SHIRT_FABRICS.map((f) => ({ ...f })), defaultFabricId: fabricId,
-    sections: [
-      { id: "fabric", title: "Fabric", kind: "fabric" },
-      { id: "collar", title: "Collar Style", groupIds: ["collar-style"] },
-    ],
-    nodes: [
-      node("model-base", "Male Model", u("model-base.png"), 150, 100, 700, 1200, 0, true, null, "front"),
-      node("left-sleeve", "Left Sleeve", u("sleeve-left.png"), 110, 300, 180, 600, 1, true, "main", "front"),
-      node("right-sleeve", "Right Sleeve", u("sleeve-right.png"), 710, 300, 180, 600, 1, true, "main", "front"),
-      node("body", "Main Body", u("body-front.png"), 250, 280, 500, 650, 2, true, "main", "front"),
-      node("collar", "Collar", u("collar-point.png"), 380, 240, 240, 120, 7, true, "main", "front"),
-      node("back-model", "Back Model", r("model-back"), 150, 100, 700, 1200, 0, true, null, "back"),
-      node("back-shirt", "Back Shirt", r("body-back"), 250, 280, 500, 650, 1, true, "main", "back"),
-    ],
-    groups: [
-      group("collar-style", "Collar Style", "classic-collar", [
-        opt("collar-style", "classic-collar", "Point Collar"),
-        opt("collar-style", "spread-collar", "Spread Collar", 400, { collar: { type: "image", image: u("collar-spread.png") } }),
       ]),
     ],
     rules: [],
@@ -185,18 +157,12 @@ export const PRESETS = {
   shirt: { label: "Shirt layout (Model)", build: shirtTemplate },
   trousers: { label: "Trousers layout", build: trouserTemplate },
   blank: { label: "Blank (add nodes yourself)", build: blankTemplate },
-  imageTest: { label: "Image test (Body + Collar)", build: imageTestShirtTemplate },
   jacketImageTest: { label: "Jacket overlay test", build: jacketImageTestTemplate },
 };
 
 const DEMO = [
   { id: "real-front-shirt", name: "Real Front Shirt", category: "Shirts", basePrice: 4500, preset: "frontViewShirt", fabric: "white-poplin", description: "Real front view with multiple collars and pockets.", hasFlatView: false },
-  { id: "presidential-oxford-shirt", name: "Presidential Oxford Shirt", category: "Shirts", basePrice: 5200, preset: "shirt", fabric: "pink-oxford", description: "Our signature Oxford weave with a refined, structured hand-feel.", hasFlatView: true },
   { id: "classic-formal-shirt", name: "Classic Formal Shirt", category: "Shirts", basePrice: 4200, preset: "shirt", fabric: "sky-twill", description: "A timeless formal shirt in fine two-ply cotton.", hasFlatView: false },
-  { id: "modern-slim-fit-shirt", name: "Modern Slim Fit Shirt", category: "Shirts", basePrice: 4600, preset: "shirt", fabric: "white-poplin", description: "Cut closer to the body for a sharp, contemporary line.", hasFlatView: false },
-  { id: "premium-business-shirt", name: "Premium Business Shirt", category: "Shirts", basePrice: 5800, preset: "shirt", fabric: "sand-herringbone", description: "Long-staple Egyptian cotton made for the boardroom.", hasFlatView: false },
-  { id: "tailored-formal-trousers", name: "Tailored Formal Trousers", category: "Trousers", basePrice: 6400, preset: "trousers", fabric: "charcoal", description: "Hand-finished trousers with a clean, elegant drape.", hasFlatView: false },
-  { id: "image-test-shirt", name: "Image Test Shirt", category: "Shirts", basePrice: 2000, preset: "imageTest", description: "Real PNG images, no seed SVGs, no fabrics.", hasFlatView: false },
   { id: "jacket-overlay-test", name: "Jacket Overlay Test", category: "Jackets", basePrice: 0, preset: "jacketImageTest", description: "Fixed model with aligned transparent jacket overlay.", hasFlatView: false },
 ];
 

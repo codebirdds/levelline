@@ -2,7 +2,7 @@ import { btnDanger, btnGold, inputCls, labelCls } from "../../ui/controls";
 import { addRule, deleteRule, updateRule } from "./editorUtils.js";
 
 export default function RulesPanel({ draft, edit }) {
-  const options = draft.groups.flatMap((g) => g.options.map((o) => ({ id: o.id, label: `${g.name} — ${o.name}` })));
+  const options = draft.groups.flatMap((g) => g.options.map((o) => ({ id: o.id, label: `${g.name}  ${o.name}` })));
   const add = () => {
     if (options.length < 2) return;
     edit((d) => addRule(d, { type: "requires", optionId: options[0].id, targetOptionIds: [options[1].id] }));

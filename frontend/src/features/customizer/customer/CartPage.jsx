@@ -35,7 +35,7 @@ export default function CartPage() {
                     {i.summary.map((s) => <li key={s.group}>{s.group}: <span className="text-[#6b6b6b]">{s.option}</span></li>)}
                   </ul>
                   <div className="mt-3 flex items-center gap-3">
-                    <button className={qtyBtn} aria-label="Decrease" onClick={() => updateQuantity(i.id, i.quantity - 1)}>−</button>
+                    <button className={qtyBtn} aria-label="Decrease" onClick={() => updateQuantity(i.id, i.quantity - 1)}></button>
                     <span className="font-sans text-sm text-[#6b6b6b]">{i.quantity}</span>
                     <button className={qtyBtn} aria-label="Increase" onClick={() => updateQuantity(i.id, i.quantity + 1)}>+</button>
                     <button className="ml-3 font-sans text-xs uppercase tracking-wide text-[#808080] underline hover:text-danger" onClick={() => removeFromCart(i.id)}>Remove</button>
@@ -49,7 +49,7 @@ export default function CartPage() {
             <button className="font-sans text-xs uppercase tracking-wide text-[#808080] underline hover:text-danger" onClick={clearCart}>Clear cart</button>
             <p className="flex items-center gap-4"><span className={TYPE.label}>Subtotal</span><span className={TYPE.bold}>{formatCurrency(total)}</span></p>
           </div>
-          <p className={`mt-4 text-right ${TYPE.p}`}>Checkout isn't connected yet — this is a local demo cart.</p>
+          <p className={`mt-4 text-right ${TYPE.p}`}>Checkout isn't connected yet  this is a local demo cart.</p>
           <Link to="/customize" className="mt-2 inline-block font-sans text-xs uppercase tracking-wide text-[#808080] underline">Continue designing</Link>
         </>
       )}

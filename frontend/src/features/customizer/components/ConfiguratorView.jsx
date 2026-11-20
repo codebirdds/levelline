@@ -160,13 +160,13 @@ export default function ConfiguratorView({ product, template, onAddToCart, embed
       };
     }
     const groups = (s.groupIds ?? []).map((id) => template.groups.find((g) => g.id === id)).filter(Boolean);
-    return { id: s.id, title: s.title, value: groups.map(selectedName).join(" · "), content: groups.map((g) => renderGroup(g, groups.length > 1)) };
+    return { id: s.id, title: s.title, value: groups.map(selectedName).join("  "), content: groups.map((g) => renderGroup(g, groups.length > 1)) };
   });
 
   return (
     <div className={`grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] ${embedded ? "" : "min-h-[calc(100vh-var(--header-h))]"}`}>
       
-      {/* LEFT — VIEWER */}
+      {/* LEFT  VIEWER */}
       <div className="relative overflow-hidden bg-[#f1f1ef] px-4 py-6 sm:px-10 lg:py-10">
         
         {/* Top Controls: Zoom */}
@@ -205,7 +205,7 @@ export default function ConfiguratorView({ product, template, onAddToCart, embed
         </div>
       </div>
 
-      {/* RIGHT — CUSTOMIZATION PANEL */}
+      {/* RIGHT  CUSTOMIZATION PANEL */}
       <div className={`bg-white px-5 pt-8 sm:px-10 lg:px-14 lg:pt-12 ${embedded ? "pb-8" : "pb-32 lg:pb-12"}`}>
         <SectionHeading align="left" title={product.name} subtitle={product.description} />
         <div className="mt-8">

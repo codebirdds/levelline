@@ -62,7 +62,7 @@ export default function CustomizerNav() {
       <div className={`fixed inset-0 z-50 lg:hidden ${open ? "" : "pointer-events-none"}`} aria-hidden={!open}>
         <div onClick={() => setOpen(false)} className={`absolute inset-0 bg-ink/50 transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0"}`} />
         <aside className={`absolute left-0 top-0 h-full w-4/5 max-w-xs bg-white p-6 transition-transform duration-300 ${open ? "translate-x-0" : "-translate-x-full"}`}>
-          <button onClick={() => setOpen(false)} aria-label="Close menu" className="mb-8 block p-2 text-[#6b6b6b]">✕</button>
+          <button onClick={() => setOpen(false)} aria-label="Close menu" className="mb-8 block p-2 text-[#6b6b6b]"></button>
           <nav className="flex flex-col gap-6">
             {[...LEFT, ...RIGHT].map((l) => <SmartLink key={l.label} href={l.href} onClick={() => setOpen(false)} className={`${link} text-sm`}>{l.label}</SmartLink>)}
           </nav>

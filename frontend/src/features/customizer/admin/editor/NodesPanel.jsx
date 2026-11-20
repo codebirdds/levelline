@@ -10,7 +10,7 @@ export default function NodesPanel({ nodes, draft, selectedId, onSelect, edit, o
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex items-center justify-between border-b border-ink-4 px-3 py-2.5">
-        <span className={`${labelCls} mb-0`}>Garment nodes · {sortedNodes.length}</span>
+        <span className={`${labelCls} mb-0`}>Garment nodes  {sortedNodes.length}</span>
         {baseMode && <button className={btnGold} onClick={onAdd}><Icon name="plus" /> Add node</button>}
       </div>
       <ul className="min-h-0 flex-1 overflow-y-auto py-1">

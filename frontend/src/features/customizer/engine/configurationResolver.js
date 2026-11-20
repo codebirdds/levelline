@@ -59,7 +59,6 @@ export function resolveGarment(t, selections, { skipGroupId, fabricId } = {}) {
   const conflicts = [];
   const missing = [];
 
-  // 1. Apply patches first
   for (const group of t.groups) {
     const option = group.options.find((o) => o.id === sel[group.id]);
     if (!option) continue;
@@ -81,7 +80,6 @@ export function resolveGarment(t, selections, { skipGroupId, fabricId } = {}) {
     }
   }
 
-  // 2. Apply variants LAST so they always win
   const overriddenNodes = new Set();
   for (const [nodeId, node] of state) {
     if (!node.useVariants) continue;
@@ -89,8 +87,9 @@ export function resolveGarment(t, selections, { skipGroupId, fabricId } = {}) {
     if (!variantId || !node.imageVariants?.length) continue;
     const variant = node.imageVariants.find((v) => v.id === variantId);
     if (!variant) continue;
-    // Save the original image as maskImage so the new image only applies to the collar shape
-    state.set(nodeId, { ...node, maskImage: node.image, image: variant.image });
+    
+    // FIX: Force maskImage to be the original collar so the new image/texture is clipped to the collar shape
+    state.set(nodeId, { ...node, image: variant.image, maskImage: node.image });
     overriddenNodes.add(nodeId);
   }
 
@@ -157,7 +156,7 @@ export function selectOption(t, selections, groupId, optionId) {
         const trial = { ...next, [hit.group.id]: targetId };
         if (getRuleViolations(t, trial).some((x) => x.kind === "excludes" && involves(x, targetId))) continue;
         next[hit.group.id] = targetId;
-        notices.push(`${optionName(t, optionId)} requires ${hit.option.name} — selected automatically.`);
+        notices.push(`${optionName(t, optionId)} requires ${hit.option.name} - selected automatically.`);
         satisfied = true;
         break;
       }

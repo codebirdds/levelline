@@ -35,7 +35,7 @@ export function write(name, value, { raw = false } = {}) {
   } catch (e) {
     const full = e?.name === "QuotaExceededError" || e?.code === 22 || /quota/i.test(e?.message || "");
     console.error(`[storage] write failed for "${name}"`, e);
-    throw new StorageError(full ? "Browser storage is full. Delete unused products or images and try again — nothing was saved." : `Could not save: ${e.message}`);
+    throw new StorageError(full ? "Browser storage is full. Delete unused products or images and try again  nothing was saved." : `Could not save: ${e.message}`);
   }
   emit(name);
 }
